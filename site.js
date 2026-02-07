@@ -29,3 +29,9 @@ function renderFooter() {
 
 renderHeader();
 renderFooter();
+
+const goatcounter = document.createElement("script");
+goatcounter.async = true;
+goatcounter.dataset.goatcounter = "https://aspoonfulofbias.goatcounter.com/count";
+goatcounter.src = "//gc.zgo.at/count.js";
+document.head.appendChild(goatcounter);
