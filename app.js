@@ -12,6 +12,8 @@ const ctx = chart.getContext("2d");
 const BASE_CHUNK = 7300;
 const TUTELAGE_BASE_CAP = 25000;
 
+const chartPadding = { left: 60, right: 20, top: 20, bottom: 50 };
+
 const options = [
   {
     key: "lumnis",
@@ -154,7 +156,6 @@ function drawChart(base) {
   const height = chart.height;
   ctx.clearRect(0, 0, width, height);
 
-  const padding = { left: 60, right: 20, top: 20, bottom: 50 };
   const maxX = Number(baseSlider.max);
   const series = options.map((opt) => ({
     opt,
@@ -165,34 +166,34 @@ function drawChart(base) {
     ...series.map((line) => line.points[line.points.length - 1].y)
   );
 
-  const xScale = (width - padding.left - padding.right) / maxX;
-  const yScale = (height - padding.top - padding.bottom) / (maxY * 1.1);
+  const xScale = (width - chartPadding.left - chartPadding.right) / maxX;
+  const yScale = (height - chartPadding.top - chartPadding.bottom) / (maxY * 1.1);
 
   ctx.strokeStyle = "rgba(29, 26, 33, 0.1)";
   ctx.lineWidth = 1;
 
   for (let i = 0; i <= 5; i += 1) {
-    const y = padding.top + (height - padding.top - padding.bottom) * (i / 5);
+    const y = chartPadding.top + (height - chartPadding.top - chartPadding.bottom) * (i / 5);
     ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
+    ctx.moveTo(chartPadding.left, y);
+    ctx.lineTo(width - chartPadding.right, y);
     ctx.stroke();
   }
 
   for (let i = 0; i <= 5; i += 1) {
-    const x = padding.left + (width - padding.left - padding.right) * (i / 5);
+    const x = chartPadding.left + (width - chartPadding.left - chartPadding.right) * (i / 5);
     ctx.beginPath();
-    ctx.moveTo(x, padding.top);
-    ctx.lineTo(x, height - padding.bottom);
+    ctx.moveTo(x, chartPadding.top);
+    ctx.lineTo(x, height - chartPadding.bottom);
     ctx.stroke();
   }
 
   ctx.strokeStyle = "#1d1a21";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(padding.left, padding.top);
-  ctx.lineTo(padding.left, height - padding.bottom);
-  ctx.lineTo(width - padding.right, height - padding.bottom);
+  ctx.moveTo(chartPadding.left, chartPadding.top);
+  ctx.lineTo(chartPadding.left, height - chartPadding.bottom);
+  ctx.lineTo(width - chartPadding.right, height - chartPadding.bottom);
   ctx.stroke();
 
   ctx.fillStyle = "#5d5866";
@@ -209,8 +210,8 @@ function drawChart(base) {
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     line.points.forEach((point, index) => {
-      const x = padding.left + point.x * xScale;
-      const y = height - padding.bottom - point.y * yScale;
+      const x = chartPadding.left + point.x * xScale;
+      const y = height - chartPadding.bottom - point.y * yScale;
       if (index === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -220,19 +221,19 @@ function drawChart(base) {
     ctx.stroke();
   });
 
-  const markerX = padding.left + base * xScale;
+  const markerX = chartPadding.left + base * xScale;
   ctx.strokeStyle = "rgba(29, 26, 33, 0.35)";
   ctx.setLineDash([6, 6]);
   ctx.beginPath();
-  ctx.moveTo(markerX, padding.top);
-  ctx.lineTo(markerX, height - padding.bottom);
+  ctx.moveTo(markerX, chartPadding.top);
+  ctx.lineTo(markerX, height - chartPadding.bottom);
   ctx.stroke();
   ctx.setLineDash([]);
 
   series.forEach((line) => {
     const point = computeTotal(base, line.opt);
     const x = markerX;
-    const y = height - padding.bottom - point.total * yScale;
+    const y = height - chartPadding.bottom - point.total * yScale;
     ctx.fillStyle = line.opt.color;
     ctx.beginPath();
     ctx.arc(x, y, 5, 0, Math.PI * 2);
@@ -269,6 +270,49 @@ baseInput.addEventListener("input", () => {
 baseSlider.addEventListener("input", () => {
   baseInput.value = baseSlider.value;
   updateAll();
+});
+
+let isDragging = false;
+
+function setBaseFromChart(event) {
+  const rect = chart.getBoundingClientRect();
+  const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+  const x = clientX - rect.left;
+  const maxX = Number(baseSlider.max);
+  const usableWidth = rect.width - chartPadding.left - chartPadding.right;
+  const clampedX = Math.max(chartPadding.left, Math.min(x, rect.width - chartPadding.right));
+  const ratio = usableWidth > 0 ? (clampedX - chartPadding.left) / usableWidth : 0;
+  const value = Math.round(ratio * maxX);
+  baseInput.value = String(value);
+  updateAll();
+}
+
+chart.addEventListener("mousedown", (event) => {
+  isDragging = true;
+  setBaseFromChart(event);
+});
+
+chart.addEventListener("mousemove", (event) => {
+  if (!isDragging) return;
+  setBaseFromChart(event);
+});
+
+window.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+chart.addEventListener("touchstart", (event) => {
+  isDragging = true;
+  setBaseFromChart(event);
+});
+
+chart.addEventListener("touchmove", (event) => {
+  if (!isDragging) return;
+  setBaseFromChart(event);
+});
+
+chart.addEventListener("touchend", () => {
+  isDragging = false;
 });
 
 updateLegend();
