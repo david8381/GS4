@@ -138,7 +138,12 @@ function renderTable(base) {
     resultsBody.appendChild(row);
   });
 
-  const best = totals.reduce((acc, entry) => (entry.data.total > acc.data.total ? entry : acc));
+  const best = totals.reduce((acc, entry) => {
+    if (entry.data.total > acc.data.total) return entry;
+    if (entry.data.total < acc.data.total) return acc;
+    if (!entry.opt.tutelage && acc.opt.tutelage) return entry;
+    return acc;
+  });
   bestTotal.textContent = `${formatNumber(best.data.total)} xp`;
   bestLabel.textContent = best.opt.name;
   bestDelta.textContent = `${formatNumber(best.data.total - baseLine.total)} xp`;
