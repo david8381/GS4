@@ -189,6 +189,16 @@ body {
   background: #fffdf8;
 }
 
+.input-row select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbbfae;
+  font-size: 1rem;
+  background: #fffdf8;
+  font-family: inherit;
+}
+
 .unit {
   font-weight: 600;
   color: var(--muted);

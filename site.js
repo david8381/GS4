@@ -6,12 +6,6 @@ function renderHeader() {
   headerSlot.innerHTML = `
     <header class="site-header">
       <div class="brand">GemStone IV Tools</div>
-      <nav class="nav">
-        <a class="nav-link" href="index.html" ${page === "home" ? "aria-current=\"page\"" : ""}>Home</a>
-        <a class="nav-link" href="calculator.html" ${page === "calculator" ? "aria-current=\"page\"" : ""}>
-          Lumnis + Tutelage
-        </a>
-      </nav>
     </header>
   `;
 }

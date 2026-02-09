@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Violet Orb Probability Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="violet-orb">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Arena / Heist / Sewers</p>
+          <h1>Violet Orb Probability</h1>
+          <p>
+            Odds start at 1 in 2500 and improve by one each run. Enter your current run counts and
+            use the slider to see the probability of finding at least one orb in the next N runs.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <label for="arenaRuns">Arena Runs Completed</label>
+            <div class="input-row">
+              <input id="arenaRuns" type="number" min="0" max="2500" step="1" value="0" />
+              <span class="unit">runs</span>
+            </div>
+
+            <div class="input-group">
+              <label for="heistRuns">Heist Runs Completed</label>
+              <div class="input-row">
+                <input id="heistRuns" type="number" min="0" max="2500" step="1" value="0" />
+                <span class="unit">runs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="sewerRuns">Sewer Runs Completed</label>
+              <div class="input-row">
+                <input id="sewerRuns" type="number" min="0" max="2500" step="1" value="0" />
+                <span class="unit">runs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="nextRuns">Next N Runs</label>
+              <div class="input-row">
+                <input id="nextRuns" type="number" min="1" max="2500" step="1" value="50" />
+                <span class="unit">runs</span>
+              </div>
+              <input id="nextRunsSlider" type="range" min="1" max="2500" step="1" value="50" />
+              <div class="slider-meta">
+                <span>1</span>
+                <span>2,500</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Arena Chance in Next N Runs</div>
+              <div class="summary-value" id="arenaChance">0%</div>
+              <div class="summary-sub" id="arenaSub">N = 50</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Heist Chance in Next N Runs</div>
+              <div class="summary-value" id="heistChance">0%</div>
+              <div class="summary-sub" id="heistSub">N = 50</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Sewer Chance in Next N Runs</div>
+              <div class="summary-value" id="sewerChance">0%</div>
+              <div class="summary-sub" id="sewerSub">N = 50</div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="violet-orb.js"></script>
+  </body>
+</html>
