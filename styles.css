@@ -50,6 +50,25 @@ body {
   text-transform: uppercase;
 }
 
+.home-link {
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 700;
+  padding: 8px 12px;
+  border: 1px solid #cbbfae;
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.home-link:hover {
+  background: var(--panel-soft);
+}
+
+.home-link[aria-current="page"] {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .nav {
   display: flex;
   gap: 16px;
@@ -189,6 +208,15 @@ body {
   background: #fffdf8;
 }
 
+.input-row input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbbfae;
+  font-size: 1rem;
+  background: #fffdf8;
+}
+
 .input-row select {
   width: 100%;
   padding: 10px 12px;
@@ -197,6 +225,105 @@ body {
   font-size: 1rem;
   background: #fffdf8;
   font-family: inherit;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbbfae;
+  font-size: 0.95rem;
+  font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  background: #fffdf8;
+  resize: vertical;
+}
+
+.btn {
+  border: 1px solid #cbbfae;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.radio-stack {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.helper {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.profile-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.stat-row {
+  display: contents;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.stat-grid input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cbbfae;
+  font-size: 0.95rem;
+  background: #fffdf8;
+}
+
+#skillsTable input[type="number"] {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbbfae;
+  font-size: 0.9rem;
+  background: #fffdf8;
 }
 
 .unit {
@@ -286,7 +413,10 @@ body {
   border-radius: 4px;
 }
 
-#chart {
+#chart,
+#trendChart,
+#xpChart,
+#resourceChart {
   width: 100%;
   height: auto;
   margin-top: 16px;

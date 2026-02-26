@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lumnis + Tutelage Calculator</title>
+    <title>Experience Burn-Down Calculator</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,38 +18,64 @@
 
       <main class="calculator">
         <section class="calc-intro">
-          <p class="eyebrow">Gift of Lumnis + Tutelage</p>
-          <h1>Experience Options</h1>
+          <p class="eyebrow">Experience + Resources</p>
+          <h1>Field Experience Burn-Down</h1>
           <p>
-            Enter your weekly base experience gained (the experience you would normally absorb without
-            any bonuses). The chart and table compare four options side by side.
+            Enter your current field experience and logic bonus to estimate absorption time and resources
+            earned in common scenarios.
           </p>
         </section>
 
         <section class="calc-panel">
           <div class="input-block">
-            <label for="baseExp">Weekly Base Experience</label>
-            <div class="input-row">
-              <input id="baseExp" type="number" min="0" step="100" value="20000" />
-              <span class="unit">xp</span>
+            <div class="input-group">
+              <label for="currentExp">Current Field Experience</label>
+              <div class="input-row">
+                <input id="currentExp" type="number" min="0" step="1" value="1000" />
+                <span class="unit">xp</span>
+              </div>
             </div>
-            <input id="baseSlider" type="range" min="0" max="150000" step="100" value="20000" />
-            <div class="slider-meta">
-              <span>0</span>
-              <span id="sliderMax">150,000</span>
+
+            <div class="input-group">
+              <label for="logicBonus">Logic Bonus</label>
+              <div class="input-row">
+                <input id="logicBonus" type="number" step="1" value="20" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label>Scenario</label>
+              <div class="radio-stack">
+                <label class="radio-row">
+                  <input type="radio" name="scenarioMode" value="on-node" checked />
+                  <span>On-Node (Town)</span>
+                </label>
+                <label class="radio-row">
+                  <input type="radio" name="scenarioMode" value="in-town" />
+                  <span>In-Town (Off-Node)</span>
+                </label>
+                <label class="radio-row">
+                  <input type="radio" name="scenarioMode" value="out-town" />
+                  <span>Out-of-Town</span>
+                </label>
+                <label class="radio-row">
+                  <input type="radio" name="scenarioMode" value="offline" />
+                  <span>Offline</span>
+                </label>
+              </div>
             </div>
           </div>
 
           <div class="summary-block">
             <div class="summary-card">
-              <div class="summary-title">Best Total XP</div>
-              <div class="summary-value" id="bestTotal">0</div>
-              <div class="summary-sub" id="bestLabel">—</div>
+              <div class="summary-title">Selected Scenario</div>
+              <div class="summary-value" id="selectedScenario">On-Node (Town)</div>
+              <div class="summary-sub" id="totalTime">Total Time: 0m</div>
             </div>
             <div class="summary-card">
-              <div class="summary-title">Extra vs Lumnis Only</div>
-              <div class="summary-value" id="bestDelta">0</div>
-              <div class="summary-sub">at your input</div>
+              <div class="summary-title">Total Resources</div>
+              <div class="summary-value" id="totalResources">0</div>
+              <div class="summary-sub" id="avgAbsorb">Avg Absorb: 0.0</div>
             </div>
           </div>
         </section>
@@ -57,28 +83,38 @@
         <section class="chart-panel">
           <div class="chart-header">
             <div>
-              <h2>XP Earned vs Base XP</h2>
-              <p>The vertical line marks your current input.</p>
+              <h2>Selected Scenario Trend</h2>
+              <p>Single chart view: XP remaining, absorb per pulse, and resource gain per pulse.</p>
             </div>
             <div class="legend" id="legend"></div>
           </div>
-          <canvas id="chart" width="960" height="420"></canvas>
+          <canvas id="trendChart" width="960" height="360"></canvas>
         </section>
 
         <section class="table-panel">
-          <h2>Breakdown at Your Input</h2>
+          <h2>Selected Scenario Breakdown</h2>
           <table>
             <thead>
               <tr>
-                <th>Option</th>
-                <th>Bonus XP</th>
-                <th>Total XP</th>
-                <th>Effective Multiplier</th>
-                <th>Extra vs Lumnis</th>
+                <th>Scenario</th>
+                <th>Total Time</th>
+                <th>Pulses / Intervals</th>
+                <th>Total Resources</th>
+                <th>Avg XP / Pulse</th>
               </tr>
             </thead>
             <tbody id="results"></tbody>
           </table>
+        </section>
+
+        <section class="notes">
+          <ul>
+            <li>On-node and in-town use logic bonus / 5. Out-of-town uses logic bonus / 7.</li>
+            <li>Pool bonus is +1 absorb per 200 unabsorbed field exp, capped at +10.</li>
+            <li>Online pulse is fixed at 60 seconds, with 85 resources if that pulse absorbs at least 20 XP.</li>
+            <li>Offline is fixed at 15 XP and 25 resources per 10-minute interval.</li>
+            <li>Vertical grid lines are every 5 minutes. Hover to inspect exact values at a pulse.</li>
+          </ul>
         </section>
 
       </main>

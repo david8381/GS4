@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Character Profiles</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="profiles">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">GS4 Character Profiles</p>
+          <h1>Profile Manager</h1>
+          <p>
+            Paste your INFO output to create a reusable profile. Profiles can store stats plus encumbrance defaults
+            for use in calculators.
+          </p>
+        </section>
+
+        <section class="calc-panel profile-grid">
+          <div class="input-block">
+            <label for="profileSelect">Saved Profiles</label>
+            <div class="input-row">
+              <select id="profileSelect">
+                <option value="">Select a profile</option>
+              </select>
+            </div>
+            <div class="input-group inline-actions">
+              <button class="btn" id="profileApply" type="button">Load</button>
+              <button class="btn ghost" id="profileDelete" type="button">Delete</button>
+            </div>
+
+            <div class="input-group">
+              <label for="infoImport">Quick import (paste INFO START output)</label>
+              <textarea id="infoImport" rows="9" placeholder="Paste the INFO START block here"></textarea>
+            </div>
+            <div class="input-group inline-actions">
+              <button class="btn" id="parseInfoStart" type="button">Parse Now</button>
+            </div>
+            <div class="helper" id="importStatus">
+              Paste INFO START output to auto-fill race, profession, and level 0 stats. Current stats will be
+              calculated from growth rates.
+            </div>
+          </div>
+
+          <div class="input-block">
+            <label for="profileName">Profile name</label>
+            <div class="input-row">
+              <input id="profileName" type="text" placeholder="e.g. Sajehn" />
+            </div>
+            <div class="input-group inline-actions">
+              <button class="btn" id="profileSave" type="button">Save/Update</button>
+            </div>
+
+            <div class="input-group">
+              <label for="profileRace">Race</label>
+              <div class="input-row">
+                <select id="profileRace"></select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="profileProfession">Profession</label>
+              <div class="input-row">
+                <select id="profileProfession"></select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="profileLevel">Current level</label>
+              <div class="input-row">
+                <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label>Stats (base / enhanced)</label>
+              <div class="stat-grid" id="statGrid"></div>
+            </div>
+            <div class="input-group inline-actions">
+              <button class="btn ghost" id="recalcStats" type="button">Recalculate from Level 0</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <label for="skillsImport">Quick import (SKILLS output)</label>
+            <textarea id="skillsImport" rows="9" placeholder="Paste the SKILLS block here"></textarea>
+            <div class="helper" id="skillsStatus">Paste SKILLS output to auto-fill skill bonuses and ranks.</div>
+          </div>
+
+          <div class="table-panel">
+            <h2>Skills</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Skill</th>
+                  <th>Bonus</th>
+                  <th>Ranks</th>
+                </tr>
+              </thead>
+              <tbody id="skillsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <label>Encumbrance Defaults</label>
+            <div class="input-group">
+              <label for="armorAsg">Armor type (ASG)</label>
+              <div class="input-row">
+                <select id="armorAsg"></select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="armorWeight">Armor actual weight</label>
+              <div class="input-row">
+                <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
+                <span class="unit">lbs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="accessoryWeight">Armor accessories weight</label>
+              <div class="input-row">
+                <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
+                <span class="unit">lbs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="gearWeight">Carried gear weight (no armor)</label>
+              <div class="input-row">
+                <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
+                <span class="unit">lbs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="silvers">Silvers carried</label>
+              <div class="input-row">
+                <input id="silvers" type="number" min="0" step="1" value="0" />
+                <span class="unit">coins</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="pfBonus">Physical Fitness bonus</label>
+              <div class="input-row">
+                <input id="pfBonus" type="number" min="0" step="1" value="0" />
+                <span class="unit">bonus</span>
+              </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <span class="helper">Defaults saved with the profile.</span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="profile.js"></script>
+  </body>
+</html>

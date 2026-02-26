@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Encumbrance Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="encumbrance">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">GS4 Encumbrance</p>
+          <h1>Encumbrance Calculator</h1>
+          <p>
+            Compute carrying capacity, encumbrance percentage, and penalties. Use the “what‑if” fields
+            to see how Strength and Constitution changes shift the result.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <label for="profileSelect">Character Profile</label>
+            <div class="input-row">
+              <select id="profileSelect">
+                <option value="">Select from Profile</option>
+              </select>
+            </div>
+            <div class="input-group inline-actions">
+              <label class="checkbox-row">
+                <input id="useEnhanced" type="checkbox" checked />
+                Use enhanced stats
+              </label>
+              <a class="btn ghost" href="profile.html">Manage Profiles</a>
+            </div>
+          </div>
+
+          <div class="input-block">
+            <label for="race">Race</label>
+            <div class="input-row">
+              <select id="race"></select>
+            </div>
+
+            <div class="input-group">
+              <label for="strStat">Strength (stat)</label>
+              <div class="input-row">
+                <input id="strStat" type="number" min="1" max="100" step="1" value="70" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="conStat">Constitution (stat)</label>
+              <div class="input-row">
+                <input id="conStat" type="number" min="1" max="100" step="1" value="60" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="strDelta">What-if Strength change</label>
+              <div class="input-row">
+                <input id="strDelta" type="number" min="-100" max="100" step="1" value="0" />
+                <span class="unit">stat</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="conDelta">What-if Constitution change</label>
+              <div class="input-row">
+                <input id="conDelta" type="number" min="-100" max="100" step="1" value="0" />
+                <span class="unit">stat</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="input-block">
+            <label for="gearWeight">Carried gear weight (no armor)</label>
+            <div class="input-row">
+              <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
+              <span class="unit">lbs</span>
+            </div>
+
+            <div class="input-group">
+              <label for="silvers">Silvers carried</label>
+              <div class="input-row">
+                <input id="silvers" type="number" min="0" step="1" value="0" />
+                <span class="unit">coins</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="armorAsg">Armor type (ASG)</label>
+              <div class="input-row">
+                <select id="armorAsg"></select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="armorWeight">Armor actual weight</label>
+              <div class="input-row">
+                <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
+                <span class="unit">lbs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="accessoryWeight">Armor accessories weight</label>
+              <div class="input-row">
+                <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
+                <span class="unit">lbs</span>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="pfBonus">Physical Fitness bonus</label>
+              <div class="input-row">
+                <input id="pfBonus" type="number" min="0" step="1" value="0" />
+                <span class="unit">bonus</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Results</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Current</th>
+                <th>With Changes</th>
+              </tr>
+            </thead>
+            <tbody id="results"></tbody>
+          </table>
+        </section>
+
+        <section class="notes">
+          <ul>
+            <li>Body weight uses even STR/CON values (odd stats are reduced by 1).</li>
+            <li>The body-weight formula is accurate when STR and CON are at least 50; lower stats run slightly heavier.</li>
+            <li>Standard-weight armor does not count toward encumbrance. Non-standard weight modifies carrying capacity.</li>
+            <li>Silvers weigh about 1/160 lb per coin.</li>
+          </ul>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="encumbrance.js"></script>
+  </body>
+</html>

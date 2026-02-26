@@ -3,9 +3,11 @@ function renderHeader() {
   if (!headerSlot) return;
 
   const page = document.body.dataset.page || "";
+  const homeAttrs = page === "home" ? 'aria-current="page"' : "";
   headerSlot.innerHTML = `
     <header class="site-header">
       <div class="brand">GemStone IV Tools</div>
+      <a class="home-link" href="index.html" ${homeAttrs}>Home</a>
     </header>
   `;
 }
