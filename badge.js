@@ -10,10 +10,14 @@ const testOutputEl = document.getElementById("testOutput");
 const stateJsonInput = document.getElementById("stateJson");
 const validateStateJsonBtn = document.getElementById("validateStateJson");
 const stateJsonStatusEl = document.getElementById("stateJsonStatus");
+const badgeProfileSelect = document.getElementById("badgeProfileSelect");
+const badgeProfileLoad = document.getElementById("badgeProfileLoad");
+const badgeProfileSave = document.getElementById("badgeProfileSave");
 
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
 const POWER_PER_UPGRADE = 1200;
+const PROFILE_KEY = "gs4.characterProfiles";
 
 const componentNames = ["Material", "Binding", "Device", "Motif", "Gem"];
 
@@ -242,6 +246,37 @@ function safeInt(value) {
   return Math.trunc(number);
 }
 
+function loadProfiles() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
+    if (Array.isArray(stored)) return stored;
+  } catch (error) {
+    return [];
+  }
+  return [];
+}
+
+function saveProfiles(profiles) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles));
+}
+
+function refreshProfileSelect(profiles) {
+  if (!badgeProfileSelect) return;
+  const selected = badgeProfileSelect.value;
+  badgeProfileSelect.innerHTML = '<option value="">Select from Profile</option>';
+  profiles.forEach((profile) => {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name;
+    badgeProfileSelect.appendChild(option);
+  });
+  if (selected) badgeProfileSelect.value = selected;
+}
+
+function findProfile(profiles, id) {
+  return profiles.find((profile) => profile.id === id);
+}
+
 function currentStateSnapshot() {
   return {
     lifetimeBp: state.lifetimeBp,
@@ -320,6 +355,13 @@ function parseStateJson(text) {
 
   if (reasons.length > 0) return { ok: false, reasons };
   return { ok: true, value: { lifetimeBp, components, boosts } };
+}
+
+function parseBadgeStateObject(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { ok: false, reasons: ["Badge state object missing or invalid."] };
+  }
+  return parseStateJson(JSON.stringify(raw));
 }
 
 function applyParsedState(parsedState) {
@@ -646,4 +688,55 @@ if (validateStateJsonBtn && stateJsonInput) {
   });
 }
 
+if (badgeProfileLoad && badgeProfileSelect) {
+  badgeProfileLoad.addEventListener("click", () => {
+    const id = badgeProfileSelect.value;
+    if (!id) {
+      setStateJsonStatus("Select a profile first.", true);
+      return;
+    }
+    const profiles = loadProfiles();
+    const profile = findProfile(profiles, id);
+    if (!profile) {
+      setStateJsonStatus("Selected profile was not found.", true);
+      return;
+    }
+
+    const badgeState = profile.defaults?.badge;
+    const parsed = parseBadgeStateObject(badgeState);
+    if (!parsed.ok) {
+      setStateJsonStatus("Profile has no saved badge state yet.", true);
+      return;
+    }
+
+    applyParsedState(parsed.value);
+    setStateJsonStatus(`Loaded badge state from profile: ${profile.name}`);
+    render();
+  });
+}
+
+if (badgeProfileSave && badgeProfileSelect) {
+  badgeProfileSave.addEventListener("click", () => {
+    const id = badgeProfileSelect.value;
+    if (!id) {
+      setStateJsonStatus("Select a profile first.", true);
+      return;
+    }
+    const profiles = loadProfiles();
+    const profile = findProfile(profiles, id);
+    if (!profile) {
+      setStateJsonStatus("Selected profile was not found.", true);
+      return;
+    }
+
+    if (!profile.defaults || typeof profile.defaults !== "object") {
+      profile.defaults = {};
+    }
+    profile.defaults.badge = currentStateSnapshot();
+    saveProfiles(profiles);
+    setStateJsonStatus(`Saved current badge state to profile: ${profile.name}`);
+  });
+}
+
+refreshProfileSelect(loadProfiles());
 render();

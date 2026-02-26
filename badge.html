@@ -29,6 +29,21 @@
         <section class="calc-panel">
           <div class="input-block">
             <div class="input-group">
+              <label for="badgeProfileSelect">Character Profile</label>
+              <div class="input-row">
+                <select id="badgeProfileSelect">
+                  <option value="">Select from Profile</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <button class="btn" id="badgeProfileLoad" type="button">Load from Profile</button>
+              <button class="btn ghost" id="badgeProfileSave" type="button">Save Current to Profile</button>
+              <a class="btn ghost" href="profile.html">Manage Profiles</a>
+            </div>
+
+            <div class="input-group">
               <label for="lifetimeBp">Lifetime Bounty Points</label>
               <div class="input-row">
                 <input id="lifetimeBp" type="number" min="0" step="1000" value="300000" />
