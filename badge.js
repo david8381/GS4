@@ -100,10 +100,9 @@ function nonZeroCount(components) {
 
 function slotCount(components) {
   const total = components.reduce((sum, value) => sum + value, 0);
-  const used = nonZeroCount(components);
   let slots = total > 0 ? 1 : 0;
-  if (total >= 10 && used <= 2) slots = Math.max(slots, 2);
-  if (total >= 20 && used <= 3) slots = Math.max(slots, 3);
+  if (total >= 10) slots = Math.max(slots, 2);
+  if (total >= 20) slots = Math.max(slots, 3);
   return slots;
 }
 
