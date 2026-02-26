@@ -381,6 +381,29 @@ function applyParsedState(parsedState) {
   lifetimeBpInput.value = String(state.lifetimeBp);
 }
 
+function statesEqual(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function updateProfileButtonState() {
+  if (!badgeProfileSelect || !badgeProfileLoad || !badgeProfileSave) return;
+  const key = badgeProfileSelect.value;
+  badgeProfileLoad.classList.remove("attention");
+  badgeProfileSave.classList.remove("attention");
+  if (!key) return;
+
+  const profiles = loadProfiles();
+  const found = findProfileByKey(profiles, key);
+  if (!found) return;
+  const parsed = parseBadgeStateObject(found.profile.defaults?.badge);
+  if (!parsed.ok) return;
+
+  if (!statesEqual(currentStateSnapshot(), parsed.value)) {
+    badgeProfileLoad.classList.add("attention");
+    badgeProfileSave.classList.add("attention");
+  }
+}
+
 function currentUpgradeCost() {
   return state.components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
 }
@@ -665,6 +688,7 @@ function render() {
   renderComponentTable();
   renderBoostTable();
   syncStateJson();
+  updateProfileButtonState();
 }
 
 lifetimeBpInput.addEventListener("input", () => {
@@ -764,11 +788,13 @@ if (badgeProfileSave && badgeProfileSelect) {
     refreshProfileSelect(profiles);
     badgeProfileSelect.value = key;
     setStateJsonStatus(`Saved current badge state to profile: ${profile.name}`);
+    render();
   });
 }
 
 refreshProfileSelect(loadProfiles());
 window.addEventListener("focus", () => {
   refreshProfileSelect(loadProfiles());
+  updateProfileButtonState();
 });
 render();
