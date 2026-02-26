@@ -468,6 +468,17 @@ textarea {
   line-height: 1.6;
 }
 
+.test-output {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d5ccbe;
+  border-radius: 8px;
+  background: #fffdf8;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 @media (max-width: 720px) {
   .page {
     padding: 24px 18px 40px;

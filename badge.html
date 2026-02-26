@@ -51,7 +51,7 @@
             <div class="summary-card">
               <div class="summary-title">Recharge Cost (ORDER 5)</div>
               <div class="summary-value" id="rechargeCost">0</div>
-              <div class="summary-sub">Based on selected boosts + values</div>
+              <div class="summary-sub" id="powerSummary">Enhancive power: 0 / 0</div>
             </div>
           </div>
         </section>
@@ -80,6 +80,7 @@
                 <th>Boost</th>
                 <th>Value</th>
                 <th>Max</th>
+                <th>Req Upgrades</th>
                 <th>Recharge Cost</th>
               </tr>
             </thead>
@@ -93,8 +94,17 @@
             <li>Upgrade BP is lifetime-invested value (not spent), but recharge uses current BP.</li>
             <li>2nd slot rule: 10 total upgrades in 2 or fewer components.</li>
             <li>3rd slot rule: 20 total upgrades in 3 or fewer components.</li>
+            <li>Enhancement strength is gated by total badge upgrades and varies by boost type.</li>
             <li>Recharge table follows the GSWiki badge cost spreadsheet values (triangular progression by value).</li>
           </ul>
+        </section>
+
+        <section class="table-panel">
+          <h2>Planner Self-Tests</h2>
+          <div class="inline-actions">
+            <button class="btn" id="runBadgeTests" type="button">Run Test Cases</button>
+          </div>
+          <pre id="testOutput" class="test-output">No tests run yet.</pre>
         </section>
       </main>
 

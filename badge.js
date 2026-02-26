@@ -3,9 +3,13 @@ const upgradeCostEl = document.getElementById("upgradeCost");
 const bpRemainingEl = document.getElementById("bpRemaining");
 const slotSummaryEl = document.getElementById("slotSummary");
 const rechargeCostEl = document.getElementById("rechargeCost");
+const powerSummaryEl = document.getElementById("powerSummary");
+const runBadgeTestsBtn = document.getElementById("runBadgeTests");
+const testOutputEl = document.getElementById("testOutput");
 
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
+const POWER_PER_UPGRADE = 1200;
 
 const componentNames = ["Material", "Binding", "Device", "Motif", "Gem"];
 
@@ -27,6 +31,14 @@ const rankNames = [
   "Armor Use Ranks",
   "Shield Use Ranks",
   "Combat Maneuvers Ranks",
+  "Edged Weapons Ranks",
+  "Blunt Weapons Ranks",
+  "Two-Handed Weapons Ranks",
+  "Ranged Weapons Ranks",
+  "Thrown Weapons Ranks",
+  "Polearm Weapons Ranks",
+  "Brawling Ranks",
+  "Ambushing Ranks",
   "Multi Opponent Combat Ranks",
   "Physical Fitness Ranks",
   "Dodging Ranks",
@@ -35,8 +47,8 @@ const rankNames = [
   "Spell Aiming Ranks",
   "Harness Power Ranks",
   "Elemental Mana Control Ranks",
-  "Spirit Mana Control Ranks",
   "Mental Mana Control Ranks",
+  "Spirit Mana Control Ranks",
   "Elemental Lore - Air Ranks",
   "Elemental Lore - Earth Ranks",
   "Elemental Lore - Fire Ranks",
@@ -44,13 +56,15 @@ const rankNames = [
   "Spiritual Lore - Blessings Ranks",
   "Spiritual Lore - Religion Ranks",
   "Spiritual Lore - Summoning Ranks",
-  "Spiritual Lore - Transformation Ranks",
+  "Sorcerous Lore - Demonology Ranks",
+  "Sorcerous Lore - Necromancy Ranks",
   "Mental Lore - Divination Ranks",
   "Mental Lore - Manipulation Ranks",
   "Mental Lore - Telepathy Ranks",
   "Mental Lore - Transference Ranks",
+  "Mental Lore - Transformation Ranks",
   "Survival Ranks",
-  "Disarm Traps Ranks",
+  "Disarming Traps Ranks",
   "Picking Locks Ranks",
   "Stalking and Hiding Ranks",
   "Perception Ranks",
@@ -59,16 +73,6 @@ const rankNames = [
   "First Aid Ranks",
   "Trading Ranks",
   "Pickpocketing Ranks",
-  "Spell Research Ranks",
-  "Spiritual CS",
-  "Elemental CS",
-  "Mental CS",
-  "Brawling Ranks",
-  "Ambush Ranks",
-  "Thrown Weapons Ranks",
-  "Polearms Ranks",
-  "Ranged Weapons Ranks",
-  "Edged Weapons Ranks",
 ];
 
 function formatNumber(value) {
@@ -102,6 +106,10 @@ function slotCount(components) {
   return slots;
 }
 
+function totalUpgrades(components) {
+  return components.reduce((sum, value) => sum + value, 0);
+}
+
 function buildBoostDefs() {
   const defs = [];
 
@@ -124,18 +132,36 @@ function buildBoostDefs() {
   defs.push({ id: 27, name: "Spirit Recovery", max: 2, unit: 16000 });
 
   const rankUnitOverrides = {
-    29: { unit: 4000 },
-    40: { unit: 4800, max: 4 },
-    41: { unit: 1600 },
-    43: { unit: 3200 },
-    44: { unit: 3200 },
-    69: { unit: 800, max: 10 },
-    70: { unit: 800, max: 10 },
+    29: { unit: 4000 }, // Armor Use
+    40: { unit: 4800, max: 4 }, // MOC
+    41: { unit: 1600 }, // PF
+    43: { unit: 3200 }, // Arcane Symbols
+    44: { unit: 3200 }, // MIU
+    50: { unit: 4000 },
+    51: { unit: 4000 },
+    52: { unit: 4000 },
+    53: { unit: 4000 },
+    54: { unit: 4000 },
+    55: { unit: 4000 },
+    56: { unit: 4000 },
+    57: { unit: 4000 },
+    58: { unit: 4000 },
+    59: { unit: 4000 },
+    60: { unit: 4000 },
+    61: { unit: 4000 },
+    62: { unit: 4000 },
+    63: { unit: 4000 },
+    64: { unit: 1600 },
+    65: { unit: 1600 },
+    66: { unit: 1600 },
+    67: { unit: 1600 },
+    68: { unit: 1600 },
+    69: { unit: 800, max: 10 }, // Climbing
+    70: { unit: 800, max: 10 }, // Swimming
+    71: { unit: 1600 },
+    72: { unit: 1600 },
+    73: { unit: 1600 },
   };
-
-  for (let id = 50; id <= 63; id += 1) rankUnitOverrides[id] = { unit: 4000 };
-  for (let id = 64; id <= 68; id += 1) rankUnitOverrides[id] = { unit: 1600 };
-  for (let id = 71; id <= 73; id += 1) rankUnitOverrides[id] = { unit: 1600 };
 
   rankNames.forEach((name, idx) => {
     const id = 28 + idx;
@@ -154,12 +180,31 @@ function buildBoostDefs() {
     41: 160,
     43: 320,
     44: 320,
+    50: 400,
+    51: 400,
+    52: 400,
+    53: 400,
+    54: 400,
+    55: 400,
+    56: 400,
+    57: 400,
+    58: 400,
+    59: 400,
+    60: 400,
+    61: 400,
+    62: 400,
+    63: 400,
+    64: 160,
+    65: 160,
+    66: 160,
+    67: 160,
+    68: 160,
     69: 80,
     70: 80,
+    71: 160,
+    72: 160,
+    73: 160,
   };
-  for (let id = 50; id <= 63; id += 1) bonusUnitOverrides[id] = 400;
-  for (let id = 64; id <= 68; id += 1) bonusUnitOverrides[id] = 160;
-  for (let id = 71; id <= 73; id += 1) bonusUnitOverrides[id] = 160;
 
   rankNames.forEach((name, idx) => {
     const sourceId = 28 + idx;
@@ -192,14 +237,115 @@ function currentUpgradeCost() {
   return state.components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
 }
 
+function upgradeCostForComponents(components) {
+  return components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
+}
+
 function boostCost(entry) {
   const def = boostById.get(entry.id);
   if (!def) return 0;
   return triangularCost(def.unit, entry.value);
 }
 
+function boostCostFor(id, value) {
+  const def = boostById.get(id);
+  if (!def) return 0;
+  return triangularCost(def.unit, value);
+}
+
 function currentRechargeCost() {
   return state.boosts.reduce((sum, entry) => sum + boostCost(entry), 0);
+}
+
+function rechargeCostForBoosts(boosts) {
+  return boosts.reduce((sum, entry) => sum + boostCost(entry), 0);
+}
+
+function requiredUpgradesForCost(cost) {
+  if (cost <= 0) return 0;
+  return Math.ceil(cost / POWER_PER_UPGRADE);
+}
+
+function availableEnhancementPower() {
+  return totalUpgrades(state.components) * POWER_PER_UPGRADE;
+}
+
+function availableEnhancementPowerForComponents(components) {
+  return totalUpgrades(components) * POWER_PER_UPGRADE;
+}
+
+function slotIsUnlocked(index) {
+  return index < slotCount(state.components);
+}
+
+function evaluateTestState(testState) {
+  const upgrade = upgradeCostForComponents(testState.components);
+  const slotsUnlocked = slotCount(testState.components);
+  const slotsUsed = testState.boosts.filter((entry) => entry.value > 0).length;
+  const recharge = rechargeCostForBoosts(testState.boosts);
+  const power = availableEnhancementPowerForComponents(testState.components);
+  return {
+    upgrade,
+    upgradeValid: upgrade <= testState.lifetimeBp,
+    slotsUnlocked,
+    slotsUsed,
+    recharge,
+    power,
+    enhValid: slotsUsed <= slotsUnlocked && recharge <= power,
+  };
+}
+
+function runSelfTests() {
+  const tests = [
+    {
+      name: "T1 fresh badge valid",
+      state: { lifetimeBp: 300000, components: [0, 0, 0, 0, 0], boosts: [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
+      expect: { upgrade: 0, upgradeValid: true, slotsUnlocked: 0, enhValid: true },
+    },
+    {
+      name: "T2 component overspend invalid",
+      state: { lifetimeBp: 50000, components: [3, 0, 0, 0, 0], boosts: [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
+      expect: { upgrade: 60000, upgradeValid: false },
+    },
+    {
+      name: "T3 unlock second slot",
+      state: { lifetimeBp: 9999999, components: [5, 5, 0, 0, 0], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 0 }] },
+      expect: { slotsUnlocked: 2, enhValid: true },
+    },
+    {
+      name: "T4 third boost invalid when only two slots unlocked",
+      state: { lifetimeBp: 9999999, components: [5, 5, 0, 0, 0], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 1 }] },
+      expect: { slotsUnlocked: 2, enhValid: false },
+    },
+    {
+      name: "T5 high-cost boost invalid at low upgrades",
+      state: { lifetimeBp: 9999999, components: [1, 0, 0, 0, 0], boosts: [{ id: 29, value: 5 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
+      expect: { power: 1200, enhValid: false },
+    },
+    {
+      name: "T6 valid at higher upgrades",
+      state: { lifetimeBp: 9999999, components: [10, 10, 0, 0, 0], boosts: [{ id: 29, value: 2 }, { id: 22, value: 2 }, { id: 87, value: 0 }] },
+      expect: { slotsUnlocked: 3, enhValid: true },
+    },
+  ];
+
+  let pass = 0;
+  const lines = [];
+  tests.forEach((test) => {
+    const got = evaluateTestState(test.state);
+    let ok = true;
+    Object.entries(test.expect).forEach(([key, expected]) => {
+      if (got[key] !== expected) ok = false;
+    });
+    if (ok) pass += 1;
+    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    lines.push(` got: ${JSON.stringify(got)}`);
+    lines.push(` exp: ${JSON.stringify(test.expect)}`);
+  });
+  lines.push("");
+  lines.push(`Summary: ${pass}/${tests.length} passing`);
+  testOutputEl.textContent = lines.join("\n");
+  testOutputEl.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
 }
 
 function changeComponent(index, delta) {
@@ -228,20 +374,31 @@ function setBoostId(index, id) {
 function renderSummary() {
   const upgrade = currentUpgradeCost();
   const recharge = currentRechargeCost();
-  const slots = slotCount(state.components);
+  const slotsUnlocked = slotCount(state.components);
+  const slotsUsed = state.boosts.filter((entry) => entry.value > 0).length;
+  const powerAvailable = availableEnhancementPower();
+  const isValid = slotsUsed <= slotsUnlocked && recharge <= powerAvailable;
+  const upgradeValid = upgrade <= state.lifetimeBp;
 
   upgradeCostEl.textContent = `${formatNumber(upgrade)} BP`;
+  upgradeCostEl.style.color = upgradeValid ? "#1f4e42" : "#b42318";
 
   bpRemainingEl.textContent = `${formatNumber(state.lifetimeBp - upgrade)} BP`;
-  slotSummaryEl.textContent = `Slots: ${slots} / 3`;
+  bpRemainingEl.style.color = upgradeValid ? "#1f4e42" : "#b42318";
+  slotSummaryEl.textContent = `Slots Used: ${slotsUsed} / ${slotsUnlocked}`;
 
   rechargeCostEl.textContent = `${formatNumber(recharge)} BP`;
+  rechargeCostEl.style.color = isValid ? "#1f4e42" : "#b42318";
+  powerSummaryEl.textContent = `Enhancive power: ${formatNumber(recharge)} / ${formatNumber(powerAvailable)}`;
+  powerSummaryEl.style.color = isValid ? "#1f4e42" : "#b42318";
 }
 
 function renderComponentTable() {
   componentTable.innerHTML = "";
+  const overspent = currentUpgradeCost() > state.lifetimeBp;
   state.components.forEach((level, index) => {
     const row = document.createElement("tr");
+    row.style.color = overspent ? "#b42318" : "#1f4e42";
     const total = upgradeCostForLevel(level);
     const next = nextUpgradeCost(level);
 
@@ -276,8 +433,12 @@ function renderBoostTable() {
   state.boosts.forEach((entry, index) => {
     const def = boostById.get(entry.id);
     const rowCost = boostCost(entry);
+    const required = requiredUpgradesForCost(rowCost);
+    const unlocked = slotIsUnlocked(index);
+    const rowValid = (unlocked || entry.value === 0) && required <= totalUpgrades(state.components);
 
     const row = document.createElement("tr");
+    row.style.color = rowValid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>
@@ -292,12 +453,13 @@ function renderBoostTable() {
       </td>
       <td>
         <div class="inline-actions">
-          <button class="btn ghost" data-boost-minus="${index}" type="button">-</button>
+          <button class="btn ghost" data-boost-minus="${index}" type="button" ${entry.value <= 0 ? "disabled" : ""}>-</button>
           <span>${entry.value}</span>
-          <button class="btn ghost" data-boost-plus="${index}" type="button">+</button>
+          <button class="btn ghost" data-boost-plus="${index}" type="button" ${entry.value >= def.max ? "disabled" : ""}>+</button>
         </div>
       </td>
       <td>${def.max}</td>
+      <td>${required}</td>
       <td>${formatNumber(rowCost)} BP</td>
     `;
     boostTable.appendChild(row);
@@ -328,5 +490,7 @@ lifetimeBpInput.addEventListener("input", () => {
   state.lifetimeBp = Math.max(0, Number(lifetimeBpInput.value) || 0);
   render();
 });
+
+runBadgeTestsBtn.addEventListener("click", runSelfTests);
 
 render();
