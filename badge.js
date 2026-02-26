@@ -251,7 +251,7 @@ function currentStateSnapshot() {
 }
 
 function syncStateJson() {
-  if (!stateJsonInput || document.activeElement === stateJsonInput) return;
+  if (!stateJsonInput) return;
   stateJsonInput.value = JSON.stringify(currentStateSnapshot(), null, 2);
 }
 
@@ -477,6 +477,7 @@ function renderSummary() {
   const recharge = currentRechargeCost();
   const slotsUnlocked = slotCount(state.components);
   const slotsUsed = state.boosts.filter((entry) => entry.value > 0).length;
+  const upgrades = totalUpgrades(state.components);
   const powerAvailable = availableEnhancementPower();
   const slotValid = slotsUsed <= slotsUnlocked;
   const powerValid = recharge <= powerAvailable;
@@ -487,8 +488,9 @@ function renderSummary() {
   upgradeCostEl.style.color = upgradeValid ? "#1f4e42" : "#b42318";
 
   bpRemainingEl.textContent = `${formatNumber(state.lifetimeBp - upgrade)} BP`;
-  bpRemainingEl.style.color = upgradeValid ? "#1f4e42" : "#b42318";
-  slotSummaryEl.textContent = `Slots Used: ${slotsUsed} / ${slotsUnlocked}`;
+  bpRemainingEl.style.color = upgradeValid && isValid ? "#1f4e42" : "#b42318";
+  slotSummaryEl.textContent = `Slots Used: ${slotsUsed} / ${slotsUnlocked} · Upgrades: ${upgrades}`;
+  slotSummaryEl.style.color = slotValid ? "#1f4e42" : "#b42318";
 
   rechargeCostEl.textContent = `${formatNumber(recharge)} BP`;
   rechargeCostEl.style.color = isValid ? "#1f4e42" : "#b42318";
