@@ -119,6 +119,22 @@ const raceGrowthModifiers = {
   Sylvankind: { str: -3, con: -2, dex: 5, agi: 5, dis: -5, aur: 3, log: 0, int: 0, wis: 0, inf: 3 },
 };
 
+const raceStatBonusModifiers = {
+  Aelotoi: { str: -5, con: 0, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 5, wis: 0, inf: -5 },
+  "Burghal Gnome": { str: -15, con: 10, dex: 10, agi: 10, dis: -5, aur: 5, log: 10, int: 5, wis: 0, inf: -5 },
+  "Dark Elf": { str: 0, con: -5, dex: 10, agi: 5, dis: -10, aur: 10, log: 0, int: 5, wis: 5, inf: -5 },
+  Dwarf: { str: 10, con: 15, dex: 0, agi: -5, dis: 10, aur: -10, log: 5, int: 0, wis: 0, inf: -10 },
+  Elf: { str: 0, con: 0, dex: 5, agi: 15, dis: -15, aur: 5, log: 0, int: 0, wis: 0, inf: 10 },
+  Erithian: { str: -5, con: 10, dex: 0, agi: 0, dis: 5, aur: 0, log: 5, int: 0, wis: 0, inf: 10 },
+  "Forest Gnome": { str: -10, con: 10, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 0, wis: 5, inf: -5 },
+  Giantman: { str: 15, con: 10, dex: -5, agi: -5, dis: 0, aur: -5, log: -5, int: 0, wis: 0, inf: 5 },
+  "Half-Elf": { str: 0, con: 0, dex: 5, agi: 10, dis: -5, aur: 0, log: 0, int: 0, wis: 0, inf: 5 },
+  "Half-Krolvin": { str: 10, con: 10, dex: 0, agi: 5, dis: 0, aur: 0, log: -10, int: 0, wis: -5, inf: -5 },
+  Halfling: { str: -15, con: 10, dex: 15, agi: 10, dis: -5, aur: -5, log: 5, int: 10, wis: 0, inf: -5 },
+  Human: { str: 5, con: 0, dex: 0, agi: 0, dis: 0, aur: 0, log: 5, int: 5, wis: 0, inf: 0 },
+  Sylvankind: { str: 0, con: 0, dex: 10, agi: 5, dis: -5, aur: 5, log: 0, int: 0, wis: 0, inf: 0 },
+};
+
 function fillSelect(select, items, labelKey = "name") {
   select.innerHTML = "";
   items.forEach((item) => {
@@ -170,6 +186,43 @@ function normalizeRaceName(raw) {
   if (cleaned === "giantman") return "Giantman";
   if (cleaned === "forestgnome" || cleaned === "forestrgnome") return "Forest Gnome";
   return raw;
+}
+
+function normalizeRaceForModifierLookup(raw) {
+  if (!raw) return "";
+  const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
+  if (cleaned === "aelotoi") return "Aelotoi";
+  if (cleaned === "burghalgnome" || cleaned === "bgnome") return "Burghal Gnome";
+  if (cleaned === "darkelf") return "Dark Elf";
+  if (cleaned === "dwarf") return "Dwarf";
+  if (cleaned === "elf") return "Elf";
+  if (cleaned === "erithian") return "Erithian";
+  if (cleaned === "forestgnome" || cleaned === "fgnome") return "Forest Gnome";
+  if (cleaned === "giantman") return "Giantman";
+  if (cleaned === "halfelf") return "Half-Elf";
+  if (cleaned === "halfkrolvin") return "Half-Krolvin";
+  if (cleaned === "halfling") return "Halfling";
+  if (cleaned === "human") return "Human";
+  if (cleaned === "sylvan" || cleaned === "sylvankind") return "Sylvankind";
+  return raw;
+}
+
+function statToBonus(statValue) {
+  return Math.floor((Number(statValue) - 50) / 2);
+}
+
+function formatBonus(bonus) {
+  if (!Number.isFinite(bonus)) return "0";
+  return bonus > 0 ? `+${bonus}` : String(bonus);
+}
+
+function getSelectedRaceName() {
+  return races.find((race) => race.key === profileRace.value)?.name || "Human";
+}
+
+function getRaceBonusModifier(raceName, statKey) {
+  const normalizedRace = normalizeRaceForModifierLookup(raceName);
+  return raceStatBonusModifiers[normalizedRace]?.[statKey] ?? 0;
 }
 
 function parseInfoBlock(text) {
@@ -300,6 +353,22 @@ function parseSkillsLevel(text) {
 
 function buildStatInputs() {
   statGrid.innerHTML = "";
+  const headers = [
+    "Stat",
+    "Base",
+    "Enhanced",
+    "Pre B",
+    "Post B",
+    "Pre E",
+    "Post E",
+  ];
+  headers.forEach((title) => {
+    const header = document.createElement("div");
+    header.className = "stat-header";
+    header.textContent = title;
+    statGrid.appendChild(header);
+  });
+
   stats.forEach((stat) => {
     const wrapper = document.createElement("div");
     wrapper.className = "stat-row";
@@ -307,8 +376,16 @@ function buildStatInputs() {
       <div class=\"stat-label\">${stat.abbr}</div>
       <input type=\"number\" min=\"1\" max=\"100\" step=\"1\" data-stat=\"${stat.key}\" data-type=\"base\" value=\"50\" />
       <input type=\"number\" min=\"1\" max=\"100\" step=\"1\" data-stat=\"${stat.key}\" data-type=\"enhanced\" value=\"50\" />
+      <div class=\"stat-bonus\" data-stat=\"${stat.key}\" data-bonus=\"pre-base\">0</div>
+      <div class=\"stat-bonus\" data-stat=\"${stat.key}\" data-bonus=\"post-base\">0</div>
+      <div class=\"stat-bonus\" data-stat=\"${stat.key}\" data-bonus=\"pre-enhanced\">0</div>
+      <div class=\"stat-bonus\" data-stat=\"${stat.key}\" data-bonus=\"post-enhanced\">0</div>
     `;
     statGrid.appendChild(wrapper);
+  });
+
+  statGrid.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", updateStatBonusDisplay);
   });
 }
 
@@ -320,6 +397,7 @@ function setStatInputs(statValues) {
       input.value = String(statValues[key][type]);
     }
   });
+  updateStatBonusDisplay();
 }
 
 function getStatInputs() {
@@ -331,6 +409,33 @@ function getStatInputs() {
     values[key][type] = clamp(Number(input.value), 1, 100);
   });
   return values;
+}
+
+function updateStatBonusDisplay() {
+  const raceName = getSelectedRaceName();
+  const currentStats = getStatInputs();
+
+  stats.forEach((stat) => {
+    const modifier = getRaceBonusModifier(raceName, stat.key);
+    const baseValue = currentStats[stat.key]?.base ?? 50;
+    const enhancedValue = currentStats[stat.key]?.enhanced ?? baseValue;
+    const preBase = statToBonus(baseValue);
+    const postBase = preBase + modifier;
+    const preEnhanced = statToBonus(enhancedValue);
+    const postEnhanced = preEnhanced + modifier;
+
+    const valuesByKey = {
+      "pre-base": preBase,
+      "post-base": postBase,
+      "pre-enhanced": preEnhanced,
+      "post-enhanced": postEnhanced,
+    };
+
+    Object.entries(valuesByKey).forEach(([bonusKey, value]) => {
+      const output = statGrid.querySelector(`[data-stat="${stat.key}"][data-bonus="${bonusKey}"]`);
+      if (output) output.textContent = formatBonus(value);
+    });
+  });
 }
 
 function recalcFromLevel0() {
@@ -454,6 +559,7 @@ updateArmorWeight();
 let profiles = loadProfiles();
 refreshProfileSelect(profiles);
 renderSkillsTable(currentSkills);
+updateStatBonusDisplay();
 
 profileApply.addEventListener("click", () => {
   const selected = profileSelect.value;
@@ -572,6 +678,7 @@ profileProfession.addEventListener("change", () => {
 });
 
 profileRace.addEventListener("change", () => {
+  updateStatBonusDisplay();
   if (currentLevel0Stats) recalcFromLevel0();
 });
 

@@ -26,6 +26,21 @@ const X_GRID_SECONDS = 300;
 const XP_GRID_STEP = 50;
 const RATE_GRID_STEP = 5;
 const PROFILE_KEY = "gs4.characterProfiles";
+const raceStatBonusModifiers = {
+  Aelotoi: { str: -5, con: 0, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 5, wis: 0, inf: -5 },
+  "Burghal Gnome": { str: -15, con: 10, dex: 10, agi: 10, dis: -5, aur: 5, log: 10, int: 5, wis: 0, inf: -5 },
+  "Dark Elf": { str: 0, con: -5, dex: 10, agi: 5, dis: -10, aur: 10, log: 0, int: 5, wis: 5, inf: -5 },
+  Dwarf: { str: 10, con: 15, dex: 0, agi: -5, dis: 10, aur: -10, log: 5, int: 0, wis: 0, inf: -10 },
+  Elf: { str: 0, con: 0, dex: 5, agi: 15, dis: -15, aur: 5, log: 0, int: 0, wis: 0, inf: 10 },
+  Erithian: { str: -5, con: 10, dex: 0, agi: 0, dis: 5, aur: 0, log: 5, int: 0, wis: 0, inf: 10 },
+  "Forest Gnome": { str: -10, con: 10, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 0, wis: 5, inf: -5 },
+  Giantman: { str: 15, con: 10, dex: -5, agi: -5, dis: 0, aur: -5, log: -5, int: 0, wis: 0, inf: 5 },
+  "Half-Elf": { str: 0, con: 0, dex: 5, agi: 10, dis: -5, aur: 0, log: 0, int: 0, wis: 0, inf: 5 },
+  "Half-Krolvin": { str: 10, con: 10, dex: 0, agi: 5, dis: 0, aur: 0, log: -10, int: 0, wis: -5, inf: -5 },
+  Halfling: { str: -15, con: 10, dex: 15, agi: 10, dis: -5, aur: -5, log: 5, int: 10, wis: 0, inf: -5 },
+  Human: { str: 5, con: 0, dex: 0, agi: 0, dis: 0, aur: 0, log: 5, int: 5, wis: 0, inf: 0 },
+  Sylvankind: { str: 0, con: 0, dex: 10, agi: 5, dis: -5, aur: 5, log: 0, int: 0, wis: 0, inf: 0 },
+};
 
 const scenarios = [
   {
@@ -123,6 +138,30 @@ function statToBonus(stat) {
   return Math.floor((Number(stat) - 50) / 2);
 }
 
+function normalizeRaceForModifierLookup(raw) {
+  if (!raw) return "";
+  const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
+  if (cleaned === "aelotoi") return "Aelotoi";
+  if (cleaned === "burghalgnome" || cleaned === "bgnome") return "Burghal Gnome";
+  if (cleaned === "darkelf") return "Dark Elf";
+  if (cleaned === "dwarf") return "Dwarf";
+  if (cleaned === "elf") return "Elf";
+  if (cleaned === "erithian") return "Erithian";
+  if (cleaned === "forestgnome" || cleaned === "fgnome") return "Forest Gnome";
+  if (cleaned === "giantman") return "Giantman";
+  if (cleaned === "halfelf") return "Half-Elf";
+  if (cleaned === "halfkrolvin") return "Half-Krolvin";
+  if (cleaned === "halfling") return "Halfling";
+  if (cleaned === "human") return "Human";
+  if (cleaned === "sylvan" || cleaned === "sylvankind") return "Sylvankind";
+  return raw;
+}
+
+function getRaceStatModifier(raceName, statKey) {
+  const normalizedRace = normalizeRaceForModifierLookup(raceName);
+  return raceStatBonusModifiers[normalizedRace]?.[statKey] ?? 0;
+}
+
 function applyProfile(profile) {
   if (!profile) return;
   const useEnhancedStats = useEnhanced.checked;
@@ -131,7 +170,8 @@ function applyProfile(profile) {
     : profile.stats?.log?.base ?? profile.logBase;
 
   if (logStat != null) {
-    logicBonusInput.value = String(statToBonus(logStat));
+    const racialLogModifier = getRaceStatModifier(profile.race, "log");
+    logicBonusInput.value = String(statToBonus(logStat) + racialLogModifier);
   }
 
   compute();
