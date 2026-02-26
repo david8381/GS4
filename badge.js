@@ -260,21 +260,31 @@ function saveProfiles(profiles) {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles));
 }
 
+function profileKey(profile, index) {
+  if (profile && profile.id != null && profile.id !== "") return String(profile.id);
+  const safeName = profile && profile.name ? String(profile.name).toLowerCase() : "profile";
+  return `legacy-${index}-${safeName}`;
+}
+
 function refreshProfileSelect(profiles) {
   if (!badgeProfileSelect) return;
   const selected = badgeProfileSelect.value;
   badgeProfileSelect.innerHTML = '<option value="">Select from Profile</option>';
-  profiles.forEach((profile) => {
+  profiles.forEach((profile, index) => {
     const option = document.createElement("option");
-    option.value = profile.id;
+    option.value = profileKey(profile, index);
     option.textContent = profile.name;
     badgeProfileSelect.appendChild(option);
   });
   if (selected) badgeProfileSelect.value = selected;
 }
 
-function findProfile(profiles, id) {
-  return profiles.find((profile) => profile.id === id);
+function findProfileByKey(profiles, key) {
+  for (let index = 0; index < profiles.length; index += 1) {
+    const profile = profiles[index];
+    if (profileKey(profile, index) === key) return { profile, index };
+  }
+  return null;
 }
 
 function currentStateSnapshot() {
@@ -690,17 +700,18 @@ if (validateStateJsonBtn && stateJsonInput) {
 
 if (badgeProfileLoad && badgeProfileSelect) {
   badgeProfileLoad.addEventListener("click", () => {
-    const id = badgeProfileSelect.value;
-    if (!id) {
+    const key = badgeProfileSelect.value;
+    if (!key) {
       setStateJsonStatus("Select a profile first.", true);
       return;
     }
     const profiles = loadProfiles();
-    const profile = findProfile(profiles, id);
-    if (!profile) {
+    const found = findProfileByKey(profiles, key);
+    if (!found) {
       setStateJsonStatus("Selected profile was not found.", true);
       return;
     }
+    const { profile } = found;
 
     const badgeState = profile.defaults?.badge;
     const parsed = parseBadgeStateObject(badgeState);
@@ -717,26 +728,33 @@ if (badgeProfileLoad && badgeProfileSelect) {
 
 if (badgeProfileSave && badgeProfileSelect) {
   badgeProfileSave.addEventListener("click", () => {
-    const id = badgeProfileSelect.value;
-    if (!id) {
+    const key = badgeProfileSelect.value;
+    if (!key) {
       setStateJsonStatus("Select a profile first.", true);
       return;
     }
     const profiles = loadProfiles();
-    const profile = findProfile(profiles, id);
-    if (!profile) {
+    const found = findProfileByKey(profiles, key);
+    if (!found) {
       setStateJsonStatus("Selected profile was not found.", true);
       return;
     }
+    const { profile, index } = found;
 
     if (!profile.defaults || typeof profile.defaults !== "object") {
       profile.defaults = {};
     }
     profile.defaults.badge = currentStateSnapshot();
+    profiles[index] = profile;
     saveProfiles(profiles);
+    refreshProfileSelect(profiles);
+    badgeProfileSelect.value = key;
     setStateJsonStatus(`Saved current badge state to profile: ${profile.name}`);
   });
 }
 
 refreshProfileSelect(loadProfiles());
+window.addEventListener("focus", () => {
+  refreshProfileSelect(loadProfiles());
+});
 render();
