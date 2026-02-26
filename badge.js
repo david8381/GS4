@@ -699,6 +699,20 @@ if (validateStateJsonBtn && stateJsonInput) {
 }
 
 if (badgeProfileLoad && badgeProfileSelect) {
+  badgeProfileSelect.addEventListener("change", () => {
+    const key = badgeProfileSelect.value;
+    if (!key) return;
+    const profiles = loadProfiles();
+    const found = findProfileByKey(profiles, key);
+    if (!found) return;
+    const { profile } = found;
+    const parsed = parseBadgeStateObject(profile.defaults?.badge);
+    if (!parsed.ok) return;
+    applyParsedState(parsed.value);
+    setStateJsonStatus(`Auto-loaded badge state from profile: ${profile.name}`);
+    render();
+  });
+
   badgeProfileLoad.addEventListener("click", () => {
     const key = badgeProfileSelect.value;
     if (!key) {
