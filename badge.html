@@ -109,6 +109,14 @@
             <button class="btn" id="runBadgeTests" type="button">Run Test Cases</button>
           </div>
           <pre id="testOutput" class="test-output">No tests run yet.</pre>
+          <div class="input-group">
+            <label for="stateJson">State JSON</label>
+            <textarea id="stateJson" rows="10" placeholder='{"lifetimeBp":300000,"components":[0,0,0,0,0],"boosts":[{"id":1,"value":0},{"id":22,"value":0},{"id":87,"value":0}]}'></textarea>
+          </div>
+          <div class="inline-actions">
+            <button class="btn" id="validateStateJson" type="button">Validate</button>
+          </div>
+          <div class="helper" id="stateJsonStatus">JSON state is synced from current planner values.</div>
         </section>
       </main>
 

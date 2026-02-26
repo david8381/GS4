@@ -7,6 +7,9 @@ const powerSummaryEl = document.getElementById("powerSummary");
 const validationMessageEl = document.getElementById("validationMessage");
 const runBadgeTestsBtn = document.getElementById("runBadgeTests");
 const testOutputEl = document.getElementById("testOutput");
+const stateJsonInput = document.getElementById("stateJson");
+const validateStateJsonBtn = document.getElementById("validateStateJson");
+const stateJsonStatusEl = document.getElementById("stateJsonStatus");
 
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
@@ -233,6 +236,99 @@ const state = {
   ],
 };
 
+function safeInt(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return Math.trunc(number);
+}
+
+function currentStateSnapshot() {
+  return {
+    lifetimeBp: state.lifetimeBp,
+    components: [...state.components],
+    boosts: state.boosts.map((entry) => ({ id: entry.id, value: entry.value })),
+  };
+}
+
+function syncStateJson() {
+  if (!stateJsonInput || document.activeElement === stateJsonInput) return;
+  stateJsonInput.value = JSON.stringify(currentStateSnapshot(), null, 2);
+}
+
+function setStateJsonStatus(message, isError = false) {
+  if (!stateJsonStatusEl) return;
+  stateJsonStatusEl.textContent = message;
+  stateJsonStatusEl.style.color = isError ? "#b42318" : "#1f4e42";
+}
+
+function parseStateJson(text) {
+  const reasons = [];
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    return { ok: false, reasons: ["Invalid JSON syntax."] };
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, reasons: ["Top-level JSON must be an object."] };
+  }
+
+  const lifetimeBp = safeInt(parsed.lifetimeBp);
+  if (lifetimeBp == null || lifetimeBp < 0) reasons.push("lifetimeBp must be an integer >= 0.");
+
+  if (!Array.isArray(parsed.components) || parsed.components.length !== 5) {
+    reasons.push("components must be an array of exactly 5 integers (0-10).");
+  }
+
+  const components = [];
+  if (Array.isArray(parsed.components)) {
+    parsed.components.forEach((value, index) => {
+      const intValue = safeInt(value);
+      if (intValue == null || intValue < 0 || intValue > 10) {
+        reasons.push(`components[${index}] must be an integer between 0 and 10.`);
+      }
+      components.push(intValue ?? 0);
+    });
+  }
+
+  if (!Array.isArray(parsed.boosts) || parsed.boosts.length !== 3) {
+    reasons.push("boosts must be an array of exactly 3 objects.");
+  }
+
+  const boosts = [];
+  if (Array.isArray(parsed.boosts)) {
+    parsed.boosts.forEach((entry, index) => {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        reasons.push(`boosts[${index}] must be an object with id and value.`);
+        boosts.push({ id: 1, value: 0 });
+        return;
+      }
+
+      const id = safeInt(entry.id);
+      const def = boostById.get(id);
+      if (!def) reasons.push(`boosts[${index}].id is not a valid boost id.`);
+
+      const value = safeInt(entry.value);
+      if (value == null || value < 0 || (def && value > def.max)) {
+        reasons.push(`boosts[${index}].value must be between 0 and max for selected id.`);
+      }
+
+      boosts.push({ id: def ? id : 1, value: value ?? 0 });
+    });
+  }
+
+  if (reasons.length > 0) return { ok: false, reasons };
+  return { ok: true, value: { lifetimeBp, components, boosts } };
+}
+
+function applyParsedState(parsedState) {
+  state.lifetimeBp = parsedState.lifetimeBp;
+  state.components = [...parsedState.components];
+  state.boosts = parsedState.boosts.map((entry) => ({ id: entry.id, value: entry.value }));
+  lifetimeBpInput.value = String(state.lifetimeBp);
+}
+
 function currentUpgradeCost() {
   return state.components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
 }
@@ -325,6 +421,11 @@ function runSelfTests() {
     {
       name: "T6 valid at higher upgrades",
       state: { lifetimeBp: 9999999, components: [10, 10, 0, 0, 0], boosts: [{ id: 29, value: 2 }, { id: 22, value: 2 }, { id: 87, value: 0 }] },
+      expect: { slotsUnlocked: 3, enhValid: true },
+    },
+    {
+      name: "T7 distributed upgrades still unlock three slots",
+      state: { lifetimeBp: 9999999, components: [10, 10, 10, 10, 10], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 1 }] },
       expect: { slotsUnlocked: 3, enhValid: true },
     },
   ];
@@ -509,6 +610,7 @@ function render() {
   renderSummary();
   renderComponentTable();
   renderBoostTable();
+  syncStateJson();
 }
 
 lifetimeBpInput.addEventListener("input", () => {
@@ -517,5 +619,29 @@ lifetimeBpInput.addEventListener("input", () => {
 });
 
 runBadgeTestsBtn.addEventListener("click", runSelfTests);
+
+if (validateStateJsonBtn && stateJsonInput) {
+  validateStateJsonBtn.addEventListener("click", () => {
+    const parsed = parseStateJson(stateJsonInput.value);
+    if (!parsed.ok) {
+      setStateJsonStatus(`JSON invalid: ${parsed.reasons.join(" ")}`, true);
+      return;
+    }
+    applyParsedState(parsed.value);
+    setStateJsonStatus("JSON valid. Planner updated.");
+    render();
+  });
+
+  stateJsonInput.addEventListener("input", () => {
+    const parsed = parseStateJson(stateJsonInput.value);
+    if (!parsed.ok) {
+      setStateJsonStatus("Waiting for valid JSON...", true);
+      return;
+    }
+    applyParsedState(parsed.value);
+    setStateJsonStatus("JSON applied from editor.");
+    render();
+  });
+}
 
 render();
