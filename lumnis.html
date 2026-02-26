@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lumnis + Tutelage Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="lumnis">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Gift of Lumnis + Tutelage</p>
+          <h1>Experience Options</h1>
+          <p>
+            Enter your weekly base experience gained (the experience you would normally absorb without
+            any bonuses). The chart and table compare four options side by side.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <label for="baseExp">Weekly Base Experience</label>
+            <div class="input-row">
+              <input id="baseExp" type="number" min="0" step="100" value="20000" />
+              <span class="unit">xp</span>
+            </div>
+            <input id="baseSlider" type="range" min="0" max="150000" step="100" value="20000" />
+            <div class="slider-meta">
+              <span>0</span>
+              <span id="sliderMax">150,000</span>
+            </div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Best Total XP</div>
+              <div class="summary-value" id="bestTotal">0</div>
+              <div class="summary-sub" id="bestLabel">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Extra vs Lumnis Only</div>
+              <div class="summary-value" id="bestDelta">0</div>
+              <div class="summary-sub">at your input</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="chart-panel">
+          <div class="chart-header">
+            <div>
+              <h2>XP Earned vs Base XP</h2>
+              <p>The vertical line marks your current input.</p>
+            </div>
+            <div class="legend" id="legend"></div>
+          </div>
+          <canvas id="chart" width="960" height="420"></canvas>
+        </section>
+
+        <section class="table-panel">
+          <h2>Breakdown at Your Input</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Bonus XP</th>
+                <th>Total XP</th>
+                <th>Effective Multiplier</th>
+                <th>Extra vs Lumnis</th>
+              </tr>
+            </thead>
+            <tbody id="results"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="lumnis.js"></script>
+  </body>
+</html>

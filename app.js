@@ -1,6 +1,8 @@
 const currentExpInput = document.getElementById("currentExp");
 const logicBonusInput = document.getElementById("logicBonus");
 const scenarioInputs = document.querySelectorAll('input[name="scenarioMode"]');
+const profileSelect = document.getElementById("profileSelectCalc");
+const useEnhanced = document.getElementById("useEnhancedCalc");
 
 const selectedScenarioLabel = document.getElementById("selectedScenario");
 const totalTimeLabel = document.getElementById("totalTime");
@@ -23,6 +25,7 @@ const OFFLINE_ABSORB_PER_INTERVAL = 15;
 const X_GRID_SECONDS = 300;
 const XP_GRID_STEP = 50;
 const RATE_GRID_STEP = 5;
+const PROFILE_KEY = "gs4.characterProfiles";
 
 const scenarios = [
   {
@@ -85,10 +88,53 @@ const metricSeries = [
 
 let latestResult = null;
 let hoverIndex = null;
+let profiles = [];
 
 function numberValue(input, fallback = 0) {
   const parsed = Number(input.value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function loadProfiles() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
+    if (Array.isArray(stored)) return stored;
+  } catch (error) {
+    return [];
+  }
+  return [];
+}
+
+function refreshProfileSelect(list) {
+  profileSelect.innerHTML = "<option value=\"\">Select from Profile</option>";
+  list.forEach((profile) => {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name;
+    profileSelect.appendChild(option);
+  });
+}
+
+function findProfile(list, id) {
+  return list.find((profile) => profile.id === id);
+}
+
+function statToBonus(stat) {
+  return Math.floor((Number(stat) - 50) / 2);
+}
+
+function applyProfile(profile) {
+  if (!profile) return;
+  const useEnhancedStats = useEnhanced.checked;
+  const logStat = useEnhancedStats
+    ? profile.stats?.log?.enhanced ?? profile.logEnhanced
+    : profile.stats?.log?.base ?? profile.logBase;
+
+  if (logStat != null) {
+    logicBonusInput.value = String(statToBonus(logStat));
+  }
+
+  compute();
 }
 
 function clampMin(value, minValue) {
@@ -429,6 +475,26 @@ scenarioInputs.forEach((input) => {
   input.addEventListener("change", compute);
 });
 
+profileSelect.addEventListener("change", () => {
+  const selected = profileSelect.value;
+  if (!selected) {
+    compute();
+    return;
+  }
+  const profile = findProfile(profiles, selected);
+  if (profile) applyProfile(profile);
+});
+
+useEnhanced.addEventListener("change", () => {
+  const selected = profileSelect.value;
+  if (!selected) {
+    compute();
+    return;
+  }
+  const profile = findProfile(profiles, selected);
+  if (profile) applyProfile(profile);
+});
+
 trendChart.addEventListener("mousemove", updateHover);
 trendChart.addEventListener("mouseleave", clearHover);
 trendChart.addEventListener("touchstart", updateHover);
@@ -436,4 +502,6 @@ trendChart.addEventListener("touchmove", updateHover);
 trendChart.addEventListener("touchend", clearHover);
 
 renderLegend();
+profiles = loadProfiles();
+refreshProfileSelect(profiles);
 compute();

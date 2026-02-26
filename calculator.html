@@ -29,6 +29,23 @@
         <section class="calc-panel">
           <div class="input-block">
             <div class="input-group">
+              <label for="profileSelectCalc">Character Profile</label>
+              <div class="input-row">
+                <select id="profileSelectCalc">
+                  <option value="">Select from Profile</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <label class="checkbox-row">
+                <input id="useEnhancedCalc" type="checkbox" checked />
+                Use enhanced LOG stat
+              </label>
+              <a class="btn ghost" href="profile.html">Manage Profiles</a>
+            </div>
+
+            <div class="input-group">
               <label for="currentExp">Current Field Experience</label>
               <div class="input-row">
                 <input id="currentExp" type="number" min="0" step="1" value="1000" />
