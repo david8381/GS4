@@ -4,6 +4,7 @@ const bpRemainingEl = document.getElementById("bpRemaining");
 const slotSummaryEl = document.getElementById("slotSummary");
 const rechargeCostEl = document.getElementById("rechargeCost");
 const powerSummaryEl = document.getElementById("powerSummary");
+const validationMessageEl = document.getElementById("validationMessage");
 const runBadgeTestsBtn = document.getElementById("runBadgeTests");
 const testOutputEl = document.getElementById("testOutput");
 
@@ -377,7 +378,9 @@ function renderSummary() {
   const slotsUnlocked = slotCount(state.components);
   const slotsUsed = state.boosts.filter((entry) => entry.value > 0).length;
   const powerAvailable = availableEnhancementPower();
-  const isValid = slotsUsed <= slotsUnlocked && recharge <= powerAvailable;
+  const slotValid = slotsUsed <= slotsUnlocked;
+  const powerValid = recharge <= powerAvailable;
+  const isValid = slotValid && powerValid;
   const upgradeValid = upgrade <= state.lifetimeBp;
 
   upgradeCostEl.textContent = `${formatNumber(upgrade)} BP`;
@@ -391,6 +394,29 @@ function renderSummary() {
   rechargeCostEl.style.color = isValid ? "#1f4e42" : "#b42318";
   powerSummaryEl.textContent = `Enhancive power: ${formatNumber(recharge)} / ${formatNumber(powerAvailable)}`;
   powerSummaryEl.style.color = isValid ? "#1f4e42" : "#b42318";
+
+  const reasons = [];
+  if (!upgradeValid) {
+    reasons.push(
+      `Component upgrades cost ${formatNumber(upgrade)} BP but lifetime BP is only ${formatNumber(state.lifetimeBp)}.`
+    );
+  }
+  if (!slotValid) {
+    reasons.push(`Using ${slotsUsed} boost slots, but only ${slotsUnlocked} slot(s) are unlocked.`);
+  }
+  if (!powerValid) {
+    reasons.push(
+      `Enhancement power required is ${formatNumber(recharge)}, but only ${formatNumber(powerAvailable)} is available from upgrades.`
+    );
+  }
+
+  if (reasons.length === 0) {
+    validationMessageEl.textContent = "Configuration valid.";
+    validationMessageEl.style.color = "#1f4e42";
+  } else {
+    validationMessageEl.textContent = `Invalid configuration: ${reasons.join(" ")}`;
+    validationMessageEl.style.color = "#b42318";
+  }
 }
 
 function renderComponentTable() {
