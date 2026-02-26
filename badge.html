@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Adventurer's Guild Badge Planner</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="badge">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Adventurer's Guild</p>
+          <h1>Badge Planner + Recharge Estimator</h1>
+          <p>
+            Enter your lifetime bounty points and current badge setup, then tweak levels with +/- to see
+            BP impact, boost changes, and recharge cost changes.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="input-group">
+              <label for="lifetimeBp">Lifetime Bounty Points</label>
+              <div class="input-row">
+                <input id="lifetimeBp" type="number" min="0" step="1000" value="300000" />
+                <span class="unit">BP</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Total Upgrade Cost</div>
+              <div class="summary-value" id="upgradeCost">0</div>
+              <div class="summary-sub">Lifetime-invested badge value</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Lifetime BP Remaining</div>
+              <div class="summary-value" id="bpRemaining">0</div>
+              <div class="summary-sub" id="slotSummary">Slots: 0 / 3</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Recharge Cost (ORDER 5)</div>
+              <div class="summary-value" id="rechargeCost">0</div>
+              <div class="summary-sub">Based on selected boosts + values</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Badge Components</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Level</th>
+                <th>Next Upgrade Cost</th>
+                <th>Total Invested</th>
+              </tr>
+            </thead>
+            <tbody id="componentTable"></tbody>
+          </table>
+        </section>
+
+        <section class="table-panel">
+          <h2>Enhancement Configuration</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Slot</th>
+                <th>Boost</th>
+                <th>Value</th>
+                <th>Max</th>
+                <th>Recharge Cost</th>
+              </tr>
+            </thead>
+            <tbody id="boostTable"></tbody>
+          </table>
+        </section>
+
+        <section class="notes">
+          <ul>
+            <li>Upgrade step cost is 10,000 * new level (e.g. level 4->5 costs 50,000 BP).</li>
+            <li>Upgrade BP is lifetime-invested value (not spent), but recharge uses current BP.</li>
+            <li>2nd slot rule: 10 total upgrades in 2 or fewer components.</li>
+            <li>3rd slot rule: 20 total upgrades in 3 or fewer components.</li>
+            <li>Recharge table follows the GSWiki badge cost spreadsheet values (triangular progression by value).</li>
+          </ul>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="badge.js"></script>
+  </body>
+</html>
