@@ -27,20 +27,12 @@
         </section>
 
         <section class="calc-panel">
-          <div class="input-block">
-            <label for="profileSelect">Character Profile</label>
-            <div class="input-row">
-              <select id="profileSelect">
-                <option value="">Select from Profile</option>
-              </select>
-            </div>
-            <div class="input-group inline-actions">
-              <label class="checkbox-row">
-                <input id="useEnhanced" type="checkbox" checked />
-                Use enhanced stats
-              </label>
-              <a class="btn ghost" href="profile.html">Manage Profiles</a>
-            </div>
+          <div class="header-bridge" aria-hidden="true">
+            <select id="profileSelect">
+              <option value="">Select from Profile</option>
+            </select>
+            <button id="profileLoad" type="button">Load</button>
+            <input id="useEnhanced" type="checkbox" checked />
           </div>
 
           <div class="input-block">
@@ -52,21 +44,21 @@
             <div class="input-group">
               <label for="strStat">Strength (stat)</label>
               <div class="input-row">
-                <input id="strStat" type="number" min="1" max="100" step="1" value="70" />
+                <input id="strStat" type="number" min="1" max="200" step="1" value="70" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="conStat">Constitution (stat)</label>
               <div class="input-row">
-                <input id="conStat" type="number" min="1" max="100" step="1" value="60" />
+                <input id="conStat" type="number" min="1" max="200" step="1" value="60" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="strDelta">What-if Strength change</label>
               <div class="input-row">
-                <input id="strDelta" type="number" min="-100" max="100" step="1" value="0" />
+                <input id="strDelta" type="number" min="-200" max="200" step="1" value="0" />
                 <span class="unit">stat</span>
               </div>
             </div>
@@ -74,9 +66,21 @@
             <div class="input-group">
               <label for="conDelta">What-if Constitution change</label>
               <div class="input-row">
-                <input id="conDelta" type="number" min="-100" max="100" step="1" value="0" />
+                <input id="conDelta" type="number" min="-200" max="200" step="1" value="0" />
                 <span class="unit">stat</span>
               </div>
+            </div>
+
+            <div class="input-group">
+              <label for="pfBonus">Physical Fitness bonus</label>
+              <div class="input-row">
+                <input id="pfBonus" type="number" min="0" step="1" value="0" />
+                <span class="unit">bonus</span>
+              </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <button class="btn" id="profileStatsReload" type="button" disabled>Reload from Profile</button>
             </div>
 
           </div>
@@ -119,13 +123,12 @@
               </div>
             </div>
 
-            <div class="input-group">
-              <label for="pfBonus">Physical Fitness bonus</label>
-              <div class="input-row">
-                <input id="pfBonus" type="number" min="0" step="1" value="0" />
-                <span class="unit">bonus</span>
-              </div>
+            <div class="input-group inline-actions">
+              <button class="btn" id="profileDefaultsSave" type="button" disabled>Update Profile Equipment</button>
+              <button class="btn" id="profileDefaultsReload" type="button" disabled>Reload from Profile</button>
             </div>
+            <div class="helper" id="profileDefaultsStatus">Save disabled: select a character profile first.</div>
+
           </div>
         </section>
 
@@ -143,14 +146,29 @@
           </table>
         </section>
 
-        <section class="notes">
-          <ul>
-            <li>Body weight uses even STR/CON values (odd stats are reduced by 1).</li>
-            <li>The body-weight formula is accurate when STR and CON are at least 50; lower stats run slightly heavier.</li>
-            <li>Standard-weight armor does not count toward encumbrance. Non-standard weight modifies carrying capacity.</li>
-            <li>Silvers weigh about 1/160 lb per coin.</li>
-          </ul>
-        </section>
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Encumbrance" target="_blank" rel="noopener noreferrer">GSWiki: Encumbrance</a></li>
+                <li><a href="https://gswiki.play.net/Armor_group" target="_blank" rel="noopener noreferrer">GSWiki: Armor Group</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+
+        <details class="collapsible-section">
+          <summary>Page Tests</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <div class="inline-actions">
+                <button class="btn" id="runEncumbranceTests" type="button">Run Test Cases</button>
+              </div>
+              <pre id="encumbranceTestOutput" class="test-output">No tests run yet.</pre>
+            </section>
+          </div>
+        </details>
       </main>
 
       <div data-footer></div>

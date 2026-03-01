@@ -2,7 +2,11 @@ const currentExpInput = document.getElementById("currentExp");
 const logicBonusInput = document.getElementById("logicBonus");
 const scenarioInputs = document.querySelectorAll('input[name="scenarioMode"]');
 const profileSelect = document.getElementById("profileSelectCalc");
+const profileLoad = document.getElementById("profileLoadCalc");
+const profileReload = document.getElementById("profileReloadCalc");
 const useEnhanced = document.getElementById("useEnhancedCalc");
+const runCalculatorTestsBtn = document.getElementById("runCalculatorTests");
+const calculatorTestOutput = document.getElementById("calculatorTestOutput");
 
 const selectedScenarioLabel = document.getElementById("selectedScenario");
 const totalTimeLabel = document.getElementById("totalTime");
@@ -104,6 +108,7 @@ const metricSeries = [
 let latestResult = null;
 let hoverIndex = null;
 let profiles = [];
+let loadedProfileSnapshot = null;
 
 function numberValue(input, fallback = 0) {
   const parsed = Number(input.value);
@@ -138,6 +143,38 @@ function statToBonus(stat) {
   return Math.floor((Number(stat) - 50) / 2);
 }
 
+function stateEquals(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function currentProfileSnapshot() {
+  return {
+    logicBonus: Number(logicBonusInput.value) || 0,
+  };
+}
+
+function updateProfileLoadButtonState() {
+  if (!profileLoad) return;
+  profileLoad.classList.remove("attention");
+  if (profileReload) {
+    profileReload.disabled = !profileSelect.value || !loadedProfileSnapshot;
+    profileReload.classList.remove("attention");
+  }
+  if (!profileSelect.value || !loadedProfileSnapshot) return;
+  const hasChanges = !stateEquals(currentProfileSnapshot(), loadedProfileSnapshot);
+  if (hasChanges) {
+    profileLoad.classList.add("attention");
+    if (profileReload) profileReload.classList.add("attention");
+  }
+}
+
+function reloadSelectedProfile() {
+  const selected = profileSelect.value;
+  if (!selected) return;
+  const profile = findProfile(profiles, selected);
+  if (profile) applyProfile(profile);
+}
+
 function normalizeRaceForModifierLookup(raw) {
   if (!raw) return "";
   const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
@@ -162,18 +199,39 @@ function getRaceStatModifier(raceName, statKey) {
   return raceStatBonusModifiers[normalizedRace]?.[statKey] ?? 0;
 }
 
+function profileStatValue(profile, statKey, useEnhancedStats) {
+  if (!profile) return null;
+  const statEntry = profile.stats?.[statKey];
+  if (useEnhancedStats) {
+    return statEntry?.enhanced ?? profile[`${statKey}Enhanced`] ?? null;
+  }
+  return statEntry?.base ?? profile[`${statKey}Base`] ?? null;
+}
+
+function getFieldExpPoolCap(profile, useEnhancedStats) {
+  const logStat = Number(profileStatValue(profile, "log", useEnhancedStats));
+  const disStat = Number(profileStatValue(profile, "dis", useEnhancedStats));
+  if (!Number.isFinite(logStat) || !Number.isFinite(disStat)) return null;
+  return Math.max(0, Math.trunc(800 + logStat + disStat));
+}
+
 function applyProfile(profile) {
   if (!profile) return;
   const useEnhancedStats = useEnhanced.checked;
-  const logStat = useEnhancedStats
-    ? profile.stats?.log?.enhanced ?? profile.logEnhanced
-    : profile.stats?.log?.base ?? profile.logBase;
+  const logStat = profileStatValue(profile, "log", useEnhancedStats);
 
   if (logStat != null) {
     const racialLogModifier = getRaceStatModifier(profile.race, "log");
     logicBonusInput.value = String(statToBonus(logStat) + racialLogModifier);
   }
 
+  const fieldExpCap = getFieldExpPoolCap(profile, useEnhancedStats);
+  if (fieldExpCap != null) {
+    currentExpInput.value = String(fieldExpCap);
+  }
+
+  loadedProfileSnapshot = currentProfileSnapshot();
+  updateProfileLoadButtonState();
   compute();
 }
 
@@ -473,6 +531,7 @@ function compute() {
   renderSummary(result);
   renderBreakdown(result);
   drawTrendChart(result);
+  updateProfileLoadButtonState();
 }
 
 function updateHover(event) {
@@ -518,12 +577,26 @@ scenarioInputs.forEach((input) => {
 profileSelect.addEventListener("change", () => {
   const selected = profileSelect.value;
   if (!selected) {
+    loadedProfileSnapshot = null;
+    updateProfileLoadButtonState();
     compute();
     return;
   }
   const profile = findProfile(profiles, selected);
   if (profile) applyProfile(profile);
 });
+
+if (profileLoad) {
+  profileLoad.addEventListener("click", () => {
+    reloadSelectedProfile();
+  });
+}
+
+if (profileReload) {
+  profileReload.addEventListener("click", () => {
+    reloadSelectedProfile();
+  });
+}
 
 useEnhanced.addEventListener("change", () => {
   const selected = profileSelect.value;
@@ -541,7 +614,55 @@ trendChart.addEventListener("touchstart", updateHover);
 trendChart.addEventListener("touchmove", updateHover);
 trendChart.addEventListener("touchend", clearHover);
 
+function runCalculatorSelfTests() {
+  const tests = [
+    {
+      name: "T1 offline absorbs 15 per interval and gains 25 resources",
+      run: () => simulateScenario(30, 0, findScenario("offline")),
+      check: (got) => got.pulses === 2 && got.elapsedSeconds === 1200 && got.resources === 50,
+    },
+    {
+      name: "T2 online resource pulse requires >=20 absorb",
+      run: () => simulateScenario(10, 0, findScenario("on-node")),
+      check: (got) => got.resources === 0,
+    },
+    {
+      name: "T3 larger pool takes longer than small pool",
+      run: () => ({
+        small: simulateScenario(100, 20, findScenario("in-town")).elapsedSeconds,
+        large: simulateScenario(300, 20, findScenario("in-town")).elapsedSeconds,
+      }),
+      check: (got) => got.large > got.small,
+    },
+  ];
+
+  let pass = 0;
+  const lines = [];
+  tests.forEach((test) => {
+    const got = test.run();
+    const ok = Boolean(test.check(got));
+    if (ok) pass += 1;
+    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    if (!ok) lines.push(` got: ${JSON.stringify(got)}`);
+  });
+  lines.push("");
+  lines.push(`Summary: ${pass}/${tests.length} passing`);
+  if (calculatorTestOutput) {
+    calculatorTestOutput.textContent = lines.join("\n");
+    calculatorTestOutput.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
+  }
+}
+
+if (runCalculatorTestsBtn) {
+  runCalculatorTestsBtn.addEventListener("click", runCalculatorSelfTests);
+}
+
 renderLegend();
 profiles = loadProfiles();
 refreshProfileSelect(profiles);
+window.addEventListener("focus", () => {
+  profiles = loadProfiles();
+  refreshProfileSelect(profiles);
+  updateProfileLoadButtonState();
+});
 compute();

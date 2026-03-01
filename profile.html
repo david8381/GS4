@@ -26,149 +26,300 @@
           </p>
         </section>
 
-        <section class="calc-panel profile-grid">
-          <div class="input-block">
-            <label for="profileSelect">Saved Profiles</label>
-            <div class="input-row">
-              <select id="profileSelect">
-                <option value="">Select a profile</option>
-              </select>
+        <section class="calc-panel">
+          <div class="header-bridge" aria-hidden="true">
+            <select id="profileSelect">
+              <option value="">Select a profile</option>
+            </select>
+            <button id="profileApply" type="button">Reload from Profile</button>
+            <button id="profileSave" class="save-profile-btn profile-update-btn" type="button">Update Profile</button>
+          </div>
+
+          <div class="input-block profile-compact">
+            <h2>Profile</h2>
+            <div class="input-group">
+              <label for="profileName">Profile name</label>
+              <div class="input-row">
+                <input id="profileName" type="text" placeholder="e.g. Sajehn" />
+              </div>
             </div>
             <div class="input-group inline-actions">
-              <button class="btn" id="profileApply" type="button">Load</button>
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
               <button class="btn ghost" id="profileDelete" type="button">Delete</button>
             </div>
-
-            <div class="input-group">
-              <label for="infoImport">Quick import (paste INFO START output)</label>
-              <textarea id="infoImport" rows="9" placeholder="Paste the INFO START block here"></textarea>
-            </div>
-            <div class="input-group inline-actions">
-              <button class="btn" id="parseInfoStart" type="button">Parse Now</button>
-            </div>
-            <div class="helper" id="importStatus">
-              Paste INFO START output to auto-fill race, profession, and level 0 stats. Current stats will be
-              calculated from growth rates.
-            </div>
-          </div>
-
-          <div class="input-block">
-            <label for="profileName">Profile name</label>
-            <div class="input-row">
-              <input id="profileName" type="text" placeholder="e.g. Sajehn" />
-            </div>
-            <div class="input-group inline-actions">
-              <button class="btn" id="profileSave" type="button">Save/Update</button>
-            </div>
-
-            <div class="input-group">
-              <label for="profileRace">Race</label>
-              <div class="input-row">
-                <select id="profileRace"></select>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="profileProfession">Profession</label>
-              <div class="input-row">
-                <select id="profileProfession"></select>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="profileLevel">Current level</label>
-              <div class="input-row">
-                <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label>Stats and bonuses (pre/post racial)</label>
-              <div class="stat-grid" id="statGrid"></div>
-            </div>
-            <div class="input-group inline-actions">
-              <button class="btn ghost" id="recalcStats" type="button">Recalculate from Level 0</button>
-            </div>
           </div>
         </section>
 
-        <section class="calc-panel">
-          <div class="input-block">
-            <label for="skillsImport">Quick import (SKILLS output)</label>
-            <textarea id="skillsImport" rows="9" placeholder="Paste the SKILLS block here"></textarea>
-            <div class="helper" id="skillsStatus">Paste SKILLS output to auto-fill skill bonuses and ranks.</div>
-          </div>
-
-          <div class="table-panel">
-            <h2>Skills</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Skill</th>
-                  <th>Bonus</th>
-                  <th>Ranks</th>
-                </tr>
-              </thead>
-              <tbody id="skillsTable"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="calc-panel">
-          <div class="input-block">
-            <label>Encumbrance Defaults</label>
-            <div class="input-group">
-              <label for="armorAsg">Armor type (ASG)</label>
-              <div class="input-row">
-                <select id="armorAsg"></select>
+        <details class="collapsible-section" id="quickStartSection" open>
+          <summary>Quick Start Imports (Optional)</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel import-strip">
+              <div class="input-block import-card">
+                <h2>INFO START</h2>
+              <div class="input-group">
+                <label for="infoImport">Paste INFO START output</label>
+                <textarea id="infoImport" rows="7" placeholder="Paste INFO START block"></textarea>
+              </div>
+              <div class="helper" id="importStatus">
+                Run <code>INFO START</code>. Paste full output.
               </div>
             </div>
 
-            <div class="input-group">
-              <label for="armorWeight">Armor actual weight</label>
-              <div class="input-row">
-                <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">lbs</span>
+              <div class="input-block import-card">
+                <h2>SKILLS</h2>
+                <div class="input-group">
+                  <label for="skillsImport">Paste SKILLS output</label>
+                  <textarea id="skillsImport" rows="7" placeholder="Paste SKILLS block"></textarea>
+                </div>
+                <div class="helper" id="skillsStatus">Paste SKILLS output to load ranks.</div>
               </div>
-            </div>
 
-            <div class="input-group">
-              <label for="accessoryWeight">Armor accessories weight</label>
-              <div class="input-row">
-                <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">lbs</span>
+              <div class="input-block import-card">
+                <h2>ASC LIST</h2>
+                <div class="input-group">
+                  <label for="ascImport">Paste ASC LIST output</label>
+                  <textarea id="ascImport" rows="7" placeholder="Paste ASC LIST block"></textarea>
+                </div>
+                <div class="helper" id="ascImportStatus">Paste ASC LIST to load current ascension ranks.</div>
               </div>
-            </div>
-
-            <div class="input-group">
-              <label for="gearWeight">Carried gear weight (no armor)</label>
-              <div class="input-row">
-                <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">lbs</span>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="silvers">Silvers carried</label>
-              <div class="input-row">
-                <input id="silvers" type="number" min="0" step="1" value="0" />
-                <span class="unit">coins</span>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="pfBonus">Physical Fitness bonus</label>
-              <div class="input-row">
-                <input id="pfBonus" type="number" min="0" step="1" value="0" />
-                <span class="unit">bonus</span>
-              </div>
-            </div>
-
-            <div class="input-group inline-actions">
-              <span class="helper">Defaults saved with the profile.</span>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
             </div>
           </div>
-        </section>
+        </details>
+
+        <details class="collapsible-section" id="adjustmentsSection">
+          <summary>Ascension + Enhancives</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel profile-grid">
+              <div class="table-panel ascension-panel">
+                <h2>Ascension</h2>
+                <h3>Stat Adjustments</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Stat</th>
+                      <th>Asc Stat +</th>
+                      <th>Asc Bonus +</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ascStatTable"></tbody>
+                </table>
+                <h3>Skill Adjustments</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      <th>Asc Bonus +</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ascSkillTable"></tbody>
+                </table>
+                <div class="helper" id="ascStatus">Ascension limits are enforced per row.</div>
+              </div>
+
+              <div class="table-panel enhancive-panel">
+                <h2>Enhancives</h2>
+                <h3>Stat Enhancives</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Stat</th>
+                      <th>Enh Stat +</th>
+                      <th>Enh Bonus +</th>
+                      <th>Eff/Limit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhStatTable"></tbody>
+                </table>
+                <h3>Skill Enhancives</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      <th>Enh Rank +</th>
+                      <th>Enh Bonus +</th>
+                      <th>Eff/Limit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhSkillTable"></tbody>
+                </table>
+                <div class="helper" id="enhStatus">Enhancive limits are enforced per row.</div>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="generalSection" open>
+          <summary>General Character Information</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <h2>General Character Information</h2>
+                <div class="input-group">
+                  <label for="profileRace">Race</label>
+                  <div class="input-row">
+                    <select id="profileRace"></select>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="profileProfession">Profession</label>
+                  <div class="input-row">
+                    <select id="profileProfession"></select>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="profileLevel">Current level</label>
+                  <div class="input-row">
+                    <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
+                  </div>
+                </div>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="resultsSection" open>
+          <summary>Stats + Skills</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel profile-grid profile-results-grid">
+              <div class="table-panel">
+                <h2>Stats</h2>
+                <div class="stat-grid" id="statGrid"></div>
+              </div>
+
+              <div class="table-panel profile-skills-panel">
+                <div class="inline-actions">
+                  <h2>Skills</h2>
+                  <label class="checkbox-row">
+                    <input id="skillsShowTrainedOnly" type="checkbox" />
+                    Show only non-zero
+                  </label>
+                </div>
+                <table>
+                  <colgroup>
+                    <col class="col-skill" />
+                    <col class="col-small" />
+                    <col class="col-small" />
+                    <col class="col-small" />
+                    <col class="col-small" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      <th>Ranks</th>
+                      <th>Bonus</th>
+                      <th>Final Ranks</th>
+                      <th>Final Bonus</th>
+                    </tr>
+                  </thead>
+                  <tbody id="skillsTable"></tbody>
+                </table>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="encumbranceSection">
+          <summary>Character Equipment</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <label>Character Equipment</label>
+                <div class="input-group">
+                  <label for="armorAsg">Armor type (ASG)</label>
+                  <div class="input-row">
+                    <select id="armorAsg"></select>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="armorWeight">Armor actual weight</label>
+                  <div class="input-row">
+                    <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
+                    <span class="unit">lbs</span>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="accessoryWeight">Armor accessories weight</label>
+                  <div class="input-row">
+                    <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
+                    <span class="unit">lbs</span>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="gearWeight">Carried gear weight (no armor)</label>
+                  <div class="input-row">
+                    <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
+                    <span class="unit">lbs</span>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label for="silvers">Silvers carried</label>
+                  <div class="input-row">
+                    <input id="silvers" type="number" min="0" step="1" value="0" />
+                    <span class="unit">coins</span>
+                  </div>
+                </div>
+
+                <div class="input-group inline-actions">
+                  <span class="helper">Defaults saved with the profile.</span>
+                </div>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/INFO" target="_blank" rel="noopener noreferrer">GSWiki: INFO</a></li>
+                <li><a href="https://gswiki.play.net/SKILLS" target="_blank" rel="noopener noreferrer">GSWiki: SKILLS</a></li>
+                <li><a href="https://gswiki.play.net/Ascension" target="_blank" rel="noopener noreferrer">GSWiki: Ascension</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="testsSection">
+          <summary>Page Tests</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <div class="inline-actions">
+                  <button class="btn" id="runProfileTests" type="button">Run Tests</button>
+                </div>
+                <pre id="profileTestOutput" class="test-output">No tests run yet.</pre>
+              </div>
+            </section>
+          </div>
+        </details>
       </main>
 
       <div data-footer></div>

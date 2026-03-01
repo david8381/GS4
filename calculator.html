@@ -28,21 +28,12 @@
 
         <section class="calc-panel">
           <div class="input-block">
-            <div class="input-group">
-              <label for="profileSelectCalc">Character Profile</label>
-              <div class="input-row">
-                <select id="profileSelectCalc">
-                  <option value="">Select from Profile</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="input-group inline-actions">
-              <label class="checkbox-row">
-                <input id="useEnhancedCalc" type="checkbox" checked />
-                Use enhanced LOG stat
-              </label>
-              <a class="btn ghost" href="profile.html">Manage Profiles</a>
+            <div class="header-bridge" aria-hidden="true">
+              <select id="profileSelectCalc">
+                <option value="">Select from Profile</option>
+              </select>
+              <button id="profileLoadCalc" type="button">Load</button>
+              <input id="useEnhancedCalc" type="checkbox" checked />
             </div>
 
             <div class="input-group">
@@ -58,6 +49,10 @@
               <div class="input-row">
                 <input id="logicBonus" type="number" step="1" value="20" />
               </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <button class="btn" id="profileReloadCalc" type="button" disabled>Reload from Profile</button>
             </div>
 
             <div class="input-group">
@@ -124,15 +119,29 @@
           </table>
         </section>
 
-        <section class="notes">
-          <ul>
-            <li>On-node and in-town use logic bonus / 5. Out-of-town uses logic bonus / 7.</li>
-            <li>Pool bonus is +1 absorb per 200 unabsorbed field exp, capped at +10.</li>
-            <li>Online pulse is fixed at 60 seconds, with 85 resources if that pulse absorbs at least 20 XP.</li>
-            <li>Offline is fixed at 15 XP and 25 resources per 10-minute interval.</li>
-            <li>Vertical grid lines are every 5 minutes. Hover to inspect exact values at a pulse.</li>
-          </ul>
-        </section>
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Experience" target="_blank" rel="noopener noreferrer">GSWiki: Experience</a></li>
+                <li><a href="https://gswiki.play.net/Experience_pool" target="_blank" rel="noopener noreferrer">GSWiki: Experience Pool</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+
+        <details class="collapsible-section">
+          <summary>Page Tests</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <div class="inline-actions">
+                <button class="btn" id="runCalculatorTests" type="button">Run Test Cases</button>
+              </div>
+              <pre id="calculatorTestOutput" class="test-output">No tests run yet.</pre>
+            </section>
+          </div>
+        </details>
 
       </main>
 

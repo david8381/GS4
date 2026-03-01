@@ -4,6 +4,11 @@ const conInput = document.getElementById("conStat");
 const strDeltaInput = document.getElementById("strDelta");
 const conDeltaInput = document.getElementById("conDelta");
 const profileSelect = document.getElementById("profileSelect");
+const profileLoad = document.getElementById("profileLoad");
+const profileDefaultsSave = document.getElementById("profileDefaultsSave");
+const profileDefaultsReload = document.getElementById("profileDefaultsReload");
+const profileStatsReload = document.getElementById("profileStatsReload");
+const profileDefaultsStatus = document.getElementById("profileDefaultsStatus");
 const useEnhanced = document.getElementById("useEnhanced");
 
 const gearWeightInput = document.getElementById("gearWeight");
@@ -13,8 +18,14 @@ const armorWeightInput = document.getElementById("armorWeight");
 const accessoryWeightInput = document.getElementById("accessoryWeight");
 const pfBonusInput = document.getElementById("pfBonus");
 const resultsBody = document.getElementById("results");
+const equipmentFields = [gearWeightInput, silversInput, armorAsgSelect, armorWeightInput, accessoryWeightInput];
+const runEncumbranceTestsBtn = document.getElementById("runEncumbranceTests");
+const encumbranceTestOutput = document.getElementById("encumbranceTestOutput");
 
 const PROFILE_KEY = "gs4.characterProfiles";
+const MAX_STAT_VALUE = 200;
+let loadedProfileSnapshot = null;
+let successFlashTimer = null;
 
 const races = [
   { key: "burghal", name: "Burghal Gnome", baseWeight: 40, weightFactor: 0.4, maxWeight: 120, encFactor: 0.5 },
@@ -73,6 +84,10 @@ function loadProfiles() {
   return [];
 }
 
+function saveProfiles(nextProfiles) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfiles));
+}
+
 function refreshProfileSelect(profiles) {
   profileSelect.innerHTML = "<option value=\"\">Select from Profile</option>";
   profiles.forEach((profile) => {
@@ -129,11 +144,177 @@ function applyProfile(profile) {
   const pfSkill = profile.skills?.find((skill) => skill.name.toLowerCase() === "physical fitness");
   const pfValue = pfSkill?.bonus ?? profile.defaults?.pfBonus;
   pfBonusInput.value = String(pfValue ?? pfBonusInput.value);
+  loadedProfileSnapshot = currentProfileSnapshot();
+  updateProfileLoadButtonState();
+  updateProfileDefaultsSaveState(profile);
   updateResults();
 }
 
+function stateEquals(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function currentProfileSnapshot() {
+  return {
+    race: raceSelect.value,
+    str: Number(strInput.value) || 0,
+    con: Number(conInput.value) || 0,
+    gearWeight: Number(gearWeightInput.value) || 0,
+    silvers: Number(silversInput.value) || 0,
+    armorAsg: armorAsgSelect.value,
+    armorWeight: Number(armorWeightInput.value) || 0,
+    accessoryWeight: Number(accessoryWeightInput.value) || 0,
+    pfBonus: Number(pfBonusInput.value) || 0,
+  };
+}
+
+function currentDefaultsSnapshot() {
+  return {
+    gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
+    silvers: Math.max(0, Number(silversInput.value) || 0),
+    armorAsg: armorAsgSelect.value,
+    armorWeight: Math.max(0, Number(armorWeightInput.value) || 0),
+    accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
+  };
+}
+
+function currentStatsSnapshot() {
+  return {
+    race: raceSelect.value,
+    str: Number(strInput.value) || 0,
+    con: Number(conInput.value) || 0,
+    pfBonus: Number(pfBonusInput.value) || 0,
+  };
+}
+
+function savedStatsSnapshot(profile) {
+  const raceName = normalizeRaceName(profile?.race || "");
+  const raceOption = races.find((race) => race.name.toLowerCase() === raceName.toLowerCase());
+  const useEnhancedStats = useEnhanced.checked;
+  const strValue = useEnhancedStats
+    ? profile?.stats?.str?.enhanced ?? profile?.strEnhanced
+    : profile?.stats?.str?.base ?? profile?.strBase;
+  const conValue = useEnhancedStats
+    ? profile?.stats?.con?.enhanced ?? profile?.conEnhanced
+    : profile?.stats?.con?.base ?? profile?.conBase;
+  const pfSkill = profile?.skills?.find((skill) => skill.name.toLowerCase() === "physical fitness");
+  const pfValue = pfSkill?.bonus ?? profile?.defaults?.pfBonus;
+  return {
+    race: raceOption?.key || raceSelect.value,
+    str: Number(strValue ?? strInput.value) || 0,
+    con: Number(conValue ?? conInput.value) || 0,
+    pfBonus: Number(pfValue ?? pfBonusInput.value) || 0,
+  };
+}
+
+function savedDefaultsSnapshot(profile) {
+  return {
+    gearWeight: Math.max(0, Number(profile?.defaults?.gearWeight) || 0),
+    silvers: Math.max(0, Number(profile?.defaults?.silvers) || 0),
+    armorAsg: profile?.defaults?.armorAsg || "none",
+    armorWeight: Math.max(0, Number(profile?.defaults?.armorWeight) || 0),
+    accessoryWeight: Math.max(0, Number(profile?.defaults?.accessoryWeight) || 0),
+  };
+}
+
+function applySavedEquipmentDefaults(profile) {
+  const defaults = savedDefaultsSnapshot(profile);
+  gearWeightInput.value = String(defaults.gearWeight);
+  silversInput.value = String(defaults.silvers);
+  armorAsgSelect.value = defaults.armorAsg;
+  armorWeightInput.value = String(defaults.armorWeight);
+  accessoryWeightInput.value = String(defaults.accessoryWeight);
+}
+
+function updateEquipmentDiffHighlights(profile) {
+  equipmentFields.forEach((field) => field.classList.remove("changed-from-profile"));
+  if (!profile) return;
+  const current = currentDefaultsSnapshot();
+  const saved = savedDefaultsSnapshot(profile);
+  if (current.gearWeight !== saved.gearWeight) gearWeightInput.classList.add("changed-from-profile");
+  if (current.silvers !== saved.silvers) silversInput.classList.add("changed-from-profile");
+  if (current.armorAsg !== saved.armorAsg) armorAsgSelect.classList.add("changed-from-profile");
+  if (current.armorWeight !== saved.armorWeight) armorWeightInput.classList.add("changed-from-profile");
+  if (current.accessoryWeight !== saved.accessoryWeight) accessoryWeightInput.classList.add("changed-from-profile");
+}
+
+function updateProfileDefaultsSaveState(profileOverride = null) {
+  if (!profileDefaultsSave || !profileDefaultsStatus) return;
+  profileDefaultsSave.classList.remove("success-attention");
+  if (profileDefaultsReload) profileDefaultsReload.classList.remove("attention");
+
+  const selected = profileSelect.value;
+  if (!selected) {
+    profileDefaultsSave.disabled = true;
+    if (profileDefaultsReload) profileDefaultsReload.disabled = true;
+    profileDefaultsStatus.textContent = "Save disabled: select a character profile first.";
+    profileDefaultsStatus.style.color = "";
+    updateEquipmentDiffHighlights(null);
+    return;
+  }
+
+  const profile = profileOverride || findProfile(profiles, selected);
+  if (!profile) {
+    profileDefaultsSave.disabled = true;
+    if (profileDefaultsReload) profileDefaultsReload.disabled = true;
+    profileDefaultsStatus.textContent = "Selected profile was not found.";
+    profileDefaultsStatus.style.color = "#b42318";
+    updateEquipmentDiffHighlights(null);
+    return;
+  }
+
+  profileDefaultsSave.disabled = false;
+  if (profileDefaultsReload) profileDefaultsReload.disabled = false;
+  const hasChanges = !stateEquals(currentDefaultsSnapshot(), savedDefaultsSnapshot(profile));
+  updateEquipmentDiffHighlights(profile);
+  if (hasChanges) {
+    profileDefaultsSave.classList.add("success-attention");
+    if (profileDefaultsReload) profileDefaultsReload.classList.add("attention");
+    profileDefaultsStatus.textContent = "Carry/armor defaults differ from saved profile values.";
+    profileDefaultsStatus.style.color = "#1f7a4d";
+  } else {
+    profileDefaultsStatus.textContent = "Carry/armor defaults match saved profile values.";
+    profileDefaultsStatus.style.color = "";
+  }
+}
+
+function updateProfileLoadButtonState() {
+  if (!profileLoad) return;
+  profileLoad.classList.remove("attention", "success-attention");
+  if (profileStatsReload) profileStatsReload.classList.remove("attention");
+  if (!profileSelect.value || !loadedProfileSnapshot) {
+    if (profileStatsReload) profileStatsReload.disabled = true;
+    return;
+  }
+  const hasChanges = !stateEquals(currentProfileSnapshot(), loadedProfileSnapshot);
+  if (hasChanges) {
+    profileLoad.classList.add("attention");
+  }
+  const selected = profileSelect.value;
+  const profile = selected ? findProfile(profiles, selected) : null;
+  if (!profileStatsReload) return;
+  if (!profile) {
+    profileStatsReload.disabled = true;
+    return;
+  }
+  profileStatsReload.disabled = false;
+  const statsChanged = !stateEquals(currentStatsSnapshot(), savedStatsSnapshot(profile));
+  if (statsChanged) profileStatsReload.classList.add("attention");
+}
+
+function flashButtonSuccess(button) {
+  if (!button) return;
+  button.classList.add("success-flash");
+  if (successFlashTimer) {
+    clearTimeout(successFlashTimer);
+  }
+  successFlashTimer = setTimeout(() => {
+    button.classList.remove("success-flash");
+  }, 1200);
+}
+
 function evenStat(value) {
-  const clipped = clamp(Math.floor(value), 1, 100);
+  const clipped = clamp(Math.floor(value), 1, MAX_STAT_VALUE);
   return clipped % 2 === 0 ? clipped : clipped - 1;
 }
 
@@ -183,7 +364,7 @@ function encumbranceMessage(percent) {
 
 function computeResults(stats, inputs, race) {
   const bodyWeight = computeBodyWeight(stats.str, stats.con, race);
-  const effectiveStr = clamp(stats.str, 1, 100);
+  const effectiveStr = clamp(stats.str, 1, MAX_STAT_VALUE);
   const unenc = computeUnencumbered(effectiveStr, bodyWeight);
 
   const armorAdj = armorAdjustment(race, inputs.armorStandard, inputs.armorActual);
@@ -247,10 +428,10 @@ function updateResults() {
   resultsBody.innerHTML = "";
 
   const race = getRace();
-  const strStat = clamp(Number(strInput.value), 1, 100);
-  const conStat = clamp(Number(conInput.value), 1, 100);
-  const strDelta = clamp(Number(strDeltaInput.value), -100, 100);
-  const conDelta = clamp(Number(conDeltaInput.value), -100, 100);
+  const strStat = clamp(Number(strInput.value), 1, MAX_STAT_VALUE);
+  const conStat = clamp(Number(conInput.value), 1, MAX_STAT_VALUE);
+  const strDelta = clamp(Number(strDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
+  const conDelta = clamp(Number(conDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
 
   const armor = armorAsg.find((item) => item.key === armorAsgSelect.value) || armorAsg[0];
 
@@ -265,7 +446,7 @@ function updateResults() {
 
   const current = computeResults({ str: strStat, con: conStat }, inputs, race);
   const future = computeResults(
-    { str: clamp(strStat + strDelta, 1, 100), con: clamp(conStat + conDelta, 1, 100) },
+    { str: clamp(strStat + strDelta, 1, MAX_STAT_VALUE), con: clamp(conStat + conDelta, 1, MAX_STAT_VALUE) },
     inputs,
     race
   );
@@ -290,6 +471,8 @@ function updateResults() {
   renderRow("Max carry (items)", `${formatNumber(current.maxCarry)} lbs`, `${formatNumber(future.maxCarry)} lbs`);
   renderRow("Silver cap", `${formatNumber(current.silverCap)} lbs`, `${formatNumber(future.silverCap)} lbs`);
   renderRow("Max single item weight", `${formatNumber(current.maxItemWeight)} lbs`, `${formatNumber(future.maxItemWeight)} lbs`);
+  updateProfileLoadButtonState();
+  updateProfileDefaultsSaveState();
 }
 
 fillSelect(raceSelect, races);
@@ -313,12 +496,102 @@ armorAsgSelect.addEventListener("change", () => {
 profileSelect.addEventListener("change", () => {
   const selected = profileSelect.value;
   if (!selected) {
+    loadedProfileSnapshot = null;
+    updateProfileLoadButtonState();
+    updateProfileDefaultsSaveState();
     updateResults();
     return;
   }
   const profile = findProfile(profiles, selected);
   if (profile) applyProfile(profile);
 });
+
+if (profileLoad) {
+  profileLoad.addEventListener("click", () => {
+    const selected = profileSelect.value;
+    if (!selected) return;
+    const profile = findProfile(profiles, selected);
+    if (profile) {
+      applyProfile(profile);
+    }
+  });
+}
+
+if (profileDefaultsSave) {
+  profileDefaultsSave.addEventListener("click", () => {
+    const selected = profileSelect.value;
+    if (!selected) return;
+    const profileList = loadProfiles();
+    const profile = findProfile(profileList, selected);
+    if (!profile) {
+      updateProfileDefaultsSaveState();
+      return;
+    }
+
+    if (!profile.defaults || typeof profile.defaults !== "object") {
+      profile.defaults = {};
+    }
+    const defaults = currentDefaultsSnapshot();
+    profile.defaults.gearWeight = defaults.gearWeight;
+    profile.defaults.silvers = defaults.silvers;
+    profile.defaults.armorAsg = defaults.armorAsg;
+    profile.defaults.armorWeight = defaults.armorWeight;
+    profile.defaults.accessoryWeight = defaults.accessoryWeight;
+
+    profiles = profileList.map((entry) => (entry.id === selected ? profile : entry));
+    saveProfiles(profiles);
+    refreshProfileSelect(profiles);
+    profileSelect.value = selected;
+    loadedProfileSnapshot = currentProfileSnapshot();
+    updateProfileLoadButtonState();
+    updateProfileDefaultsSaveState(profile);
+    if (profileDefaultsStatus) {
+      profileDefaultsStatus.textContent = `Saved carry/armor defaults to profile: ${profile.name}`;
+      profileDefaultsStatus.style.color = "#1f7a4d";
+    }
+    flashButtonSuccess(profileDefaultsSave);
+  });
+}
+
+if (profileDefaultsReload) {
+  profileDefaultsReload.addEventListener("click", () => {
+    const selected = profileSelect.value;
+    if (!selected) return;
+    const profile = findProfile(loadProfiles(), selected);
+    if (!profile) {
+      updateProfileDefaultsSaveState();
+      return;
+    }
+    applySavedEquipmentDefaults(profile);
+    loadedProfileSnapshot = currentProfileSnapshot();
+    updateResults();
+    updateProfileDefaultsSaveState(profile);
+    if (profileDefaultsStatus) {
+      profileDefaultsStatus.textContent = `Reloaded carry/armor defaults from profile: ${profile.name}`;
+      profileDefaultsStatus.style.color = "#b42318";
+    }
+  });
+}
+
+if (profileStatsReload) {
+  profileStatsReload.addEventListener("click", () => {
+    const selected = profileSelect.value;
+    if (!selected) return;
+    const profile = findProfile(loadProfiles(), selected);
+    if (!profile) {
+      updateProfileLoadButtonState();
+      return;
+    }
+    const saved = savedStatsSnapshot(profile);
+    raceSelect.value = saved.race;
+    strInput.value = String(saved.str);
+    conInput.value = String(saved.con);
+    pfBonusInput.value = String(saved.pfBonus);
+    loadedProfileSnapshot = currentProfileSnapshot();
+    updateResults();
+    updateProfileLoadButtonState();
+  });
+}
 
 useEnhanced.addEventListener("change", () => {
   const selected = profileSelect.value;
@@ -329,3 +602,72 @@ useEnhanced.addEventListener("change", () => {
     updateResults();
   }
 });
+
+window.addEventListener("focus", () => {
+  profiles = loadProfiles();
+  refreshProfileSelect(profiles);
+  updateProfileLoadButtonState();
+  updateProfileDefaultsSaveState();
+});
+
+function runEncumbranceSelfTests() {
+  const human = races.find((race) => race.key === "human");
+  const noneArmor = armorAsg.find((item) => item.key === "none");
+  const tests = [
+    {
+      name: "T1 body weight increases with STR/CON",
+      run: () => ({
+        low: computeBodyWeight(50, 50, human),
+        high: computeBodyWeight(80, 80, human),
+      }),
+      check: (got) => got.high > got.low,
+    },
+    {
+      name: "T2 no carry means zero encumbrance",
+      run: () =>
+        computeResults(
+          { str: 70, con: 70 },
+          { gearWeight: 0, silvers: 0, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 0 },
+          human
+        ),
+      check: (got) => got.encumbrance === 0,
+    },
+    {
+      name: "T3 PF bonus reduces encumbrance",
+      run: () => {
+        const base = computeResults(
+          { str: 60, con: 60 },
+          { gearWeight: 200, silvers: 0, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 0 },
+          human
+        );
+        const pf = computeResults(
+          { str: 60, con: 60 },
+          { gearWeight: 200, silvers: 0, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 50 },
+          human
+        );
+        return { base: base.encumbrance, pf: pf.encumbrance };
+      },
+      check: (got) => got.pf < got.base,
+    },
+  ];
+
+  let pass = 0;
+  const lines = [];
+  tests.forEach((test) => {
+    const got = test.run();
+    const ok = Boolean(test.check(got));
+    if (ok) pass += 1;
+    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    if (!ok) lines.push(` got: ${JSON.stringify(got)}`);
+  });
+  lines.push("");
+  lines.push(`Summary: ${pass}/${tests.length} passing`);
+  if (encumbranceTestOutput) {
+    encumbranceTestOutput.textContent = lines.join("\n");
+    encumbranceTestOutput.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
+  }
+}
+
+if (runEncumbranceTestsBtn) {
+  runEncumbranceTestsBtn.addEventListener("click", runEncumbranceSelfTests);
+}

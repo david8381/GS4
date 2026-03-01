@@ -28,19 +28,11 @@
 
         <section class="calc-panel">
           <div class="input-block">
-            <div class="input-group">
-              <label for="badgeProfileSelect">Character Profile</label>
-              <div class="input-row">
-                <select id="badgeProfileSelect">
-                  <option value="">Select from Profile</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="input-group inline-actions">
-              <button class="btn" id="badgeProfileLoad" type="button">Load from Profile</button>
-              <button class="btn ghost" id="badgeProfileSave" type="button">Save Current to Profile</button>
-              <a class="btn ghost" href="profile.html">Manage Profiles</a>
+            <div class="header-bridge" aria-hidden="true">
+              <select id="badgeProfileSelect">
+                <option value="">Select from Profile</option>
+              </select>
+              <button id="badgeProfileLoad" type="button">Load</button>
             </div>
 
             <div class="input-group">
@@ -50,6 +42,12 @@
                 <span class="unit">BP</span>
               </div>
             </div>
+
+            <div class="input-group inline-actions">
+              <button class="btn badge-profile-save" id="badgeProfileSave" type="button">Update Profile Badge</button>
+              <button class="btn badge-profile-reload" type="button">Reload from Profile</button>
+            </div>
+            <div class="helper" id="badgeProfileStatus">Save disabled: select a character profile first.</div>
           </div>
 
           <div class="summary-block">
@@ -76,7 +74,11 @@
         </section>
 
         <section class="table-panel">
-          <h2>Badge Components</h2>
+          <div class="inline-actions">
+            <h2>Badge Components</h2>
+            <button class="btn badge-profile-save" type="button">Update Profile Badge</button>
+            <button class="btn badge-profile-reload" type="button">Reload from Profile</button>
+          </div>
           <table>
             <thead>
               <tr>
@@ -91,7 +93,11 @@
         </section>
 
         <section class="table-panel">
-          <h2>Enhancement Configuration</h2>
+          <div class="inline-actions">
+            <h2>Enhancement Configuration</h2>
+            <button class="btn badge-profile-save" type="button">Update Profile Badge</button>
+            <button class="btn badge-profile-reload" type="button">Reload from Profile</button>
+          </div>
           <table>
             <thead>
               <tr>
@@ -107,32 +113,40 @@
           </table>
         </section>
 
-        <section class="notes">
-          <ul>
-            <li>Upgrade step cost is 10,000 * new level (e.g. level 4->5 costs 50,000 BP).</li>
-            <li>Upgrade BP is lifetime-invested value (not spent), but recharge uses current BP.</li>
-            <li>2nd slot rule: 10 total upgrades in 2 or fewer components.</li>
-            <li>3rd slot rule: 20 total upgrades in 3 or fewer components.</li>
-            <li>Enhancement strength is gated by total badge upgrades and varies by boost type.</li>
-            <li>Recharge table follows the GSWiki badge cost spreadsheet values (triangular progression by value).</li>
-          </ul>
-        </section>
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Adventurer%27s_Guild_Badge" target="_blank" rel="noopener noreferrer">GSWiki: Adventurer's Guild Badge</a></li>
+                <li><a href="https://gswiki.play.net/Bounty_points" target="_blank" rel="noopener noreferrer">GSWiki: Bounty Points</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
 
-        <section class="table-panel">
-          <h2>Planner Self-Tests</h2>
-          <div class="inline-actions">
-            <button class="btn" id="runBadgeTests" type="button">Run Test Cases</button>
+        <details class="collapsible-section">
+          <summary>Page Tests</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <h2>Planner Self-Tests</h2>
+              <div class="inline-actions">
+                <button class="btn" id="runBadgeTests" type="button">Run Test Cases</button>
+                <button class="btn badge-profile-save" type="button">Update Profile Badge</button>
+                <button class="btn badge-profile-reload" type="button">Reload from Profile</button>
+              </div>
+              <pre id="testOutput" class="test-output">No tests run yet.</pre>
+              <div class="input-group">
+                <label for="stateJson">State JSON</label>
+                <textarea id="stateJson" rows="10" placeholder='{"lifetimeBp":300000,"components":[0,0,0,0,0],"boosts":[{"id":1,"value":0},{"id":22,"value":0},{"id":87,"value":0}]}'></textarea>
+              </div>
+              <div class="inline-actions">
+                <button class="btn" id="validateStateJson" type="button">Validate</button>
+              </div>
+              <div class="helper" id="stateJsonStatus">JSON state is synced from current planner values.</div>
+            </section>
           </div>
-          <pre id="testOutput" class="test-output">No tests run yet.</pre>
-          <div class="input-group">
-            <label for="stateJson">State JSON</label>
-            <textarea id="stateJson" rows="10" placeholder='{"lifetimeBp":300000,"components":[0,0,0,0,0],"boosts":[{"id":1,"value":0},{"id":22,"value":0},{"id":87,"value":0}]}'></textarea>
-          </div>
-          <div class="inline-actions">
-            <button class="btn" id="validateStateJson" type="button">Validate</button>
-          </div>
-          <div class="helper" id="stateJsonStatus">JSON state is synced from current planner values.</div>
-        </section>
+        </details>
       </main>
 
       <div data-footer></div>

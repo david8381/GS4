@@ -8,6 +8,8 @@ const bestLabel = document.getElementById("bestLabel");
 const bestDelta = document.getElementById("bestDelta");
 const chart = document.getElementById("chart");
 const ctx = chart.getContext("2d");
+const runLumnisTestsBtn = document.getElementById("runLumnisTests");
+const lumnisTestOutput = document.getElementById("lumnisTestOutput");
 
 const BASE_CHUNK = 7300;
 const TUTELAGE_BASE_CAP = 25000;
@@ -315,3 +317,49 @@ chart.addEventListener("touchend", () => {
 
 updateLegend();
 updateAll();
+
+function runLumnisSelfTests() {
+  const tests = [
+    {
+      name: "T1 zero base yields zero total and multiplier 1x",
+      run: () => computeTotal(0, options[0]),
+      check: (got) => got.total === 0 && got.bonus === 0 && got.effective === 1,
+    },
+    {
+      name: "T2 donate+tutelage outperforms lumnis at moderate base",
+      run: () => ({
+        lumnis: computeTotal(20000, options[0]).total,
+        donateTutelage: computeTotal(20000, options[2]).total,
+      }),
+      check: (got) => got.donateTutelage > got.lumnis,
+    },
+    {
+      name: "T3 higher base experience increases total",
+      run: () => ({
+        low: computeTotal(10000, options[1]).total,
+        high: computeTotal(20000, options[1]).total,
+      }),
+      check: (got) => got.high > got.low,
+    },
+  ];
+
+  let pass = 0;
+  const lines = [];
+  tests.forEach((test) => {
+    const got = test.run();
+    const ok = Boolean(test.check(got));
+    if (ok) pass += 1;
+    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    if (!ok) lines.push(` got: ${JSON.stringify(got)}`);
+  });
+  lines.push("");
+  lines.push(`Summary: ${pass}/${tests.length} passing`);
+  if (lumnisTestOutput) {
+    lumnisTestOutput.textContent = lines.join("\n");
+    lumnisTestOutput.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
+  }
+}
+
+if (runLumnisTestsBtn) {
+  runLumnisTestsBtn.addEventListener("click", runLumnisSelfTests);
+}

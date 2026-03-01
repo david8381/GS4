@@ -10,6 +10,8 @@ const sewerChance = document.getElementById("sewerChance");
 const arenaSub = document.getElementById("arenaSub");
 const heistSub = document.getElementById("heistSub");
 const sewerSub = document.getElementById("sewerSub");
+const runVioletOrbTestsBtn = document.getElementById("runVioletOrbTests");
+const violetOrbTestOutput = document.getElementById("violetOrbTestOutput");
 
 const MAX_RUNS = 2500;
 
@@ -88,3 +90,46 @@ nextRunsSlider.addEventListener("input", () => {
 });
 
 updateAll();
+
+function runVioletOrbSelfTests() {
+  const tests = [
+    {
+      name: "T1 chance is 100% at max runs",
+      run: () => probabilityForNextN(2500, 10),
+      check: (got) => got === 1,
+    },
+    {
+      name: "T2 chance increases with more next-runs",
+      run: () => ({
+        short: probabilityForNextN(100, 10),
+        longer: probabilityForNextN(100, 100),
+      }),
+      check: (got) => got.longer > got.short,
+    },
+    {
+      name: "T3 zero current runs and one next run equals 1/2500",
+      run: () => probabilityForNextN(0, 1),
+      check: (got) => Math.abs(got - 1 / 2500) < 1e-9,
+    },
+  ];
+
+  let pass = 0;
+  const lines = [];
+  tests.forEach((test) => {
+    const got = test.run();
+    const ok = Boolean(test.check(got));
+    if (ok) pass += 1;
+    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    if (!ok) lines.push(` got: ${JSON.stringify(got)}`);
+  });
+  lines.push("");
+  lines.push(`Summary: ${pass}/${tests.length} passing`);
+  if (violetOrbTestOutput) {
+    violetOrbTestOutput.textContent = lines.join("\n");
+    violetOrbTestOutput.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
+  }
+}
+
+if (runVioletOrbTestsBtn) {
+  runVioletOrbTestsBtn.addEventListener("click", runVioletOrbSelfTests);
+}

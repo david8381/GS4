@@ -10,14 +10,17 @@ const testOutputEl = document.getElementById("testOutput");
 const stateJsonInput = document.getElementById("stateJson");
 const validateStateJsonBtn = document.getElementById("validateStateJson");
 const stateJsonStatusEl = document.getElementById("stateJsonStatus");
+const badgeProfileStatusEl = document.getElementById("badgeProfileStatus");
 const badgeProfileSelect = document.getElementById("badgeProfileSelect");
 const badgeProfileLoad = document.getElementById("badgeProfileLoad");
-const badgeProfileSave = document.getElementById("badgeProfileSave");
+const badgeProfileSaveButtons = Array.from(document.querySelectorAll(".badge-profile-save"));
+const badgeProfileReloadButtons = Array.from(document.querySelectorAll(".badge-profile-reload"));
 
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
 const POWER_PER_UPGRADE = 1200;
 const PROFILE_KEY = "gs4.characterProfiles";
+const HEADER_SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
 
 const componentNames = ["Material", "Binding", "Device", "Motif", "Gem"];
 
@@ -268,7 +271,7 @@ function profileKey(profile, index) {
 
 function refreshProfileSelect(profiles) {
   if (!badgeProfileSelect) return;
-  const selected = badgeProfileSelect.value;
+  const selected = badgeProfileSelect.value || localStorage.getItem(HEADER_SELECTED_PROFILE_KEY) || "";
   badgeProfileSelect.innerHTML = '<option value="">Select from Profile</option>';
   profiles.forEach((profile, index) => {
     const option = document.createElement("option");
@@ -276,7 +279,13 @@ function refreshProfileSelect(profiles) {
     option.textContent = profile.name;
     badgeProfileSelect.appendChild(option);
   });
-  if (selected) badgeProfileSelect.value = selected;
+  if (selected) {
+    badgeProfileSelect.value = selected;
+    if (badgeProfileSelect.value !== selected && badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = "Selected profile is no longer available.";
+      badgeProfileStatusEl.style.color = "#b42318";
+    }
+  }
 }
 
 function findProfileByKey(profiles, key) {
@@ -385,22 +394,82 @@ function statesEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+function getSavedBadgeState() {
+  if (!badgeProfileSelect || !badgeProfileSelect.value) return null;
+  const profiles = loadProfiles();
+  const found = findProfileByKey(profiles, badgeProfileSelect.value);
+  if (!found) return null;
+  const parsed = parseBadgeStateObject(found.profile.defaults?.badge);
+  return parsed.ok ? parsed.value : null;
+}
+
 function updateProfileButtonState() {
-  if (!badgeProfileSelect || !badgeProfileLoad || !badgeProfileSave) return;
+  if (!badgeProfileSelect || !badgeProfileLoad || badgeProfileSaveButtons.length === 0) return;
   const key = badgeProfileSelect.value;
-  badgeProfileLoad.classList.remove("attention");
-  badgeProfileSave.classList.remove("attention");
-  if (!key) return;
+  badgeProfileLoad.classList.remove("attention", "success-attention");
+  badgeProfileSaveButtons.forEach((button) => button.classList.remove("success-attention"));
+  badgeProfileReloadButtons.forEach((button) => button.classList.remove("attention"));
+
+  if (!key) {
+    badgeProfileSaveButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    badgeProfileReloadButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    if (badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = "Save disabled: select a character profile first.";
+      badgeProfileStatusEl.style.color = "";
+    }
+    return;
+  }
 
   const profiles = loadProfiles();
   const found = findProfileByKey(profiles, key);
-  if (!found) return;
+  if (!found) {
+    badgeProfileSaveButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    badgeProfileReloadButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    if (badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = "Selected profile was not found.";
+      badgeProfileStatusEl.style.color = "#b42318";
+    }
+    return;
+  }
+  badgeProfileSaveButtons.forEach((button) => {
+    button.disabled = false;
+  });
+  badgeProfileReloadButtons.forEach((button) => {
+    button.disabled = false;
+  });
   const parsed = parseBadgeStateObject(found.profile.defaults?.badge);
-  if (!parsed.ok) return;
+  if (!parsed.ok) {
+    badgeProfileSaveButtons.forEach((button) => button.classList.add("success-attention"));
+    badgeProfileReloadButtons.forEach((button) => {
+      button.disabled = true;
+    });
+    if (badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = "No badge state is saved yet for this profile.";
+      badgeProfileStatusEl.style.color = "#1f7a4d";
+    }
+    return;
+  }
 
-  if (!statesEqual(currentStateSnapshot(), parsed.value)) {
+  const changed = !statesEqual(currentStateSnapshot(), parsed.value);
+  if (changed) {
     badgeProfileLoad.classList.add("attention");
-    badgeProfileSave.classList.add("attention");
+    badgeProfileSaveButtons.forEach((button) => button.classList.add("success-attention"));
+    badgeProfileReloadButtons.forEach((button) => button.classList.add("attention"));
+    if (badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = "Current badge values differ from the saved profile.";
+      badgeProfileStatusEl.style.color = "#1f7a4d";
+    }
+  } else if (badgeProfileStatusEl) {
+    badgeProfileStatusEl.textContent = "Badge values match the selected profile.";
+    badgeProfileStatusEl.style.color = "";
   }
 }
 
@@ -548,6 +617,7 @@ function setBoostId(index, id) {
 }
 
 function renderSummary() {
+  const saved = getSavedBadgeState();
   const upgrade = currentUpgradeCost();
   const recharge = currentRechargeCost();
   const slotsUnlocked = slotCount(state.components);
@@ -594,14 +664,23 @@ function renderSummary() {
     validationMessageEl.textContent = `Invalid configuration: ${reasons.join(" ")}`;
     validationMessageEl.style.color = "#b42318";
   }
+
+  lifetimeBpInput.classList.remove("changed-from-profile");
+  if (saved && state.lifetimeBp !== saved.lifetimeBp) {
+    lifetimeBpInput.classList.add("changed-from-profile");
+  }
 }
 
 function renderComponentTable() {
   componentTable.innerHTML = "";
+  const saved = getSavedBadgeState();
   const overspent = currentUpgradeCost() > state.lifetimeBp;
   state.components.forEach((level, index) => {
     const row = document.createElement("tr");
     row.style.color = overspent ? "#b42318" : "#1f4e42";
+    if (saved && level !== saved.components[index]) {
+      row.classList.add("changed-from-profile");
+    }
     const total = upgradeCostForLevel(level);
     const next = nextUpgradeCost(level);
 
@@ -632,6 +711,7 @@ function renderComponentTable() {
 
 function renderBoostTable() {
   boostTable.innerHTML = "";
+  const saved = getSavedBadgeState();
 
   state.boosts.forEach((entry, index) => {
     const def = boostById.get(entry.id);
@@ -642,6 +722,10 @@ function renderBoostTable() {
 
     const row = document.createElement("tr");
     row.style.color = rowValid ? "#1f4e42" : "#b42318";
+    const savedEntry = saved?.boosts?.[index];
+    if (savedEntry && (entry.id !== savedEntry.id || entry.value !== savedEntry.value)) {
+      row.classList.add("changed-from-profile");
+    }
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>
@@ -738,44 +822,23 @@ if (badgeProfileLoad && badgeProfileSelect) {
   });
 
   badgeProfileLoad.addEventListener("click", () => {
-    const key = badgeProfileSelect.value;
-    if (!key) {
-      setStateJsonStatus("Select a profile first.", true);
-      return;
-    }
-    const profiles = loadProfiles();
-    const found = findProfileByKey(profiles, key);
-    if (!found) {
-      setStateJsonStatus("Selected profile was not found.", true);
-      return;
-    }
-    const { profile } = found;
-
-    const badgeState = profile.defaults?.badge;
-    const parsed = parseBadgeStateObject(badgeState);
-    if (!parsed.ok) {
-      setStateJsonStatus("Profile has no saved badge state yet.", true);
-      return;
-    }
-
-    applyParsedState(parsed.value);
-    setStateJsonStatus(`Loaded badge state from profile: ${profile.name}`);
-    render();
+    handleBadgeProfileReload();
   });
 }
 
-if (badgeProfileSave && badgeProfileSelect) {
-  badgeProfileSave.addEventListener("click", () => {
+function handleBadgeProfileSave() {
     const key = badgeProfileSelect.value;
     if (!key) {
       setStateJsonStatus("Select a profile first.", true);
-      return;
+      updateProfileButtonState();
+      return false;
     }
     const profiles = loadProfiles();
     const found = findProfileByKey(profiles, key);
     if (!found) {
       setStateJsonStatus("Selected profile was not found.", true);
-      return;
+      updateProfileButtonState();
+      return false;
     }
     const { profile, index } = found;
 
@@ -788,11 +851,74 @@ if (badgeProfileSave && badgeProfileSelect) {
     refreshProfileSelect(profiles);
     badgeProfileSelect.value = key;
     setStateJsonStatus(`Saved current badge state to profile: ${profile.name}`);
+    if (badgeProfileStatusEl) {
+      badgeProfileStatusEl.textContent = `Saved badge values to profile: ${profile.name}`;
+      badgeProfileStatusEl.style.color = "#1f7a4d";
+    }
     render();
+    return true;
+}
+
+function handleBadgeProfileReload() {
+  const key = badgeProfileSelect.value;
+  if (!key) {
+    setStateJsonStatus("Select a profile first.", true);
+    updateProfileButtonState();
+    return false;
+  }
+  const profiles = loadProfiles();
+  const found = findProfileByKey(profiles, key);
+  if (!found) {
+    setStateJsonStatus("Selected profile was not found.", true);
+    updateProfileButtonState();
+    return false;
+  }
+  const { profile } = found;
+
+  const badgeState = profile.defaults?.badge;
+  const parsed = parseBadgeStateObject(badgeState);
+  if (!parsed.ok) {
+    setStateJsonStatus("Profile has no saved badge state yet.", true);
+    updateProfileButtonState();
+    return false;
+  }
+
+  applyParsedState(parsed.value);
+  setStateJsonStatus(`Reloaded badge state from profile: ${profile.name}`);
+  if (badgeProfileStatusEl) {
+    badgeProfileStatusEl.textContent = `Reloaded badge values from profile: ${profile.name}`;
+    badgeProfileStatusEl.style.color = "#b42318";
+  }
+  render();
+  return true;
+}
+
+if (badgeProfileSelect && badgeProfileSaveButtons.length > 0) {
+  badgeProfileSaveButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      handleBadgeProfileSave();
+    });
+  });
+}
+
+if (badgeProfileSelect && badgeProfileReloadButtons.length > 0) {
+  badgeProfileReloadButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      handleBadgeProfileReload();
+    });
   });
 }
 
 refreshProfileSelect(loadProfiles());
+if (badgeProfileSelect) {
+  const selected = localStorage.getItem(HEADER_SELECTED_PROFILE_KEY) || "";
+  if (selected) {
+    badgeProfileSelect.value = selected;
+    if (badgeProfileSelect.value === selected) {
+      badgeProfileSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+}
 window.addEventListener("focus", () => {
   refreshProfileSelect(loadProfiles());
   updateProfileButtonState();
