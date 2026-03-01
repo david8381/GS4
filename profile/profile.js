@@ -55,6 +55,7 @@ const {
   ascMnemonicMap,
   professions,
   costProfessionOrder,
+  trainingCostRows,
   loreSkillNames,
   maxPerLevelRows,
   baseGrowthRates,
@@ -813,6 +814,10 @@ function formatPoolHeaderText(poolLabel, poolUsed, poolMax) {
   return `${poolLabel} Max Ranks: ${poolMax} (Used: ${poolUsed})`;
 }
 
+function formatTrainingCostDisplay(ptp, mtp) {
+  return `${ptp}/${mtp}`;
+}
+
 function getDisplaySkillCategory(skillName) {
   const baseCategory = skillCategoryByName[skillName] || "Other";
   if (baseCategory === "Subterfuge" || baseCategory === "Survival and Utility") return "General Skills";
@@ -885,6 +890,30 @@ function buildSkillRankCapContext(skills = currentSkills) {
   return { bySkill, byPool };
 }
 
+function getNextRankCostDisplay(skill, capContext) {
+  const professionIndex = costProfessionOrder.indexOf(profileProfession.value);
+  if (professionIndex < 0) return "—";
+
+  const key = skillKey(skill.name);
+  const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
+  const cap = capContext.bySkill.get(key);
+  if (cap && ranks >= cap.maxRanks) return "—";
+
+  const trainingRowName = cap?.trainingRowName || getSkillTrainingRowName(skill.name);
+  const costRow = trainingCostRows[trainingRowName]?.[professionIndex];
+  if (!Array.isArray(costRow) || costRow.length < 2) return "—";
+
+  const basePtp = Math.max(0, Math.trunc(Number(costRow[0]) || 0));
+  const baseMtp = Math.max(0, Math.trunc(Number(costRow[1]) || 0));
+  const effectiveLevels = Math.max(0, Math.trunc(Number(profileLevel.value) || 0)) + 2;
+  const oneXLimit = effectiveLevels;
+  const twoXLimit = effectiveLevels * 2;
+
+  const nextOrdinal = (cap?.pooled ? cap.poolUsed : ranks) + 1;
+  const multiplier = nextOrdinal <= oneXLimit ? 1 : (nextOrdinal <= twoXLimit ? 2 : 4);
+  return formatTrainingCostDisplay(basePtp * multiplier, baseMtp * multiplier);
+}
+
 function renderSkillsTable(skills) {
   skillsTable.innerHTML = "";
   const visibleSkills = getVisibleSkills(skills);
@@ -893,7 +922,7 @@ function renderSkillsTable(skills) {
   const renderedPoolHeaders = new Set();
   if (!visibleSkills.length) {
     const row = document.createElement("tr");
-    row.innerHTML = "<td colspan=\"6\">No skills loaded yet.</td>";
+    row.innerHTML = "<td colspan=\"7\">No skills loaded yet.</td>";
     skillsTable.appendChild(row);
     return;
   }
@@ -911,7 +940,7 @@ function renderSkillsTable(skills) {
 
     const groupRow = document.createElement("tr");
     groupRow.className = "skills-group-row";
-    groupRow.innerHTML = `<td colspan="6">${category}</td>`;
+    groupRow.innerHTML = `<td colspan="7">${category}</td>`;
     skillsTable.appendChild(groupRow);
 
     items.forEach((skill) => {
@@ -926,6 +955,7 @@ function renderSkillsTable(skills) {
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
     const baseBonusDisplay = isCircle ? "—" : String(baseBonus);
     const finalBonusDisplay = isCircle ? "—" : String(finalBonus);
+    const nextCostDisplay = getNextRankCostDisplay(skill, capContext);
     const cap = capsBySkill.get(key);
     const maxRanksDisplay = cap ? (cap.pooled ? "—" : String(cap.maxRanks)) : "—";
     const rankInputMax = cap ? Math.max(cap.maxRanks, baseRanks) : 500;
@@ -935,7 +965,7 @@ function renderSkillsTable(skills) {
       poolRow.className = "skills-group-row";
       poolRow.dataset.poolKey = cap.poolKey;
       poolRow.dataset.poolLabel = cap.poolLabel;
-      poolRow.innerHTML = `<td colspan="6">${formatPoolHeaderText(cap.poolLabel, cap.poolUsed, cap.poolMax)}</td>`;
+      poolRow.innerHTML = `<td colspan="7">${formatPoolHeaderText(cap.poolLabel, cap.poolUsed, cap.poolMax)}</td>`;
       skillsTable.appendChild(poolRow);
       renderedPoolHeaders.add(cap.poolKey);
     }
@@ -945,6 +975,7 @@ function renderSkillsTable(skills) {
       <td>${skill.name}</td>
       <td><input type="number" min="0" max="${rankInputMax}" step="1" data-skill-rank="${key}" value="${baseRanks}" /></td>
       <td data-skill-field="base-bonus">${baseBonusDisplay}</td>
+      <td data-skill-field="next-cost">${nextCostDisplay}</td>
       <td data-skill-field="max-ranks">${maxRanksDisplay}</td>
       <td data-skill-field="final-ranks">${finalRanks}</td>
       <td data-skill-field="final-bonus">${finalBonusDisplay}</td>
@@ -1112,6 +1143,7 @@ function updateSkillsDerivedDisplay() {
     const finalRanks = Math.max(0, baseRanks + enhRank);
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
     const cap = capsBySkill.get(key);
+    const nextCostDisplay = getNextRankCostDisplay(skill, capContext);
 
     const rankInput = row.querySelector('input[data-skill-rank]');
     if (rankInput) {
@@ -1119,10 +1151,12 @@ function updateSkillsDerivedDisplay() {
       rankInput.max = String(cap ? Math.max(cap.maxRanks, baseRanks) : 500);
     }
     const baseBonusCell = row.querySelector('[data-skill-field="base-bonus"]');
+    const nextCostCell = row.querySelector('[data-skill-field="next-cost"]');
     const maxRanksCell = row.querySelector('[data-skill-field="max-ranks"]');
     const finalRanksCell = row.querySelector('[data-skill-field="final-ranks"]');
     const finalBonusCell = row.querySelector('[data-skill-field="final-bonus"]');
     if (baseBonusCell) baseBonusCell.textContent = isCircle ? "—" : String(baseBonus);
+    if (nextCostCell) nextCostCell.textContent = nextCostDisplay;
     if (maxRanksCell) maxRanksCell.textContent = cap ? (cap.pooled ? "—" : String(cap.maxRanks)) : "—";
     if (finalRanksCell) finalRanksCell.textContent = String(finalRanks);
     if (finalBonusCell) finalBonusCell.textContent = isCircle ? "—" : String(finalBonus);

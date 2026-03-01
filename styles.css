@@ -545,15 +545,9 @@ textarea {
 }
 
 #skillsTable input[data-skill-rank] {
-  max-width: 78px;
+  width: 100%;
+  max-width: 100px;
   padding: 4px 4px;
-  -moz-appearance: textfield;
-}
-
-#skillsTable input[data-skill-rank]::-webkit-outer-spin-button,
-#skillsTable input[data-skill-rank]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .profile-skills-panel {
@@ -565,11 +559,15 @@ textarea {
 }
 
 .profile-skills-panel col.col-skill {
-  width: 40%;
+  width: 35%;
+}
+
+.profile-skills-panel col.col-rank {
+  width: 15%;
 }
 
 .profile-skills-panel col.col-small {
-  width: 12%;
+  width: 10%;
 }
 
 .profile-skills-panel table th,
