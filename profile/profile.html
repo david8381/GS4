@@ -46,6 +46,7 @@
             <div class="input-group inline-actions">
               <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
               <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+              <button class="btn ghost" id="profileExportJson" type="button">Download JSON</button>
               <button class="btn ghost" id="profileDelete" type="button">Delete</button>
             </div>
           </div>
@@ -73,6 +74,15 @@
                   <textarea id="skillsImport" rows="7" placeholder="Paste SKILLS block"></textarea>
                 </div>
                 <div class="helper" id="skillsStatus">Paste SKILLS output to load ranks.</div>
+              </div>
+
+              <div class="input-block import-card">
+                <h2>EXP</h2>
+                <div class="input-group">
+                  <label for="expImport">Paste EXP output</label>
+                  <textarea id="expImport" rows="7" placeholder="Paste EXP block"></textarea>
+                </div>
+                <div class="helper" id="expImportStatus">Paste EXP to load level and experience.</div>
               </div>
 
               <div class="input-block import-card">
@@ -183,6 +193,14 @@
                     <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
                   </div>
                 </div>
+
+                <div class="input-group">
+                  <label for="profileExperience">Experience</label>
+                  <div class="input-row">
+                    <input id="profileExperience" type="number" min="0" step="1" value="0" />
+                  </div>
+                  <div class="helper">Enter experience to derive level, or set level to auto-fill a baseline experience.</div>
+                </div>
               </div>
             </section>
             <div class="inline-actions">
@@ -232,6 +250,8 @@
                   </thead>
                   <tbody id="skillsTable"></tbody>
                 </table>
+                <div class="helper" id="tpEstimateStatus">Total TP from EXP: —</div>
+                <div class="helper" id="tpSpentStatus">Total TP Spent: —</div>
               </div>
             </section>
             <div class="inline-actions">

@@ -2,11 +2,15 @@ const profileSelect = document.getElementById("profileSelect");
 const profileApply = document.getElementById("profileApply");
 const profileDelete = document.getElementById("profileDelete");
 const profileSave = document.getElementById("profileSave");
+const profileExportJson = document.getElementById("profileExportJson");
 const profileName = document.getElementById("profileName");
 const profileRace = document.getElementById("profileRace");
 const profileProfession = document.getElementById("profileProfession");
 const profileLevel = document.getElementById("profileLevel");
+const profileExperience = document.getElementById("profileExperience");
 const infoImport = document.getElementById("infoImport");
+const expImport = document.getElementById("expImport");
+const expImportStatus = document.getElementById("expImportStatus");
 const importStatus = document.getElementById("importStatus");
 const statGrid = document.getElementById("statGrid");
 const skillsImport = document.getElementById("skillsImport");
@@ -15,6 +19,8 @@ const skillsShowTrainedOnly = document.getElementById("skillsShowTrainedOnly");
 const ascImport = document.getElementById("ascImport");
 const ascImportStatus = document.getElementById("ascImportStatus");
 const skillsTable = document.getElementById("skillsTable");
+const tpEstimateStatus = document.getElementById("tpEstimateStatus");
+const tpSpentStatus = document.getElementById("tpSpentStatus");
 const ascStatTable = document.getElementById("ascStatTable");
 const ascSkillTable = document.getElementById("ascSkillTable");
 const ascStatus = document.getElementById("ascStatus");
@@ -54,6 +60,8 @@ const {
   skillAliasMap,
   ascMnemonicMap,
   professions,
+  professionPrimeReqs,
+  levelThresholds,
   costProfessionOrder,
   trainingCostRows,
   loreSkillNames,
@@ -91,11 +99,13 @@ const getRaceBonusModifier = (raceName, statKey) => (
 let currentSkills = skillCatalog.map((name) => ({ name, ranks: 0 }));
 let currentLevel0Stats = null;
 let currentBaseStats = {};
+let currentAscensionExperience = 0;
 let ascensionState = { stats: {}, skills: {} };
 let enhanciveState = { stats: {}, skills: {} };
 let applyingProfile = false;
 let skillsImportUnmatchedKeys = new Set();
 let skillsImportOffProfessionKeys = new Set();
+let syncingLevelExperience = false;
 
 function fillSelect(select, items, labelKey = "name") {
   select.innerHTML = "";
@@ -287,6 +297,233 @@ function parseAscListBlock(text) {
   });
 
   return results;
+}
+
+function levelFromExperience(experience) {
+  const value = Math.max(0, Math.trunc(Number(experience) || 0));
+  let level = 0;
+  for (let index = 0; index < levelThresholds.length; index += 1) {
+    if (value >= levelThresholds[index]) level = index;
+    else break;
+  }
+  return clamp(level, 0, 100);
+}
+
+function experienceForLevel(level) {
+  const safeLevel = clamp(Math.trunc(Number(level) || 0), 0, 100);
+  return Math.max(0, Math.trunc(Number(levelThresholds[safeLevel]) || 0));
+}
+
+function parseExpBlock(text) {
+  const source = String(text || "");
+  const expMatch = source.match(/Experience:\s*([0-9,]+)/i);
+  if (!expMatch) return null;
+  const hintedLevelMatch = source.match(/Level:\s*(\d+)/i);
+  const ascExpMatch = source.match(/Ascension Exp:\s*([0-9,]+)/i);
+  const experience = Math.max(0, Number(expMatch[1].replace(/,/g, "")) || 0);
+  return {
+    experience,
+    level: levelFromExperience(experience),
+    hintedLevel: hintedLevelMatch ? clamp(Number(hintedLevelMatch[1]), 0, 100) : null,
+    ascensionExperience: ascExpMatch ? Math.max(0, Number(ascExpMatch[1].replace(/,/g, "")) || 0) : 0,
+  };
+}
+
+function setExperienceFromLevel(level) {
+  profileExperience.value = String(experienceForLevel(level));
+}
+
+function getTrainingPointStatsForLevel(level) {
+  if (currentLevel0Stats) {
+    const raceName = races.find((race) => race.key === profileRace.value)?.name || "Human";
+    const profession = profileProfession.value;
+    const computed = computeStatsFromLevel0(currentLevel0Stats, level, raceName, profession);
+    if (computed && Object.keys(computed).length) {
+      const snapshot = {};
+      stats.forEach((stat) => {
+        snapshot[stat.key] = clamp(Number(computed?.[stat.key]?.base ?? 50), 1, 100);
+      });
+      return snapshot;
+    }
+  }
+  const fallback = {};
+  stats.forEach((stat) => {
+    fallback[stat.key] = clamp(Number(currentBaseStats?.[stat.key] ?? 50), 1, 100);
+  });
+  return fallback;
+}
+
+function trainingPointsPerLevelForStats(statSnapshot, profession) {
+  const primes = new Set(professionPrimeReqs[profession] || []);
+  const weighted = (key) => {
+    const value = clamp(Number(statSnapshot?.[key] ?? 50), 1, 100);
+    return primes.has(key) ? value * 2 : value;
+  };
+  const str = weighted("str");
+  const con = weighted("con");
+  const dex = weighted("dex");
+  const agi = weighted("agi");
+  const aur = weighted("aur");
+  const dis = weighted("dis");
+  const log = weighted("log");
+  const int = weighted("int");
+  const wis = weighted("wis");
+  const inf = weighted("inf");
+  const hybrid = (aur + dis) / 2;
+
+  const ptpPerLevel = Math.max(0, Math.floor((str + con + dex + agi + hybrid) / 20 + 25));
+  const mtpPerLevel = Math.max(0, Math.floor((log + int + wis + inf + hybrid) / 20 + 25));
+  return { ptpPerLevel, mtpPerLevel };
+}
+
+function estimateTotalTrainingPointsFromExperience(experience, profession) {
+  const totalExp = Math.max(0, Math.trunc(Number(experience) || 0));
+  const capExp = Math.max(0, Math.trunc(Number(levelThresholds[100]) || 0));
+  const expForLeveledGain = Math.min(totalExp, capExp);
+
+  let totalPtp = 0;
+  let totalMtp = 0;
+
+  // Level 0 grant.
+  const level0Stats = getTrainingPointStatsForLevel(0);
+  const level0Gain = trainingPointsPerLevelForStats(level0Stats, profession);
+  totalPtp += level0Gain.ptpPerLevel;
+  totalMtp += level0Gain.mtpPerLevel;
+
+  // EXP-driven gains through level 100 progression.
+  for (let level = 0; level < 100; level += 1) {
+    const start = levelThresholds[level];
+    const end = levelThresholds[level + 1];
+    if (expForLeveledGain <= start) break;
+    const gained = Math.min(expForLeveledGain, end) - start;
+    if (gained <= 0) continue;
+    const interval = Math.max(1, end - start);
+    // TP gain within each level band anticipates the next level's stat state.
+    const perLevel = trainingPointsPerLevelForStats(getTrainingPointStatsForLevel(Math.min(100, level + 1)), profession);
+    if (gained >= interval) {
+      totalPtp += perLevel.ptpPerLevel;
+      totalMtp += perLevel.mtpPerLevel;
+    } else {
+      totalPtp += Math.floor((gained * perLevel.ptpPerLevel) / interval);
+      totalMtp += Math.floor((gained * perLevel.mtpPerLevel) / interval);
+      break;
+    }
+  }
+
+  // Post-cap bonus: +1 PTP and +1 MTP per 2500 experience over level 100 threshold.
+  if (totalExp > capExp) {
+    const postCapChunks = Math.floor((totalExp - capExp) / 2500);
+    totalPtp += postCapChunks;
+    totalMtp += postCapChunks;
+  }
+
+  return {
+    ptp: Math.max(0, Math.trunc(totalPtp)),
+    mtp: Math.max(0, Math.trunc(totalMtp)),
+  };
+}
+
+function multiplierUnitsForRanks(rankCount, effectiveLevels) {
+  const ranks = Math.max(0, Math.trunc(Number(rankCount) || 0));
+  const oneX = Math.max(0, Math.trunc(Number(effectiveLevels) || 0));
+  const baseCount = Math.min(ranks, oneX);
+  const doubleCount = Math.min(Math.max(ranks - oneX, 0), oneX);
+  const quadCount = Math.max(ranks - oneX * 2, 0);
+  return baseCount + doubleCount * 2 + quadCount * 4;
+}
+
+function estimateSpentTrainingPointsFromRanks(skills, profession, level) {
+  const professionIndex = costProfessionOrder.indexOf(profession);
+  if (professionIndex < 0) return { ptp: 0, mtp: 0 };
+
+  const effectiveLevels = Math.max(0, Math.trunc(Number(level) || 0)) + 2;
+  const pools = new Map();
+
+  (skills || []).forEach((skill) => {
+    const ranks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
+    if (ranks <= 0) return;
+    const trainingRowName = getSkillTrainingRowName(skill.name);
+    const poolKey = getSkillPoolKey(skill.name, trainingRowName);
+    if (!pools.has(poolKey)) {
+      pools.set(poolKey, { trainingRowName, ranks: 0 });
+    }
+    pools.get(poolKey).ranks += ranks;
+  });
+
+  let spentPtp = 0;
+  let spentMtp = 0;
+  pools.forEach((pool) => {
+    const costRow = trainingCostRows[pool.trainingRowName]?.[professionIndex];
+    if (!Array.isArray(costRow) || costRow.length < 2) return;
+    const basePtp = Math.max(0, Math.trunc(Number(costRow[0]) || 0));
+    const baseMtp = Math.max(0, Math.trunc(Number(costRow[1]) || 0));
+    const units = multiplierUnitsForRanks(pool.ranks, effectiveLevels);
+    spentPtp += basePtp * units;
+    spentMtp += baseMtp * units;
+  });
+
+  return {
+    ptp: Math.max(0, Math.trunc(spentPtp)),
+    mtp: Math.max(0, Math.trunc(spentMtp)),
+  };
+}
+
+function summarizeTrainingPointConversion(totalTp, spentTp) {
+  let balancePtp = Math.trunc(Number(totalTp?.ptp) || 0) - Math.trunc(Number(spentTp?.ptp) || 0);
+  let balanceMtp = Math.trunc(Number(totalTp?.mtp) || 0) - Math.trunc(Number(spentTp?.mtp) || 0);
+  let phyToMnt = 0;
+  let mntToPhy = 0;
+
+  // Mirror in-game conversion semantics:
+  // "Phy to Mnt" and "Mnt to Phy" are source-pool points converted at 2:1.
+  if (balancePtp > 0 && balanceMtp < 0) {
+    const neededMtp = Math.abs(balanceMtp);
+    let convertiblePtp = Math.min(balancePtp, neededMtp * 2);
+    convertiblePtp = Math.floor(convertiblePtp / 2) * 2;
+    phyToMnt = Math.max(0, convertiblePtp);
+    balancePtp -= phyToMnt;
+    balanceMtp += Math.floor(phyToMnt / 2);
+  } else if (balanceMtp > 0 && balancePtp < 0) {
+    const neededPtp = Math.abs(balancePtp);
+    let convertibleMtp = Math.min(balanceMtp, neededPtp * 2);
+    convertibleMtp = Math.floor(convertibleMtp / 2) * 2;
+    mntToPhy = Math.max(0, convertibleMtp);
+    balanceMtp -= mntToPhy;
+    balancePtp += Math.floor(mntToPhy / 2);
+  }
+
+  return {
+    phyToMnt,
+    mntToPhy,
+    pointsLeftPtp: Math.max(0, balancePtp),
+    pointsLeftMtp: Math.max(0, balanceMtp),
+    remainingDeficitPtp: Math.max(0, -balancePtp),
+    remainingDeficitMtp: Math.max(0, -balanceMtp),
+  };
+}
+
+function updateTrainingPointEstimateDisplay() {
+  if (!tpEstimateStatus || !tpSpentStatus) return;
+  const profession = profileProfession.value;
+  if (!profession) {
+    tpEstimateStatus.textContent = "Total TP from EXP: —";
+    tpSpentStatus.textContent = "Total TP Spent: —";
+    return;
+  }
+  const experience = Math.max(0, Math.trunc(Number(profileExperience.value) || 0));
+  const level = clamp(Number(profileLevel.value), 0, 100);
+  const totalTp = estimateTotalTrainingPointsFromExperience(experience, profession);
+  const spentTp = estimateSpentTrainingPointsFromRanks(currentSkills, profession, level);
+  const conversion = summarizeTrainingPointConversion(totalTp, spentTp);
+
+  tpEstimateStatus.textContent = `Total TP from EXP: ${totalTp.ptp}/${totalTp.mtp} (PTP/MTP)`;
+  tpSpentStatus.textContent = `Total TP Spent: ${spentTp.ptp}/${spentTp.mtp} (PTP/MTP) | Points Left: ${conversion.pointsLeftPtp}/${conversion.pointsLeftMtp} | Converted (Phy->Mnt / Mnt->Phy): ${conversion.phyToMnt}/${conversion.mntToPhy}`;
+  if (conversion.remainingDeficitPtp > 0 || conversion.remainingDeficitMtp > 0) {
+    tpSpentStatus.textContent += ` | Shortfall: ${conversion.remainingDeficitPtp}/${conversion.remainingDeficitMtp}`;
+    tpSpentStatus.style.color = "#b42318";
+  } else {
+    tpSpentStatus.style.color = "";
+  }
 }
 
 function isAscensionSkillName(name) {
@@ -608,6 +845,7 @@ function updateDerivedDisplays(options = {}) {
   updateAscensionStatus();
   if (skipEnhRender) updateEnhanciveDisplay();
   updateEnhStatus();
+  updateTrainingPointEstimateDisplay();
   if (!applyingProfile) updateProfileActionState();
 }
 
@@ -676,6 +914,19 @@ function recalcFromLevel0() {
 function handleInfoStartParse() {
   const parsedStart = parseInfoStartBlock(infoImport.value);
   if (!parsedStart || parsedStart.error) {
+    const parsedExp = parseExpBlock(infoImport.value);
+    if (parsedExp) {
+      syncingLevelExperience = true;
+      profileExperience.value = String(parsedExp.experience);
+      profileLevel.value = String(parsedExp.level);
+      syncingLevelExperience = false;
+      currentAscensionExperience = parsedExp.ascensionExperience;
+      if (currentLevel0Stats) recalcFromLevel0();
+      else renderSkillsTable(currentSkills);
+      importStatus.textContent = `Parsed EXP block. Level ${parsedExp.level}, EXP ${parsedExp.experience}, Asc EXP ${parsedExp.ascensionExperience}.`;
+      importStatus.style.color = "";
+      return;
+    }
     if (parsedStart?.error === "wrong_block_info") {
       importStatus.textContent = "This looks like INFO output (with bonuses/...). Paste INFO START or plain level-0 stat lines only.";
       importStatus.style.color = "#b42318";
@@ -718,7 +969,10 @@ function applyProfile(profile) {
   const raceOption = races.find((race) => race.name.toLowerCase() === profile.race.toLowerCase());
   if (raceOption) profileRace.value = raceOption.key;
   if (profile.profession) profileProfession.value = profile.profession;
-  if (profile.level != null) profileLevel.value = profile.level;
+  const normalizedExperience = Math.max(0, Math.trunc(Number(profile.experience) || experienceForLevel(profile.level ?? 0)));
+  profileExperience.value = String(normalizedExperience);
+  profileLevel.value = String(levelFromExperience(normalizedExperience));
+  currentAscensionExperience = Math.max(0, Math.trunc(Number(profile.ascensionExperience) || 0));
 
   currentLevel0Stats = profile.level0Stats || null;
   if (currentLevel0Stats) {
@@ -1302,6 +1556,8 @@ function comparableProfile(record) {
     race: String(record?.race || "Human"),
     profession: String(record?.profession || ""),
     level: clamp(Number(record?.level), 0, 100),
+    experience: Math.max(0, Math.trunc(Number(record?.experience) || experienceForLevel(record?.level))),
+    ascensionExperience: Math.max(0, Math.trunc(Number(record?.ascensionExperience) || 0)),
     level0Stats: normalizeLevel0Stats(record?.level0Stats),
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1342,6 +1598,7 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
   toggleDiffHighlight(profileRace, currentProfile.race !== selectedProfile.race);
   toggleDiffHighlight(profileProfession, currentProfile.profession !== selectedProfile.profession);
   toggleDiffHighlight(profileLevel, currentProfile.level !== selectedProfile.level);
+  toggleDiffHighlight(profileExperience, currentProfile.experience !== selectedProfile.experience);
 
   toggleDiffHighlight(armorAsgSelect, currentProfile.defaults.armorAsg !== selectedProfile.defaults.armorAsg);
   toggleDiffHighlight(armorWeightInput, currentProfile.defaults.armorWeight !== selectedProfile.defaults.armorWeight);
@@ -1436,6 +1693,8 @@ function buildCurrentProfileRecord(nameOverride = null) {
     race: races.find((race) => race.key === profileRace.value)?.name || "Human",
     profession: profileProfession.value,
     level: clamp(Number(profileLevel.value), 0, 100),
+    experience: Math.max(0, Math.trunc(Number(profileExperience.value) || 0)),
+    ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
     level0Stats: currentLevel0Stats,
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1519,12 +1778,16 @@ function resetEditorForNewProfile() {
   profileRace.value = races.find((race) => race.name === "Human")?.key || races[0].key;
   profileProfession.value = "Wizard";
   profileLevel.value = "0";
+  profileExperience.value = "0";
 
   infoImport.value = "";
+  expImport.value = "";
   skillsImport.value = "";
   ascImport.value = "";
   importStatus.textContent = "Run INFO START. Paste full output.";
   importStatus.style.color = "";
+  expImportStatus.textContent = "Paste EXP to load level and experience.";
+  expImportStatus.style.color = "";
   skillsImportUnmatchedKeys = new Set();
   skillsImportOffProfessionKeys = new Set();
   updateSkillsStatusMessage();
@@ -1540,6 +1803,7 @@ function resetEditorForNewProfile() {
   currentSkills = mergeSkillsWithCatalog([]);
   currentLevel0Stats = defaultStatMap(50);
   currentBaseStats = defaultStatMap(50);
+  currentAscensionExperience = 0;
   initAdjustmentState();
   updateDerivedDisplays();
   applyingProfile = false;
@@ -1612,6 +1876,7 @@ function handleProfileSave() {
   const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
   const professionPayload = parsedInfoStart?.profession || profileProfession.value;
   const levelPayload = clamp(Number(profileLevel.value), 0, 100);
+  const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
   const record = {
     id: "",
@@ -1619,6 +1884,7 @@ function handleProfileSave() {
     race: racePayload,
     profession: professionPayload,
     level: levelPayload,
+    experience: expPayload,
     level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
   };
 
@@ -1637,9 +1903,67 @@ function handleProfileSave() {
   applySectionDefaultVisibility();
 }
 
+function sanitizeFilenamePart(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "profile";
+}
+
+function buildExportProfileRecord() {
+  const parsedInfoStart = parseInfoStartBlock(infoImport.value);
+  const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
+  const baseName = profileName.value.trim() || parsedInfo?.name || "Profile";
+  const currentRecord = buildCurrentProfileRecord(baseName);
+
+  const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
+  const professionPayload = parsedInfoStart?.profession || profileProfession.value;
+  const levelPayload = clamp(Number(profileLevel.value), 0, 100);
+  const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
+
+  const selectedId = profileSelect.value || "";
+  const existingByName = profiles.find((entry) => entry.name.toLowerCase() === baseName.toLowerCase());
+  const idPayload = selectedId || existingByName?.id || "";
+
+  return {
+    id: idPayload,
+    ...currentRecord,
+    race: racePayload,
+    profession: professionPayload,
+    level: levelPayload,
+    experience: expPayload,
+    ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
+    level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
+  };
+}
+
+function downloadProfileJson() {
+  const record = buildExportProfileRecord();
+  const json = JSON.stringify(record, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const namePart = sanitizeFilenamePart(record.name);
+  const stamp = new Date().toISOString().slice(0, 10);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${namePart}-${stamp}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+
+  if (importStatus) {
+    importStatus.textContent = `Downloaded profile JSON: ${record.name}`;
+    importStatus.style.color = "#1f4e42";
+  }
+}
+
 saveProfileButtons.forEach((button) => {
   button.addEventListener("click", handleProfileSave);
 });
+
+profileExportJson?.addEventListener("click", downloadProfileJson);
 
 infoImport.addEventListener("input", () => {
   const parsedStart = parseInfoStartBlock(infoImport.value);
@@ -1678,6 +2002,24 @@ infoImport.addEventListener("change", () => {
   }
 });
 
+expImport.addEventListener("input", () => {
+  const parsed = parseExpBlock(expImport.value);
+  if (!parsed) {
+    expImportStatus.textContent = "Paste EXP to load level and experience.";
+    expImportStatus.style.color = "";
+    return;
+  }
+  syncingLevelExperience = true;
+  profileExperience.value = String(parsed.experience);
+  profileLevel.value = String(parsed.level);
+  syncingLevelExperience = false;
+  currentAscensionExperience = parsed.ascensionExperience;
+  expImportStatus.textContent = `Parsed EXP: level ${parsed.level}, experience ${parsed.experience}, asc exp ${parsed.ascensionExperience}.`;
+  expImportStatus.style.color = "";
+  if (currentLevel0Stats) recalcFromLevel0();
+  else renderSkillsTable(currentSkills);
+});
+
 skillsImport.addEventListener("input", () => {
   const parsed = parseSkillsBlock(skillsImport.value);
   if (!parsed.length) {
@@ -1706,7 +2048,10 @@ skillsImport.addEventListener("input", () => {
 
   const level = parseSkillsLevel(skillsImport.value);
   if (level != null) {
+    syncingLevelExperience = true;
     profileLevel.value = String(level);
+    setExperienceFromLevel(level);
+    syncingLevelExperience = false;
     if (currentLevel0Stats) recalcFromLevel0();
   }
 });
@@ -1714,6 +2059,28 @@ skillsImport.addEventListener("input", () => {
 armorAsgSelect.addEventListener("change", updateArmorWeight);
 
 profileLevel.addEventListener("input", () => {
+  const level = clamp(Number(profileLevel.value), 0, 100);
+  if (!syncingLevelExperience) {
+    syncingLevelExperience = true;
+    profileLevel.value = String(level);
+    setExperienceFromLevel(level);
+    syncingLevelExperience = false;
+  }
+  if (currentLevel0Stats) {
+    recalcFromLevel0();
+    return;
+  }
+  renderSkillsTable(currentSkills);
+});
+
+profileExperience.addEventListener("input", () => {
+  if (syncingLevelExperience) return;
+  const experience = Math.max(0, Math.trunc(Number(profileExperience.value) || 0));
+  const derivedLevel = levelFromExperience(experience);
+  syncingLevelExperience = true;
+  profileExperience.value = String(experience);
+  profileLevel.value = String(derivedLevel);
+  syncingLevelExperience = false;
   if (currentLevel0Stats) {
     recalcFromLevel0();
     return;
