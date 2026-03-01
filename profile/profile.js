@@ -8,6 +8,9 @@ const profileRace = document.getElementById("profileRace");
 const profileProfession = document.getElementById("profileProfession");
 const profileLevel = document.getElementById("profileLevel");
 const profileExperience = document.getElementById("profileExperience");
+const profileAscensionExperience = document.getElementById("profileAscensionExperience");
+const profileAscensionMilestones = document.getElementById("profileAscensionMilestones");
+const atpEstimateStatus = document.getElementById("atpEstimateStatus");
 const infoImport = document.getElementById("infoImport");
 const expImport = document.getElementById("expImport");
 const expImportStatus = document.getElementById("expImportStatus");
@@ -100,6 +103,7 @@ let currentSkills = skillCatalog.map((name) => ({ name, ranks: 0 }));
 let currentLevel0Stats = null;
 let currentBaseStats = {};
 let currentAscensionExperience = 0;
+let currentAscensionMilestones = 0;
 let ascensionState = { stats: {}, skills: {} };
 let enhanciveState = { stats: {}, skills: {} };
 let applyingProfile = false;
@@ -329,6 +333,17 @@ function parseExpBlock(text) {
   };
 }
 
+function estimateTotalAscensionPoints(ascensionExperience, ascensionMilestones) {
+  const ascExp = Math.max(0, Math.trunc(Number(ascensionExperience) || 0));
+  const milestones = clamp(Math.trunc(Number(ascensionMilestones) || 0), 0, 10);
+  const expAtp = Math.floor(ascExp / 50000);
+  return {
+    totalAtp: expAtp + milestones,
+    expAtp,
+    milestones,
+  };
+}
+
 function setExperienceFromLevel(level) {
   profileExperience.value = String(experienceForLevel(level));
 }
@@ -524,6 +539,12 @@ function updateTrainingPointEstimateDisplay() {
   } else {
     tpSpentStatus.style.color = "";
   }
+}
+
+function updateAscensionPointEstimateDisplay() {
+  if (!atpEstimateStatus) return;
+  const atp = estimateTotalAscensionPoints(currentAscensionExperience, currentAscensionMilestones);
+  atpEstimateStatus.textContent = `Total ATP from milestones + asc exp: ${atp.totalAtp} (${atp.milestones} milestones + ${atp.expAtp} from asc exp)`;
 }
 
 function isAscensionSkillName(name) {
@@ -846,6 +867,7 @@ function updateDerivedDisplays(options = {}) {
   if (skipEnhRender) updateEnhanciveDisplay();
   updateEnhStatus();
   updateTrainingPointEstimateDisplay();
+  updateAscensionPointEstimateDisplay();
   if (!applyingProfile) updateProfileActionState();
 }
 
@@ -973,6 +995,9 @@ function applyProfile(profile) {
   profileExperience.value = String(normalizedExperience);
   profileLevel.value = String(levelFromExperience(normalizedExperience));
   currentAscensionExperience = Math.max(0, Math.trunc(Number(profile.ascensionExperience) || 0));
+  if (profileAscensionExperience) profileAscensionExperience.value = String(currentAscensionExperience);
+  currentAscensionMilestones = clamp(Math.trunc(Number(profile.ascensionMilestones) || 0), 0, 10);
+  if (profileAscensionMilestones) profileAscensionMilestones.value = String(currentAscensionMilestones);
 
   currentLevel0Stats = profile.level0Stats || null;
   if (currentLevel0Stats) {
@@ -1558,6 +1583,7 @@ function comparableProfile(record) {
     level: clamp(Number(record?.level), 0, 100),
     experience: Math.max(0, Math.trunc(Number(record?.experience) || experienceForLevel(record?.level))),
     ascensionExperience: Math.max(0, Math.trunc(Number(record?.ascensionExperience) || 0)),
+    ascensionMilestones: clamp(Math.trunc(Number(record?.ascensionMilestones) || 0), 0, 10),
     level0Stats: normalizeLevel0Stats(record?.level0Stats),
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1599,6 +1625,8 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
   toggleDiffHighlight(profileProfession, currentProfile.profession !== selectedProfile.profession);
   toggleDiffHighlight(profileLevel, currentProfile.level !== selectedProfile.level);
   toggleDiffHighlight(profileExperience, currentProfile.experience !== selectedProfile.experience);
+  toggleDiffHighlight(profileAscensionExperience, currentProfile.ascensionExperience !== selectedProfile.ascensionExperience);
+  toggleDiffHighlight(profileAscensionMilestones, currentProfile.ascensionMilestones !== selectedProfile.ascensionMilestones);
 
   toggleDiffHighlight(armorAsgSelect, currentProfile.defaults.armorAsg !== selectedProfile.defaults.armorAsg);
   toggleDiffHighlight(armorWeightInput, currentProfile.defaults.armorWeight !== selectedProfile.defaults.armorWeight);
@@ -1695,6 +1723,7 @@ function buildCurrentProfileRecord(nameOverride = null) {
     level: clamp(Number(profileLevel.value), 0, 100),
     experience: Math.max(0, Math.trunc(Number(profileExperience.value) || 0)),
     ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
+    ascensionMilestones: clamp(Math.trunc(Number(currentAscensionMilestones) || 0), 0, 10),
     level0Stats: currentLevel0Stats,
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1779,6 +1808,9 @@ function resetEditorForNewProfile() {
   profileProfession.value = "Wizard";
   profileLevel.value = "0";
   profileExperience.value = "0";
+  if (profileAscensionExperience) profileAscensionExperience.value = "0";
+  currentAscensionMilestones = 0;
+  if (profileAscensionMilestones) profileAscensionMilestones.value = "0";
 
   infoImport.value = "";
   expImport.value = "";
@@ -1934,6 +1966,7 @@ function buildExportProfileRecord() {
     level: levelPayload,
     experience: expPayload,
     ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
+    ascensionMilestones: clamp(Math.trunc(Number(currentAscensionMilestones) || 0), 0, 10),
     level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
   };
 }
@@ -2014,10 +2047,25 @@ expImport.addEventListener("input", () => {
   profileLevel.value = String(parsed.level);
   syncingLevelExperience = false;
   currentAscensionExperience = parsed.ascensionExperience;
+  if (profileAscensionExperience) profileAscensionExperience.value = String(currentAscensionExperience);
   expImportStatus.textContent = `Parsed EXP: level ${parsed.level}, experience ${parsed.experience}, asc exp ${parsed.ascensionExperience}.`;
   expImportStatus.style.color = "";
   if (currentLevel0Stats) recalcFromLevel0();
   else renderSkillsTable(currentSkills);
+});
+
+profileAscensionExperience?.addEventListener("input", () => {
+  const value = Math.max(0, Math.trunc(Number(profileAscensionExperience.value) || 0));
+  profileAscensionExperience.value = String(value);
+  currentAscensionExperience = value;
+  updateDerivedDisplays();
+});
+
+profileAscensionMilestones?.addEventListener("input", () => {
+  const value = clamp(Math.trunc(Number(profileAscensionMilestones.value) || 0), 0, 10);
+  profileAscensionMilestones.value = String(value);
+  currentAscensionMilestones = value;
+  updateDerivedDisplays();
 });
 
 skillsImport.addEventListener("input", () => {

@@ -201,6 +201,23 @@
                   </div>
                   <div class="helper">Enter experience to derive level, or set level to auto-fill a baseline experience.</div>
                 </div>
+
+                <div class="input-group">
+                  <label for="profileAscensionExperience">Ascension Experience</label>
+                  <div class="input-row">
+                    <input id="profileAscensionExperience" type="number" min="0" step="1" value="0" />
+                  </div>
+                  <div class="helper">Enter ascension exp directly if not importing EXP output.</div>
+                </div>
+
+                <div class="input-group">
+                  <label for="profileAscensionMilestones">Ascension Milestones Reached</label>
+                  <div class="input-row">
+                    <input id="profileAscensionMilestones" type="number" min="0" max="10" step="1" value="0" />
+                  </div>
+                  <div class="helper">Enter milestones completed (0-10).</div>
+                </div>
+                <div class="helper" id="atpEstimateStatus">Total ATP from milestones + asc exp: —</div>
               </div>
             </section>
             <div class="inline-actions">
