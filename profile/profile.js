@@ -36,301 +36,56 @@ const silversInput = document.getElementById("silvers");
 
 const PROFILE_KEY = "gs4.characterProfiles";
 
-const races = [
-  { key: "burghal", name: "Burghal Gnome", baseWeight: 40, weightFactor: 0.4, maxWeight: 120, encFactor: 0.5 },
-  { key: "halfling", name: "Halfling", baseWeight: 45.3333, weightFactor: 0.4533, maxWeight: 136, encFactor: 0.5 },
-  { key: "forest-gnome", name: "Forest Gnome", baseWeight: 47.6667, weightFactor: 0.4767, maxWeight: 143, encFactor: 0.6 },
-  { key: "aelotoi", name: "Aelotoi", baseWeight: 67.6667, weightFactor: 0.6767, maxWeight: 203, encFactor: 0.75 },
-  { key: "elf", name: "Elf", baseWeight: 70, weightFactor: 0.7, maxWeight: 210, encFactor: 0.78 },
-  { key: "erithian", name: "Erithian", baseWeight: 72.3333, weightFactor: 0.7233, maxWeight: 217, encFactor: 0.85 },
-  { key: "sylvankind", name: "Sylvankind", baseWeight: 72.3333, weightFactor: 0.7233, maxWeight: 217, encFactor: 0.81 },
-  { key: "dark-elf", name: "Dark Elf", baseWeight: 77.6667, weightFactor: 0.7767, maxWeight: 233, encFactor: 0.84 },
-  { key: "dwarf", name: "Dwarf", baseWeight: 77.6667, weightFactor: 0.7767, maxWeight: 233, encFactor: 0.8 },
-  { key: "half-elf", name: "Half-Elf", baseWeight: 82.3333, weightFactor: 0.8233, maxWeight: 247, encFactor: 0.92 },
-  { key: "human", name: "Human", baseWeight: 90, weightFactor: 0.9, maxWeight: 270, encFactor: 1.0 },
-  { key: "half-krolvin", name: "Half-Krolvin", baseWeight: 100, weightFactor: 1.0, maxWeight: 300, encFactor: 1.1 },
-  { key: "giantman", name: "Giantman", baseWeight: 120, weightFactor: 1.2, maxWeight: 360, encFactor: 1.33 },
-];
+const dataSource = globalThis.GS4_DATA;
+const logic = globalThis.ProfileLogic;
 
-const armorAsg = [
-  { key: "none", name: "None / Normal Clothing (ASG 1)", standardWeight: 0, cmanPenalty: 0 },
-  { key: "asg2", name: "Robes (ASG 2)", standardWeight: 8, cmanPenalty: 0 },
-  { key: "asg5", name: "Light Leather (ASG 5)", standardWeight: 10, cmanPenalty: 0 },
-  { key: "asg6", name: "Full Leather (ASG 6)", standardWeight: 13, cmanPenalty: 0 },
-  { key: "asg7", name: "Reinforced Leather (ASG 7)", standardWeight: 15, cmanPenalty: 2 },
-  { key: "asg8", name: "Double Leather (ASG 8)", standardWeight: 16, cmanPenalty: 2 },
-  { key: "asg9", name: "Leather Breastplate (ASG 9)", standardWeight: 16, cmanPenalty: 3 },
-  { key: "asg10", name: "Cuirbouilli Leather (ASG 10)", standardWeight: 17, cmanPenalty: 3 },
-  { key: "asg11", name: "Studded Leather (ASG 11)", standardWeight: 20, cmanPenalty: 3 },
-  { key: "asg12", name: "Brigandine Armor (ASG 12)", standardWeight: 25, cmanPenalty: 4 },
-  { key: "asg13", name: "Chain Mail (ASG 13)", standardWeight: 25, cmanPenalty: 4 },
-  { key: "asg14", name: "Double Chain (ASG 14)", standardWeight: 25, cmanPenalty: 4 },
-  { key: "asg15", name: "Augmented Chain (ASG 15)", standardWeight: 26, cmanPenalty: 5 },
-  { key: "asg16", name: "Chain Hauberk (ASG 16)", standardWeight: 27, cmanPenalty: 5 },
-  { key: "asg17", name: "Metal Breastplate (ASG 17)", standardWeight: 23, cmanPenalty: 6 },
-  { key: "asg18", name: "Augmented Plate (ASG 18)", standardWeight: 25, cmanPenalty: 7 },
-  { key: "asg19", name: "Half Plate (ASG 19)", standardWeight: 50, cmanPenalty: 8 },
-  { key: "asg20", name: "Full Plate (ASG 20)", standardWeight: 75, cmanPenalty: 10 },
-];
+if (!dataSource) throw new Error("GS4_DATA is not loaded. Ensure data/gs4-data.js is loaded before profile.js.");
+if (!logic) throw new Error("ProfileLogic is not loaded. Ensure profile-logic.js is loaded before profile.js.");
 
-const stats = [
-  { key: "str", label: "Strength", abbr: "STR" },
-  { key: "con", label: "Constitution", abbr: "CON" },
-  { key: "dex", label: "Dexterity", abbr: "DEX" },
-  { key: "agi", label: "Agility", abbr: "AGI" },
-  { key: "dis", label: "Discipline", abbr: "DIS" },
-  { key: "aur", label: "Aura", abbr: "AUR" },
-  { key: "log", label: "Logic", abbr: "LOG" },
-  { key: "int", label: "Intuition", abbr: "INT" },
-  { key: "wis", label: "Wisdom", abbr: "WIS" },
-  { key: "inf", label: "Influence", abbr: "INF" },
-];
+const {
+  races,
+  armorAsg,
+  stats,
+  skillCatalog,
+  spellCircles,
+  professionSpellCircleMap,
+  skillCategoryByName,
+  skillCategoryOrder,
+  skillAliasMap,
+  ascMnemonicMap,
+  professions,
+  costProfessionOrder,
+  loreSkillNames,
+  maxPerLevelRows,
+  baseGrowthRates,
+  raceGrowthModifiers,
+  raceStatBonusModifiers,
+} = dataSource;
 
-const skillCatalog = [
-  "Armor Use",
-  "Shield Use",
-  "Combat Maneuvers",
-  "Edged Weapons",
-  "Blunt Weapons",
-  "Two-Handed Weapons",
-  "Ranged Weapons",
-  "Thrown Weapons",
-  "Polearm Weapons",
-  "Brawling",
-  "Two Weapon Combat",
-  "Ambush",
-  "Multi Opponent Combat",
-  "Physical Fitness",
-  "Dodging",
-  "Arcane Symbols",
-  "Magic Item Use",
-  "Spell Aiming",
-  "Harness Power",
-  "Elemental Mana Control",
-  "Mental Mana Control",
-  "Spirit Mana Control",
-  "Elemental Lore - Air",
-  "Elemental Lore - Earth",
-  "Elemental Lore - Fire",
-  "Elemental Lore - Water",
-  "Spiritual Lore - Blessings",
-  "Spiritual Lore - Religion",
-  "Spiritual Lore - Summoning",
-  "Sorcerous Lore - Demonology",
-  "Sorcerous Lore - Necromancy",
-  "Mental Lore - Divination",
-  "Mental Lore - Manipulation",
-  "Mental Lore - Telepathy",
-  "Mental Lore - Transference",
-  "Mental Lore - Transformation",
-  "Stalking and Hiding",
-  "Perception",
-  "Climbing",
-  "Swimming",
-  "Disarming Traps",
-  "Picking Locks",
-  "Picking Pockets",
-  "First Aid",
-  "Survival",
-  "Trading",
-  "Minor Elemental",
-  "Major Elemental",
-  "Minor Spiritual",
-  "Major Spiritual",
-  "Minor Mental",
-  "Major Mental",
-  "Wizard",
-  "Bard",
-  "Cleric",
-  "Empath",
-  "Ranger",
-  "Paladin",
-  "Sorcerer",
-  "Monk",
-];
+const clamp = logic.clamp;
+const normalizeRaceName = logic.normalizeRaceName;
+const statToBonus = logic.statToBonus;
+const skillKey = logic.skillKey;
+const skillBonusFromRanks = logic.skillBonusFromRanks;
 
-const spellCircles = new Set([
-  "Minor Elemental",
-  "Major Elemental",
-  "Minor Spiritual",
-  "Major Spiritual",
-  "Minor Mental",
-  "Major Mental",
-  "Wizard",
-  "Bard",
-  "Cleric",
-  "Empath",
-  "Ranger",
-  "Paladin",
-  "Sorcerer",
-  "Monk",
-]);
-
-const professionSpellCircleMap = {
-  Bard: new Set(["Bard", "Minor Elemental"]),
-  Cleric: new Set(["Cleric", "Major Spiritual", "Minor Spiritual"]),
-  Empath: new Set(["Empath", "Major Spiritual", "Minor Spiritual"]),
-  Monk: new Set(["Minor Mental", "Minor Spiritual"]),
-  Paladin: new Set(["Paladin", "Minor Spiritual"]),
-  Ranger: new Set(["Ranger", "Minor Spiritual"]),
-  Rogue: new Set(["Minor Elemental", "Minor Spiritual"]),
-  Sorcerer: new Set(["Sorcerer", "Minor Elemental", "Minor Spiritual"]),
-  Warrior: new Set(["Minor Elemental", "Minor Spiritual"]),
-  Wizard: new Set(["Wizard", "Major Elemental", "Minor Elemental"]),
-};
-
-const skillCategoryByName = {
-  "Armor Use": "Armor and Shield",
-  "Shield Use": "Armor and Shield",
-  "Edged Weapons": "Weapon Skills",
-  "Blunt Weapons": "Weapon Skills",
-  "Two-Handed Weapons": "Weapon Skills",
-  "Ranged Weapons": "Weapon Skills",
-  "Thrown Weapons": "Weapon Skills",
-  "Polearm Weapons": "Weapon Skills",
-  Brawling: "Weapon Skills",
-  "Two Weapon Combat": "Weapon Skills",
-  "Combat Maneuvers": "Combat Skills",
-  Ambush: "Combat Skills",
-  "Multi Opponent Combat": "Combat Skills",
-  "Physical Fitness": "Combat Skills",
-  Dodging: "Combat Skills",
-  "Arcane Symbols": "Magic Skills",
-  "Magic Item Use": "Magic Skills",
-  "Spell Aiming": "Magic Skills",
-  "Harness Power": "Magic Skills",
-  "Elemental Mana Control": "Magic Skills",
-  "Mental Mana Control": "Magic Skills",
-  "Spirit Mana Control": "Magic Skills",
-  "Elemental Lore - Air": "Lores",
-  "Elemental Lore - Earth": "Lores",
-  "Elemental Lore - Fire": "Lores",
-  "Elemental Lore - Water": "Lores",
-  "Spiritual Lore - Blessings": "Lores",
-  "Spiritual Lore - Religion": "Lores",
-  "Spiritual Lore - Summoning": "Lores",
-  "Sorcerous Lore - Demonology": "Lores",
-  "Sorcerous Lore - Necromancy": "Lores",
-  "Mental Lore - Divination": "Lores",
-  "Mental Lore - Manipulation": "Lores",
-  "Mental Lore - Telepathy": "Lores",
-  "Mental Lore - Transference": "Lores",
-  "Mental Lore - Transformation": "Lores",
-  "Stalking and Hiding": "Subterfuge",
-  "Disarming Traps": "Subterfuge",
-  "Picking Locks": "Subterfuge",
-  "Picking Pockets": "Subterfuge",
-  Perception: "Survival and Utility",
-  Climbing: "Survival and Utility",
-  Swimming: "Survival and Utility",
-  "First Aid": "Survival and Utility",
-  Survival: "Survival and Utility",
-  Trading: "Survival and Utility",
-  "Minor Elemental": "Spell Circles",
-  "Major Elemental": "Spell Circles",
-  "Minor Spiritual": "Spell Circles",
-  "Major Spiritual": "Spell Circles",
-  "Minor Mental": "Spell Circles",
-  "Major Mental": "Spell Circles",
-  Wizard: "Spell Circles",
-  Bard: "Spell Circles",
-  Cleric: "Spell Circles",
-  Empath: "Spell Circles",
-  Ranger: "Spell Circles",
-  Paladin: "Spell Circles",
-  Sorcerer: "Spell Circles",
-  Monk: "Spell Circles",
-};
-
-const skillCategoryOrder = [
-  "Armor and Shield",
-  "Weapon Skills",
-  "Combat Skills",
-  "Magic Skills",
-  "Lores",
-  "Subterfuge",
-  "Survival and Utility",
-  "Spell Circles",
-  "Other",
-];
-
-const skillAliasMap = {
-  pickpocketing: "Picking Pockets",
-  "picking pockets": "Picking Pockets",
-  "elemental lore, air": "Elemental Lore - Air",
-  "elemental lore, earth": "Elemental Lore - Earth",
-  "elemental lore, fire": "Elemental Lore - Fire",
-  "elemental lore, water": "Elemental Lore - Water",
-  "spiritual lore, blessings": "Spiritual Lore - Blessings",
-  "spiritual lore, religion": "Spiritual Lore - Religion",
-  "spiritual lore, summoning": "Spiritual Lore - Summoning",
-  "sorcerous lore, demonology": "Sorcerous Lore - Demonology",
-  "sorcerous lore, necromancy": "Sorcerous Lore - Necromancy",
-  "mental lore, divination": "Mental Lore - Divination",
-  "mental lore, manipulation": "Mental Lore - Manipulation",
-  "mental lore, telepathy": "Mental Lore - Telepathy",
-  "mental lore, transference": "Mental Lore - Transference",
-  "mental lore, transformation": "Mental Lore - Transformation",
-};
-
-const ascMnemonicMap = {
-  agility: "Agility",
-  aura: "Aura",
-  constitution: "Constitution",
-  dexterity: "Dexterity",
-  discipline: "Discipline",
-  influence: "Influence",
-  intuition: "Intuition",
-  logic: "Logic",
-  strength: "Strength",
-  wisdom: "Wisdom",
-  ambush: "Ambush",
-  arcanesymbols: "Arcane Symbols",
-  armoruse: "Armor Use",
-  bluntweapons: "Blunt Weapons",
-  brawling: "Brawling",
-  climbing: "Climbing",
-  combatmaneuvers: "Combat Maneuvers",
-  disarmingtraps: "Disarming Traps",
-  dodging: "Dodging",
-  edgedweapons: "Edged Weapons",
-  elair: "Elemental Lore - Air",
-  elearth: "Elemental Lore - Earth",
-  elfire: "Elemental Lore - Fire",
-  elwater: "Elemental Lore - Water",
-  elementalmc: "Elemental Mana Control",
-  firstaid: "First Aid",
-  harnesspower: "Harness Power",
-  magicitemuse: "Magic Item Use",
-  mldivination: "Mental Lore - Divination",
-  mlmanipulation: "Mental Lore - Manipulation",
-  mltelepathy: "Mental Lore - Telepathy",
-  mltransference: "Mental Lore - Transference",
-  mltransform: "Mental Lore - Transformation",
-  mentalmc: "Mental Mana Control",
-  multiopponent: "Multi Opponent Combat",
-  perception: "Perception",
-  physicalfitness: "Physical Fitness",
-  pickinglocks: "Picking Locks",
-  pickingpockets: "Picking Pockets",
-  polearmsweapons: "Polearm Weapons",
-  rangedweapons: "Ranged Weapons",
-  shielduse: "Shield Use",
-  soldemonology: "Sorcerous Lore - Demonology",
-  solnecromancy: "Sorcerous Lore - Necromancy",
-  spellaiming: "Spell Aiming",
-  spiritmc: "Spirit Mana Control",
-  slblessings: "Spiritual Lore - Blessings",
-  slreligion: "Spiritual Lore - Religion",
-  slsummoning: "Spiritual Lore - Summoning",
-  stalking: "Stalking and Hiding",
-  survival: "Survival",
-  swimming: "Swimming",
-  thrownweapons: "Thrown Weapons",
-  trading: "Trading",
-  twoweaponcombat: "Two Weapon Combat",
-  twohandedweapon: "Two-Handed Weapons",
-};
+const defaultStatMap = (value = 0) => logic.defaultStatMap(stats, value);
+const canonicalSkillName = (rawName) => logic.canonicalSkillName(rawName, skillAliasMap, skillCatalog);
+const mergeSkillsWithCatalog = (skills = []) => logic.mergeSkillsWithCatalog(skills, skillCatalog, skillAliasMap);
+const normalizeSkillEntry = (skill) => logic.normalizeSkillEntry(skill, skillCatalog, skillAliasMap);
+const computeStatsFromLevel0 = (level0Stats, level, raceName, profession) => (
+  logic.computeStatsFromLevel0({
+    stats,
+    level0Stats,
+    level,
+    raceName,
+    profession,
+    baseGrowthRates,
+    raceGrowthModifiers,
+  })
+);
+const getRaceBonusModifier = (raceName, statKey) => (
+  logic.getRaceBonusModifier(raceStatBonusModifiers, raceName, statKey)
+);
 
 let currentSkills = skillCatalog.map((name) => ({ name, ranks: 0 }));
 let currentLevel0Stats = null;
@@ -340,64 +95,6 @@ let enhanciveState = { stats: {}, skills: {} };
 let applyingProfile = false;
 let skillsImportUnmatchedKeys = new Set();
 let skillsImportOffProfessionKeys = new Set();
-
-const professions = [
-  "Bard",
-  "Cleric",
-  "Empath",
-  "Monk",
-  "Paladin",
-  "Ranger",
-  "Rogue",
-  "Sorcerer",
-  "Warrior",
-  "Wizard",
-];
-
-const baseGrowthRates = {
-  Bard: { str: 25, con: 20, dex: 25, agi: 20, dis: 15, aur: 25, log: 10, int: 15, wis: 20, inf: 30 },
-  Cleric: { str: 20, con: 20, dex: 10, agi: 15, dis: 25, aur: 15, log: 25, int: 25, wis: 30, inf: 20 },
-  Empath: { str: 10, con: 20, dex: 15, agi: 15, dis: 25, aur: 20, log: 25, int: 20, wis: 30, inf: 25 },
-  Monk: { str: 25, con: 25, dex: 20, agi: 30, dis: 25, aur: 15, log: 20, int: 20, wis: 15, inf: 10 },
-  Paladin: { str: 30, con: 25, dex: 20, agi: 20, dis: 25, aur: 15, log: 10, int: 15, wis: 25, inf: 20 },
-  Ranger: { str: 25, con: 20, dex: 30, agi: 20, dis: 20, aur: 15, log: 15, int: 25, wis: 25, inf: 10 },
-  Rogue: { str: 25, con: 20, dex: 25, agi: 30, dis: 20, aur: 15, log: 20, int: 25, wis: 10, inf: 15 },
-  Sorcerer: { str: 10, con: 15, dex: 20, agi: 15, dis: 25, aur: 30, log: 25, int: 20, wis: 25, inf: 20 },
-  Warrior: { str: 30, con: 25, dex: 25, agi: 25, dis: 20, aur: 15, log: 10, int: 20, wis: 15, inf: 20 },
-  Wizard: { str: 10, con: 15, dex: 25, agi: 15, dis: 20, aur: 30, log: 25, int: 25, wis: 20, inf: 20 },
-};
-
-const raceGrowthModifiers = {
-  Aelotoi: { str: 0, con: -2, dex: 3, agi: 3, dis: 2, aur: 0, log: 0, int: 2, wis: 0, inf: -2 },
-  "Burghal Gnome": { str: -5, con: 0, dex: 3, agi: 3, dis: -3, aur: -2, log: 5, int: 5, wis: 0, inf: 0 },
-  "Dark Elf": { str: 0, con: -2, dex: 5, agi: 5, dis: -2, aur: 0, log: 0, int: 0, wis: 0, inf: 0 },
-  Dwarf: { str: 5, con: 5, dex: -3, agi: -5, dis: 3, aur: 0, log: 0, int: 0, wis: 3, inf: -2 },
-  Elf: { str: 0, con: -5, dex: 5, agi: 3, dis: -5, aur: 5, log: 0, int: 0, wis: 0, inf: 3 },
-  Erithian: { str: -2, con: 0, dex: 0, agi: 0, dis: 3, aur: 0, log: 2, int: 0, wis: 0, inf: 3 },
-  "Forest Gnome": { str: -3, con: 2, dex: 2, agi: 3, dis: 2, aur: 0, log: 0, int: 0, wis: 0, inf: 0 },
-  Giantman: { str: 5, con: 3, dex: -2, agi: -2, dis: 0, aur: 0, log: 0, int: 2, wis: 0, inf: 0 },
-  "Half-Elf": { str: 2, con: 0, dex: 2, agi: 2, dis: -2, aur: 0, log: 0, int: 0, wis: 0, inf: 2 },
-  "Half-Krolvin": { str: 3, con: 5, dex: 2, agi: 2, dis: 0, aur: -2, log: -2, int: 0, wis: 0, inf: -2 },
-  Halfling: { str: -5, con: 5, dex: 5, agi: 5, dis: -2, aur: 0, log: -2, int: 0, wis: 0, inf: 0 },
-  Human: { str: 2, con: 2, dex: 0, agi: 0, dis: 0, aur: 0, log: 0, int: 2, wis: 0, inf: 0 },
-  Sylvankind: { str: -3, con: -2, dex: 5, agi: 5, dis: -5, aur: 3, log: 0, int: 0, wis: 0, inf: 3 },
-};
-
-const raceStatBonusModifiers = {
-  Aelotoi: { str: -5, con: 0, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 5, wis: 0, inf: -5 },
-  "Burghal Gnome": { str: -15, con: 10, dex: 10, agi: 10, dis: -5, aur: 5, log: 10, int: 5, wis: 0, inf: -5 },
-  "Dark Elf": { str: 0, con: -5, dex: 10, agi: 5, dis: -10, aur: 10, log: 0, int: 5, wis: 5, inf: -5 },
-  Dwarf: { str: 10, con: 15, dex: 0, agi: -5, dis: 10, aur: -10, log: 5, int: 0, wis: 0, inf: -10 },
-  Elf: { str: 0, con: 0, dex: 5, agi: 15, dis: -15, aur: 5, log: 0, int: 0, wis: 0, inf: 10 },
-  Erithian: { str: -5, con: 10, dex: 0, agi: 0, dis: 5, aur: 0, log: 5, int: 0, wis: 0, inf: 10 },
-  "Forest Gnome": { str: -10, con: 10, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 0, wis: 5, inf: -5 },
-  Giantman: { str: 15, con: 10, dex: -5, agi: -5, dis: 0, aur: -5, log: -5, int: 0, wis: 0, inf: 5 },
-  "Half-Elf": { str: 0, con: 0, dex: 5, agi: 10, dis: -5, aur: 0, log: 0, int: 0, wis: 0, inf: 5 },
-  "Half-Krolvin": { str: 10, con: 10, dex: 0, agi: 5, dis: 0, aur: 0, log: -10, int: 0, wis: -5, inf: -5 },
-  Halfling: { str: -15, con: 10, dex: 15, agi: 10, dis: -5, aur: -5, log: 5, int: 10, wis: 0, inf: -5 },
-  Human: { str: 5, con: 0, dex: 0, agi: 0, dis: 0, aur: 0, log: 5, int: 5, wis: 0, inf: 0 },
-  Sylvankind: { str: 0, con: 0, dex: 10, agi: 5, dis: -5, aur: 5, log: 0, int: 0, wis: 0, inf: 0 },
-};
 
 function fillSelect(select, items, labelKey = "name") {
   select.innerHTML = "";
@@ -437,44 +134,6 @@ function findProfile(profiles, id) {
   return profiles.find((profile) => profile.id === id);
 }
 
-function clamp(value, min, max) {
-  if (!Number.isFinite(value)) return min;
-  return Math.min(Math.max(value, min), max);
-}
-
-function normalizeRaceName(raw) {
-  const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
-  if (cleaned === "darkelf") return "Dark Elf";
-  if (cleaned === "halfelf") return "Half-Elf";
-  if (cleaned === "halfkrolvin") return "Half-Krolvin";
-  if (cleaned === "giantman") return "Giantman";
-  if (cleaned === "forestgnome" || cleaned === "forestrgnome") return "Forest Gnome";
-  return raw;
-}
-
-function normalizeRaceForModifierLookup(raw) {
-  if (!raw) return "";
-  const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
-  if (cleaned === "aelotoi") return "Aelotoi";
-  if (cleaned === "burghalgnome" || cleaned === "bgnome") return "Burghal Gnome";
-  if (cleaned === "darkelf") return "Dark Elf";
-  if (cleaned === "dwarf") return "Dwarf";
-  if (cleaned === "elf") return "Elf";
-  if (cleaned === "erithian") return "Erithian";
-  if (cleaned === "forestgnome" || cleaned === "fgnome") return "Forest Gnome";
-  if (cleaned === "giantman") return "Giantman";
-  if (cleaned === "halfelf") return "Half-Elf";
-  if (cleaned === "halfkrolvin") return "Half-Krolvin";
-  if (cleaned === "halfling") return "Halfling";
-  if (cleaned === "human") return "Human";
-  if (cleaned === "sylvan" || cleaned === "sylvankind") return "Sylvankind";
-  return raw;
-}
-
-function statToBonus(statValue) {
-  return Math.floor((Number(statValue) - 50) / 2);
-}
-
 function formatBonus(bonus) {
   if (!Number.isFinite(bonus)) return "0";
   return bonus > 0 ? `+${bonus}` : String(bonus);
@@ -482,11 +141,6 @@ function formatBonus(bonus) {
 
 function getSelectedRaceName() {
   return races.find((race) => race.key === profileRace.value)?.name || "Human";
-}
-
-function getRaceBonusModifier(raceName, statKey) {
-  const normalizedRace = normalizeRaceForModifierLookup(raceName);
-  return raceStatBonusModifiers[normalizedRace]?.[statKey] ?? 0;
 }
 
 function parseInfoBlock(text) {
@@ -570,33 +224,6 @@ function parseInfoStartBlock(text) {
   };
 }
 
-function getGrowthRate(raceName, profession, statKey) {
-  const base = baseGrowthRates[profession]?.[statKey];
-  const mod = raceGrowthModifiers[raceName]?.[statKey] ?? 0;
-  if (base == null) return null;
-  return base + mod;
-}
-
-function computeStatsFromLevel0(level0Stats, level, raceName, profession) {
-  const computed = {};
-  stats.forEach((stat) => {
-    const rate = getGrowthRate(raceName, profession, stat.key);
-    if (!rate || level0Stats[stat.key] == null) return;
-    let value = level0Stats[stat.key];
-    for (let lvl = 1; lvl <= level; lvl += 1) {
-      const gi = Math.max(Math.trunc(value / rate), 1);
-      if (lvl % gi === 0) {
-        value = Math.min(100, value + 1);
-      }
-    }
-    computed[stat.key] = { base: value, enhanced: value };
-  });
-  if (Object.keys(computed).length === 0) {
-    importStatus.textContent = "Could not compute stats. Check race/profession selection.";
-  }
-  return computed;
-}
-
 function parseSkillsBlock(text) {
   const lines = text.split(/\r?\n/);
   const parsed = [];
@@ -661,60 +288,8 @@ function parseAscListBlock(text) {
   return results;
 }
 
-function defaultStatMap(value = 0) {
-  const payload = {};
-  stats.forEach((stat) => {
-    payload[stat.key] = value;
-  });
-  return payload;
-}
-
-function skillKey(name) {
-  return String(name || "").trim().toLowerCase();
-}
-
-function canonicalSkillName(rawName) {
-  const cleaned = String(rawName || "").trim();
-  if (!cleaned) return "";
-  const normalized = skillKey(cleaned.replace(/\s+/g, " "));
-  if (skillAliasMap[normalized]) return skillAliasMap[normalized];
-
-  const exact = skillCatalog.find((name) => skillKey(name) === normalized);
-  if (exact) return exact;
-
-  const fuzzy = skillCatalog.find((name) => {
-    const key = skillKey(name);
-    return key.startsWith(normalized) || normalized.startsWith(key);
-  });
-  return fuzzy || cleaned;
-}
-
 function isAscensionSkillName(name) {
   return !spellCircles.has(name);
-}
-
-function mergeSkillsWithCatalog(skills = []) {
-  const byKey = new Map();
-  skills.forEach((skill) => {
-    const canonical = canonicalSkillName(skill?.name || "");
-    if (!canonical) return;
-    byKey.set(skillKey(canonical), {
-      name: canonical,
-      ranks: Math.max(0, Math.trunc(Number(skill?.ranks) || 0)),
-    });
-  });
-
-  const merged = skillCatalog.map((name) => {
-    const existing = byKey.get(skillKey(name));
-    return existing ? existing : { name, ranks: 0 };
-  });
-
-  byKey.forEach((value, key) => {
-    if (!merged.some((entry) => skillKey(entry.name) === key)) {
-      merged.push(value);
-    }
-  });
-  return merged;
 }
 
 function initAdjustmentState() {
@@ -1085,6 +660,11 @@ function recalcFromLevel0() {
     return;
   }
   const computed = computeStatsFromLevel0(currentLevel0Stats, level, raceName, profession);
+  if (!Object.keys(computed || {}).length) {
+    importStatus.textContent = "Could not compute stats. Check race/profession selection.";
+    importStatus.style.color = "#b42318";
+    return;
+  }
   currentBaseStats = {};
   stats.forEach((stat) => {
     currentBaseStats[stat.key] = computed?.[stat.key]?.base ?? 50;
@@ -1203,30 +783,135 @@ function updateArmorWeight() {
   armorWeightInput.value = String(selected.standardWeight);
 }
 
+function getSkillTrainingRowName(skillName) {
+  if (spellCircles.has(skillName)) return "Spell Research";
+  if (loreSkillNames.has(skillName)) {
+    if (skillName.startsWith("Elemental Lore -")) return "Elemental Lore";
+    if (skillName.startsWith("Spiritual Lore -")) return "Spiritual Lore";
+    if (skillName.startsWith("Sorcerous Lore -")) return "Sorcerous Lore";
+    if (skillName.startsWith("Mental Lore -")) return "Mental Lore";
+  }
+  return skillName;
+}
+
+function getSkillPoolKey(skillName, trainingRowName) {
+  if (spellCircles.has(skillName) || trainingRowName === "Spell Research") return "pool:spell-research";
+  if (trainingRowName === "Elemental Lore") return "pool:lore-elemental";
+  if (trainingRowName === "Spiritual Lore") return "pool:lore-spiritual";
+  if (trainingRowName === "Sorcerous Lore") return "pool:lore-sorcerous";
+  if (trainingRowName === "Mental Lore") return "pool:lore-mental";
+  return `pool:skill:${skillKey(skillName)}`;
+}
+
+function getSkillPoolLabel(poolKey, trainingRowName) {
+  if (poolKey === "pool:spell-research") return "Spell Research";
+  if (poolKey.startsWith("pool:lore-")) return trainingRowName;
+  return trainingRowName;
+}
+
+function formatPoolHeaderText(poolLabel, poolUsed, poolMax) {
+  return `${poolLabel} Max Ranks: ${poolMax} (Used: ${poolUsed})`;
+}
+
+function getDisplaySkillCategory(skillName) {
+  const baseCategory = skillCategoryByName[skillName] || "Other";
+  if (baseCategory === "Subterfuge" || baseCategory === "Survival and Utility") return "General Skills";
+  return baseCategory;
+}
+
+const displaySkillCategoryOrder = [
+  "Armor and Shield",
+  "Weapon Skills",
+  "Combat Skills",
+  "Magic Skills",
+  "Lores",
+  "General Skills",
+  "Spell Circles",
+  "Other",
+];
+
+function buildSkillRankCapContext(skills = currentSkills) {
+  const professionIndex = costProfessionOrder.indexOf(profileProfession.value);
+  const level = Math.max(0, Math.trunc(Number(profileLevel.value) || 0));
+  const effectiveLevels = level + 2;
+  const poolTotals = new Map();
+  const entries = [];
+  const byPool = new Map();
+
+  skills.forEach((skill) => {
+    const key = skillKey(skill.name);
+    const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
+    const trainingRowName = getSkillTrainingRowName(skill.name);
+    const perLevelCap = professionIndex >= 0 ? maxPerLevelRows[trainingRowName]?.[professionIndex] : null;
+    const poolKey = getSkillPoolKey(skill.name, trainingRowName);
+    const maxTotal = Number.isFinite(perLevelCap) ? Math.max(0, Math.trunc(perLevelCap * effectiveLevels)) : null;
+    entries.push({ key, ranks, trainingRowName, poolKey, maxTotal });
+    if (maxTotal == null) return;
+    poolTotals.set(poolKey, (poolTotals.get(poolKey) || 0) + ranks);
+    if (!byPool.has(poolKey)) {
+      byPool.set(poolKey, {
+        poolKey,
+        poolLabel: getSkillPoolLabel(poolKey, trainingRowName),
+        poolMax: maxTotal,
+        pooled: poolKey.startsWith("pool:lore-") || poolKey === "pool:spell-research",
+      });
+    }
+  });
+
+  const bySkill = new Map();
+  byPool.forEach((pool) => {
+    pool.poolUsed = poolTotals.get(pool.poolKey) || 0;
+  });
+
+  entries.forEach((entry) => {
+    if (entry.maxTotal == null) {
+      bySkill.set(entry.key, null);
+      return;
+    }
+    const poolUsed = poolTotals.get(entry.poolKey) || 0;
+    const maxRanks = Math.max(0, entry.maxTotal - (poolUsed - entry.ranks));
+    const poolMeta = byPool.get(entry.poolKey);
+    bySkill.set(entry.key, {
+      trainingRowName: entry.trainingRowName,
+      poolKey: entry.poolKey,
+      poolLabel: poolMeta?.poolLabel || entry.trainingRowName,
+      pooled: Boolean(poolMeta?.pooled),
+      poolUsed: poolMeta?.poolUsed ?? poolUsed,
+      maxRanks,
+      poolMax: entry.maxTotal,
+    });
+  });
+
+  return { bySkill, byPool };
+}
+
 function renderSkillsTable(skills) {
   skillsTable.innerHTML = "";
   const visibleSkills = getVisibleSkills(skills);
+  const capContext = buildSkillRankCapContext(currentSkills);
+  const capsBySkill = capContext.bySkill;
+  const renderedPoolHeaders = new Set();
   if (!visibleSkills.length) {
     const row = document.createElement("tr");
-    row.innerHTML = "<td colspan=\"5\">No skills loaded yet.</td>";
+    row.innerHTML = "<td colspan=\"6\">No skills loaded yet.</td>";
     skillsTable.appendChild(row);
     return;
   }
   const grouped = new Map();
-  skillCategoryOrder.forEach((category) => grouped.set(category, []));
+  displaySkillCategoryOrder.forEach((category) => grouped.set(category, []));
   visibleSkills.forEach((skill) => {
-    const category = skillCategoryByName[skill.name] || "Other";
+    const category = getDisplaySkillCategory(skill.name);
     if (!grouped.has(category)) grouped.set(category, []);
     grouped.get(category).push(skill);
   });
 
-  skillCategoryOrder.forEach((category) => {
+  displaySkillCategoryOrder.forEach((category) => {
     const items = grouped.get(category) || [];
     if (!items.length) return;
 
     const groupRow = document.createElement("tr");
     groupRow.className = "skills-group-row";
-    groupRow.innerHTML = `<td colspan="5">${category}</td>`;
+    groupRow.innerHTML = `<td colspan="6">${category}</td>`;
     skillsTable.appendChild(groupRow);
 
     items.forEach((skill) => {
@@ -1241,12 +926,26 @@ function renderSkillsTable(skills) {
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
     const baseBonusDisplay = isCircle ? "—" : String(baseBonus);
     const finalBonusDisplay = isCircle ? "—" : String(finalBonus);
+    const cap = capsBySkill.get(key);
+    const maxRanksDisplay = cap ? (cap.pooled ? "—" : String(cap.maxRanks)) : "—";
+    const rankInputMax = cap ? Math.max(cap.maxRanks, baseRanks) : 500;
+
+    if (cap?.pooled && !renderedPoolHeaders.has(cap.poolKey)) {
+      const poolRow = document.createElement("tr");
+      poolRow.className = "skills-group-row";
+      poolRow.dataset.poolKey = cap.poolKey;
+      poolRow.dataset.poolLabel = cap.poolLabel;
+      poolRow.innerHTML = `<td colspan="6">${formatPoolHeaderText(cap.poolLabel, cap.poolUsed, cap.poolMax)}</td>`;
+      skillsTable.appendChild(poolRow);
+      renderedPoolHeaders.add(cap.poolKey);
+    }
 
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${skill.name}</td>
-      <td><input type="number" min="0" max="500" step="1" data-skill-rank="${key}" value="${baseRanks}" /></td>
+      <td><input type="number" min="0" max="${rankInputMax}" step="1" data-skill-rank="${key}" value="${baseRanks}" /></td>
       <td data-skill-field="base-bonus">${baseBonusDisplay}</td>
+      <td data-skill-field="max-ranks">${maxRanksDisplay}</td>
       <td data-skill-field="final-ranks">${finalRanks}</td>
       <td data-skill-field="final-bonus">${finalBonusDisplay}</td>
     `;
@@ -1264,7 +963,11 @@ function renderSkillsTable(skills) {
       const key = input.dataset.skillRank;
       const skill = currentSkills.find((entry) => skillKey(entry.name) === key);
       if (!skill) return;
-      skill.ranks = Math.max(0, Math.trunc(Number(input.value) || 0));
+      const requested = Math.max(0, Math.trunc(Number(input.value) || 0));
+      const cap = buildSkillRankCapContext(currentSkills).bySkill.get(key);
+      const capped = cap ? Math.min(requested, cap.maxRanks) : requested;
+      skill.ranks = capped;
+      if (String(capped) !== String(input.value)) input.value = String(capped);
       updateSkillsImportFlags();
       updateSkillsStatusMessage();
       updateDerivedDisplays({ skipSkillsRender: true, skipStatsRender: true, skipAscRender: true, skipEnhRender: true });
@@ -1384,6 +1087,18 @@ function runProfileSelfTests() {
 
 function updateSkillsDerivedDisplay() {
   if (!skillsTable) return;
+  const capContext = buildSkillRankCapContext(currentSkills);
+  const capsBySkill = capContext.bySkill;
+  const capsByPool = capContext.byPool;
+  skillsTable.querySelectorAll("tr[data-pool-key]").forEach((row) => {
+    const poolKey = row.dataset.poolKey;
+    const poolLabel = row.dataset.poolLabel || "Pool";
+    const pool = capsByPool.get(poolKey);
+    const cell = row.firstElementChild;
+    if (pool && cell) {
+      cell.textContent = formatPoolHeaderText(poolLabel, pool.poolUsed, pool.poolMax);
+    }
+  });
   skillsTable.querySelectorAll("tr[data-skill-key]").forEach((row) => {
     const key = row.dataset.skillKey;
     const isCircle = row.dataset.isCircle === "1";
@@ -1396,13 +1111,19 @@ function updateSkillsDerivedDisplay() {
     const baseBonus = skillBonusFromRanks(baseRanks);
     const finalRanks = Math.max(0, baseRanks + enhRank);
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
+    const cap = capsBySkill.get(key);
 
     const rankInput = row.querySelector('input[data-skill-rank]');
-    if (rankInput && document.activeElement !== rankInput) rankInput.value = String(baseRanks);
+    if (rankInput) {
+      if (document.activeElement !== rankInput) rankInput.value = String(baseRanks);
+      rankInput.max = String(cap ? Math.max(cap.maxRanks, baseRanks) : 500);
+    }
     const baseBonusCell = row.querySelector('[data-skill-field="base-bonus"]');
+    const maxRanksCell = row.querySelector('[data-skill-field="max-ranks"]');
     const finalRanksCell = row.querySelector('[data-skill-field="final-ranks"]');
     const finalBonusCell = row.querySelector('[data-skill-field="final-bonus"]');
     if (baseBonusCell) baseBonusCell.textContent = isCircle ? "—" : String(baseBonus);
+    if (maxRanksCell) maxRanksCell.textContent = cap ? (cap.pooled ? "—" : String(cap.maxRanks)) : "—";
     if (finalRanksCell) finalRanksCell.textContent = String(finalRanks);
     if (finalBonusCell) finalBonusCell.textContent = isCircle ? "—" : String(finalBonus);
     if (skillsImportUnmatchedKeys.has(key) || skillsImportOffProfessionKeys.has(key)) {
@@ -1411,24 +1132,6 @@ function updateSkillsDerivedDisplay() {
       row.style.color = "";
     }
   });
-}
-
-function skillBonusFromRanks(ranks) {
-  const value = Math.max(0, Math.trunc(Number(ranks) || 0));
-  if (value <= 10) return value * 5;
-  if (value <= 20) return 50 + (value - 10) * 4;
-  if (value <= 30) return 90 + (value - 20) * 3;
-  if (value <= 40) return 120 + (value - 30) * 2;
-  return 100 + value;
-}
-
-function normalizeSkillEntry(skill) {
-  const baseRanks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
-  const canonical = canonicalSkillName(skill?.name || "Unknown Skill");
-  return {
-    name: canonical || "Unknown Skill",
-    ranks: baseRanks,
-  };
 }
 
 function applyAscList(text, options = {}) {
@@ -1977,7 +1680,11 @@ skillsImport.addEventListener("input", () => {
 armorAsgSelect.addEventListener("change", updateArmorWeight);
 
 profileLevel.addEventListener("input", () => {
-  if (currentLevel0Stats) recalcFromLevel0();
+  if (currentLevel0Stats) {
+    recalcFromLevel0();
+    return;
+  }
+  renderSkillsTable(currentSkills);
 });
 
 profileProfession.addEventListener("change", () => {

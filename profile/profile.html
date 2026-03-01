@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Character Profiles</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="../styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
   </head>
-  <body data-page="profiles">
+  <body data-page="profiles" data-root="../">
     <div class="page">
       <div data-header></div>
 
@@ -216,12 +216,14 @@
                     <col class="col-small" />
                     <col class="col-small" />
                     <col class="col-small" />
+                    <col class="col-small" />
                   </colgroup>
                   <thead>
                     <tr>
                       <th>Skill</th>
                       <th>Ranks</th>
                       <th>Bonus</th>
+                      <th>Max Ranks</th>
                       <th>Final Ranks</th>
                       <th>Final Bonus</th>
                     </tr>
@@ -325,7 +327,9 @@
       <div data-footer></div>
     </div>
 
-    <script src="site.js" defer></script>
+    <script src="../site.js" defer></script>
+    <script src="../data/gs4-data.js"></script>
+    <script src="profile-logic.js"></script>
     <script src="profile.js"></script>
   </body>
 </html>

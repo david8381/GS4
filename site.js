@@ -101,13 +101,14 @@ function renderHeader() {
   if (!headerSlot) return;
 
   const page = document.body.dataset.page || "";
+  const root = document.body.dataset.root || "";
   const homeAttrs = page === "home" ? 'aria-current="page"' : "";
   headerSlot.innerHTML = `
     <header class="site-header">
       <div class="brand">GS4 Tools</div>
       <div class="header-actions">
-        <a class="home-link" href="index.html" ${homeAttrs}>Home</a>
-        <a class="home-link" href="profile.html"${page === "profiles" ? ' aria-current="page"' : ""}>Manage Profiles</a>
+        <a class="home-link" href="${root}index.html" ${homeAttrs}>Home</a>
+        <a class="home-link" href="${root}profile/profile.html"${page === "profiles" ? ' aria-current="page"' : ""}>Manage Profiles</a>
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">New Profile</option>
         </select>

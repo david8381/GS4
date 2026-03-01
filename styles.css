@@ -533,8 +533,8 @@ textarea {
 
 #skillsTable input[type="number"] {
   width: 100%;
-  min-width: 72px;
-  max-width: 96px;
+  min-width: 0;
+  max-width: 72px;
   padding: 5px 6px;
   border-radius: 6px;
   border: 1px solid #cbbfae;
@@ -542,6 +542,11 @@ textarea {
   background: #fffdf8;
   margin: 0 auto;
   display: block;
+}
+
+#skillsTable input[data-skill-rank] {
+  max-width: 64px;
+  padding: 4px 5px;
 }
 
 .profile-skills-panel {
@@ -553,11 +558,11 @@ textarea {
 }
 
 .profile-skills-panel col.col-skill {
-  width: 44%;
+  width: 40%;
 }
 
 .profile-skills-panel col.col-small {
-  width: 14%;
+  width: 12%;
 }
 
 .profile-skills-panel table th,
