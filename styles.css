@@ -545,8 +545,15 @@ textarea {
 }
 
 #skillsTable input[data-skill-rank] {
-  max-width: 64px;
-  padding: 4px 5px;
+  max-width: 78px;
+  padding: 4px 4px;
+  -moz-appearance: textfield;
+}
+
+#skillsTable input[data-skill-rank]::-webkit-outer-spin-button,
+#skillsTable input[data-skill-rank]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .profile-skills-panel {
