@@ -550,6 +550,34 @@ textarea {
   padding: 4px 4px;
 }
 
+#ascAbilityGroups input[data-asc-ability] {
+  width: 100%;
+  min-width: 0;
+  max-width: 90px;
+  padding: 4px 4px;
+  border-radius: 6px;
+  border: 1px solid #cbbfae;
+  font-size: 0.86rem;
+  background: #fffdf8;
+}
+
+.asc-group {
+  border: 1px solid #d9cfbf;
+  border-radius: 10px;
+  background: #fdf9f2;
+  margin-top: 10px;
+}
+
+.asc-group > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.asc-group-body {
+  padding: 0 10px 10px;
+}
+
 .profile-skills-panel {
   overflow-x: visible;
 }

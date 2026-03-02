@@ -21,17 +21,18 @@ const skillsStatus = document.getElementById("skillsStatus");
 const skillsShowTrainedOnly = document.getElementById("skillsShowTrainedOnly");
 const ascImport = document.getElementById("ascImport");
 const ascImportStatus = document.getElementById("ascImportStatus");
+const ascShowTrainedOnly = document.getElementById("ascShowTrainedOnly");
 const skillsTable = document.getElementById("skillsTable");
 const tpEstimateStatus = document.getElementById("tpEstimateStatus");
 const tpSpentStatus = document.getElementById("tpSpentStatus");
-const ascStatTable = document.getElementById("ascStatTable");
-const ascSkillTable = document.getElementById("ascSkillTable");
+const ascAbilityGroups = document.getElementById("ascAbilityGroups");
 const ascStatus = document.getElementById("ascStatus");
 const enhStatTable = document.getElementById("enhStatTable");
 const enhSkillTable = document.getElementById("enhSkillTable");
 const enhStatus = document.getElementById("enhStatus");
 const quickStartSection = document.getElementById("quickStartSection");
-const adjustmentsSection = document.getElementById("adjustmentsSection");
+const ascensionSection = document.getElementById("ascensionSection");
+const enhanciveSection = document.getElementById("enhanciveSection");
 const runProfileTestsBtn = document.getElementById("runProfileTests");
 const profileTestOutputEl = document.getElementById("profileTestOutput");
 const saveProfileButtons = Array.from(document.querySelectorAll(".save-profile-btn"));
@@ -99,11 +100,102 @@ const getRaceBonusModifier = (raceName, statKey) => (
   logic.getRaceBonusModifier(raceStatBonusModifiers, raceName, statKey)
 );
 
+const defaultAscensionAbilityCatalog = [
+  ["Acid Resistance", "resistacid", 40, "Resist"],
+  ["Agility", "agility", 40, "Stat"],
+  ["Ambush", "ambush", 50, "Skill"],
+  ["Arcane Symbols", "arcanesymbols", 50, "Skill"],
+  ["Armor Use", "armoruse", 50, "Skill"],
+  ["Aura", "aura", 40, "Stat"],
+  ["Blunt Weapons", "bluntweapons", 50, "Skill"],
+  ["Brawling", "brawling", 50, "Skill"],
+  ["Climbing", "climbing", 50, "Skill"],
+  ["Cold Resistance", "resistcold", 40, "Resist"],
+  ["Combat Maneuvers", "combatmaneuvers", 50, "Skill"],
+  ["Constitution", "constitution", 40, "Stat"],
+  ["Crush Resistance", "resistcrush", 40, "Resist"],
+  ["Dexterity", "dexterity", 40, "Stat"],
+  ["Disarming Traps", "disarmingtraps", 50, "Skill"],
+  ["Discipline", "discipline", 40, "Stat"],
+  ["Disintegration Resistance", "resistdisintegr", 40, "Resist"],
+  ["Disruption Resistance", "resistdisruptio", 40, "Resist"],
+  ["Dodging", "dodging", 50, "Skill"],
+  ["Edged Weapons", "edgedweapons", 50, "Skill"],
+  ["Electric Resistance", "resistelectric", 40, "Resist"],
+  ["Elemental Lore - Air", "elair", 50, "Skill"],
+  ["Elemental Lore - Earth", "elearth", 50, "Skill"],
+  ["Elemental Lore - Fire", "elfire", 50, "Skill"],
+  ["Elemental Lore - Water", "elwater", 50, "Skill"],
+  ["Elemental Mana Control", "elementalmc", 50, "Skill"],
+  ["First Aid", "firstaid", 50, "Skill"],
+  ["Grapple Resistance", "resistgrapple", 40, "Resist"],
+  ["Harness Power", "harnesspower", 50, "Skill"],
+  ["Health Regeneration", "regenhealth", 50, "Regen"],
+  ["Heat Resistance", "resistheat", 40, "Resist"],
+  ["Impact Resistance", "resistimpact", 40, "Resist"],
+  ["Influence", "influence", 40, "Stat"],
+  ["Intuition", "intuition", 40, "Stat"],
+  ["Logic", "logic", 40, "Stat"],
+  ["Magic Item Use", "magicitemuse", 50, "Skill"],
+  ["Mana Regeneration", "regenmana", 50, "Regen"],
+  ["Mental Lore - Divination", "mldivination", 50, "Skill"],
+  ["Mental Lore - Manipulation", "mlmanipulation", 50, "Skill"],
+  ["Mental Lore - Telepathy", "mltelepathy", 50, "Skill"],
+  ["Mental Lore - Transference", "mltransference", 50, "Skill"],
+  ["Mental Lore - Transformation", "mltransform", 50, "Skill"],
+  ["Mental Mana Control", "mentalmc", 50, "Skill"],
+  ["Multi Opponent Combat", "multiopponent", 50, "Skill"],
+  ["Perception", "perception", 50, "Skill"],
+  ["Physical Fitness", "physicalfitness", 50, "Skill"],
+  ["Picking Locks", "pickinglocks", 50, "Skill"],
+  ["Picking Pockets", "pickingpockets", 50, "Skill"],
+  ["Plasma Resistance", "resistplasma", 40, "Resist"],
+  ["Polearm Weapons", "polearmsweapons", 50, "Skill"],
+  ["Porter", "porter", 50, "Other"],
+  ["Puncture Resistance", "resistpuncture", 40, "Resist"],
+  ["Ranged Weapons", "rangedweapons", 50, "Skill"],
+  ["Shield Use", "shielduse", 50, "Skill"],
+  ["Slash Resistance", "resistslash", 40, "Resist"],
+  ["Sorcerous Lore - Demonology", "soldemonology", 50, "Skill"],
+  ["Sorcerous Lore - Necromancy", "solnecromancy", 50, "Skill"],
+  ["Spell Aiming", "spellaiming", 50, "Skill"],
+  ["Spirit Mana Control", "spiritmc", 50, "Skill"],
+  ["Spiritual Lore - Blessings", "slblessings", 50, "Skill"],
+  ["Spiritual Lore - Religion", "slreligion", 50, "Skill"],
+  ["Spiritual Lore - Summoning", "slsummoning", 50, "Skill"],
+  ["Stalking and Hiding", "stalking", 50, "Skill"],
+  ["Stamina Regeneration", "regenstamina", 50, "Regen"],
+  ["Steam Resistance", "resiststeam", 40, "Resist"],
+  ["Strength", "strength", 40, "Stat"],
+  ["Survival", "survival", 50, "Skill"],
+  ["Swimming", "swimming", 50, "Skill"],
+  ["Thrown Weapons", "thrownweapons", 50, "Skill"],
+  ["Trading", "trading", 50, "Skill"],
+  ["Transcend Destiny", "trandest", 10, "Other"],
+  ["Two Weapon Combat", "twoweaponcombat", 50, "Skill"],
+  ["Two-Handed Weapons", "twohandedweapon", 50, "Skill"],
+  ["Unbalance Resistance", "resistunbalance", 40, "Resist"],
+  ["Vacuum Resistance", "resistvacuum", 40, "Resist"],
+  ["Wisdom", "wisdom", 40, "Stat"],
+].map(([name, mnemonic, cap, subcategory]) => ({
+  name,
+  mnemonic,
+  cap,
+  subcategory,
+  category: mnemonic === "trandest" ? "Elite" : "Common",
+}));
+
 let currentSkills = skillCatalog.map((name) => ({ name, ranks: 0 }));
 let currentLevel0Stats = null;
 let currentBaseStats = {};
 let currentAscensionExperience = 0;
 let currentAscensionMilestones = 0;
+let currentAscensionAbilities = [];
+let currentBadgeDefaults = {
+  lifetimeBp: 0,
+  components: [0, 0, 0, 0, 0],
+  boosts: [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }],
+};
 let ascensionState = { stats: {}, skills: {} };
 let enhanciveState = { stats: {}, skills: {} };
 let applyingProfile = false;
@@ -288,7 +380,8 @@ function parseAscListBlock(text) {
     const name = match[1].trim().replace(/\s{2,}/g, " ");
     const right = match[5].trim();
     const typeParts = right.split(/\s{2,}|\t+/).filter(Boolean);
-    const subcategory = (typeParts[typeParts.length - 1] || "").toLowerCase();
+    const category = (typeParts[1] || "Common").trim();
+    const subcategory = (typeParts[2] || typeParts[typeParts.length - 1] || "Skill").trim();
 
     if (!name) return;
     results.push({
@@ -296,11 +389,235 @@ function parseAscListBlock(text) {
       mnemonic: match[2].toLowerCase(),
       ranks: Number(match[3]),
       cap: Number(match[4]),
+      category,
       subcategory,
     });
   });
 
   return results;
+}
+
+function buildDefaultAscensionAbilities() {
+  return defaultAscensionAbilityCatalog.map((entry) => ({
+    name: entry.name,
+    mnemonic: entry.mnemonic,
+    cap: entry.cap,
+    category: entry.category || "Common",
+    subcategory: entry.subcategory || "Skill",
+    ranks: 0,
+  }));
+}
+
+function normalizeAscensionAbilities(entries) {
+  const byMnemonic = new Map();
+  buildDefaultAscensionAbilities().forEach((entry) => {
+    byMnemonic.set(entry.mnemonic, { ...entry });
+  });
+
+  (entries || []).forEach((entry) => {
+    const mnemonic = String(entry?.mnemonic || "").trim().toLowerCase();
+    if (!mnemonic) return;
+    const existing = byMnemonic.get(mnemonic);
+    const cap = Math.max(0, Math.trunc(Number(entry?.cap ?? existing?.cap ?? 50) || 50));
+    const ranks = clamp(Math.trunc(Number(entry?.ranks ?? existing?.ranks ?? 0) || 0), 0, cap);
+    byMnemonic.set(mnemonic, {
+      name: String(entry?.name || existing?.name || mnemonic).trim() || mnemonic,
+      mnemonic,
+      cap,
+      category: String(entry?.category || existing?.category || "Common"),
+      subcategory: String(entry?.subcategory || existing?.subcategory || "Skill"),
+      ranks,
+    });
+  });
+
+  const groupOrder = { stat: 0, skill: 1, resist: 2, regen: 3, other: 4 };
+  const groupIndex = (ability) => {
+    const raw = String(ability?.subcategory || "").toLowerCase();
+    if (raw.includes("stat")) return groupOrder.stat;
+    if (raw.includes("skill")) return groupOrder.skill;
+    if (raw.includes("resist")) return groupOrder.resist;
+    if (raw.includes("regen")) return groupOrder.regen;
+    return groupOrder.other;
+  };
+
+  return Array.from(byMnemonic.values()).sort((a, b) => {
+    const groupDiff = groupIndex(a) - groupIndex(b);
+    if (groupDiff !== 0) return groupDiff;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function normalizeBadgeDefaults(raw) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  const components = Array.isArray(source.components)
+    ? source.components.slice(0, 5).map((value) => clamp(Math.trunc(Number(value) || 0), 0, 10))
+    : [0, 0, 0, 0, 0];
+  while (components.length < 5) components.push(0);
+
+  const fallbackBoosts = [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }];
+  const boosts = Array.isArray(source.boosts)
+    ? source.boosts.slice(0, 3).map((entry, index) => {
+      const fallback = fallbackBoosts[index] || fallbackBoosts[0];
+      return {
+        id: Math.max(1, Math.trunc(Number(entry?.id) || fallback.id)),
+        value: Math.max(0, Math.trunc(Number(entry?.value) || 0)),
+      };
+    })
+    : fallbackBoosts.map((entry) => ({ ...entry }));
+  while (boosts.length < 3) boosts.push({ ...fallbackBoosts[boosts.length] });
+
+  return {
+    lifetimeBp: Math.max(0, Math.trunc(Number(source.lifetimeBp) || 0)),
+    components,
+    boosts,
+  };
+}
+
+function resolveStatKeyFromAscName(name) {
+  const raw = String(name || "").trim().toLowerCase();
+  if (!raw) return null;
+  const direct = stats.find((stat) => stat.key === raw);
+  if (direct) return direct.key;
+  const byAbbr = stats.find((stat) => stat.abbr.toLowerCase() === raw);
+  if (byAbbr) return byAbbr.key;
+  const byLabel = stats.find((stat) => stat.label.toLowerCase() === raw);
+  if (byLabel) return byLabel.key;
+  return null;
+}
+
+function getAscensionDisplayGroup(ability) {
+  const mnemonic = String(ability?.mnemonic || "").toLowerCase();
+  if (mnemonic === "porter" || mnemonic === "trandest") return "other";
+  const raw = String(ability?.subcategory || "").toLowerCase();
+  if (raw.includes("stat")) return "stat";
+  if (raw.includes("skill")) return "skill";
+  if (raw.includes("resist")) return "resist";
+  if (raw.includes("regen")) return "regen";
+  return "other";
+}
+
+function ascensionRankCost(ability, rankOrdinal) {
+  const ordinal = Math.max(1, Math.trunc(Number(rankOrdinal) || 1));
+  if (ability?.mnemonic === "trandest") {
+    return ordinal <= 5 ? ordinal * 10 : 50;
+  }
+  return Math.ceil(ordinal / 5);
+}
+
+function ascensionPointsForRanks(ranks, ability = null) {
+  const capped = Math.max(0, Math.trunc(Number(ranks) || 0));
+  let total = 0;
+  for (let rank = 1; rank <= capped; rank += 1) {
+    total += ascensionRankCost(ability, rank);
+  }
+  return total;
+}
+
+function calculateAscensionPointsUsed(abilities = currentAscensionAbilities) {
+  return (abilities || []).reduce((sum, ability) => sum + ascensionPointsForRanks(ability.ranks, ability), 0);
+}
+
+function totalAscensionPointsAvailable() {
+  return estimateTotalAscensionPoints(currentAscensionExperience, currentAscensionMilestones).totalAtp;
+}
+
+function getAscensionAbilityContext(abilities = currentAscensionAbilities) {
+  const byMnemonic = new Map((abilities || []).map((ability) => [ability.mnemonic, ability]));
+  const commonAtpSpent = (abilities || []).reduce((sum, ability) => {
+    if (ability.mnemonic === "trandest") return sum;
+    if (String(ability.category || "").toLowerCase() !== "common") return sum;
+    return sum + ascensionPointsForRanks(ability.ranks, ability);
+  }, 0);
+  const strengthRanks = Math.max(0, Math.trunc(Number(byMnemonic.get("strength")?.ranks) || 0));
+  const physicalFitnessRanks = Math.max(0, Math.trunc(Number(byMnemonic.get("physicalfitness")?.ranks) || 0));
+  return { byMnemonic, commonAtpSpent, strengthRanks, physicalFitnessRanks };
+}
+
+function getAscensionAbilityGate(ability, abilities = currentAscensionAbilities) {
+  if (!ability) return { allowed: true, reason: "" };
+  const context = getAscensionAbilityContext(abilities);
+  if (ability.mnemonic === "trandest" && context.commonAtpSpent < 150) {
+    return { allowed: false, reason: "Requires 150 ATP spent in Common abilities." };
+  }
+  if (ability.mnemonic === "porter" && (context.strengthRanks + context.physicalFitnessRanks) < 10) {
+    return { allowed: false, reason: "Requires 10 combined ranks in Strength + Physical Fitness." };
+  }
+  return { allowed: true, reason: "" };
+}
+
+function getMaxAllowedAscensionRanks(ability, abilities = currentAscensionAbilities) {
+  const gate = getAscensionAbilityGate(ability, abilities);
+  if (gate.allowed) return ability.cap;
+  return Math.max(0, Math.trunc(Number(ability.ranks) || 0));
+}
+
+function getNextAscensionCostDisplay(ability, abilities = currentAscensionAbilities) {
+  const ranks = Math.max(0, Math.trunc(Number(ability?.ranks) || 0));
+  const cap = Math.max(0, Math.trunc(Number(ability?.cap) || 0));
+  if (ranks >= cap) return { display: "—", gateReason: "" };
+  const gate = getAscensionAbilityGate(ability, abilities);
+  if (!gate.allowed) return { display: "Locked", gateReason: gate.reason };
+  const nextCost = ascensionRankCost(ability, ranks + 1);
+  return { display: String(nextCost), gateReason: "" };
+}
+
+function enforceAscensionPointBudget() {
+  const available = totalAscensionPointsAvailable();
+  let used = calculateAscensionPointsUsed();
+  if (used <= available) return;
+  const sorted = [...currentAscensionAbilities].sort((a, b) => b.ranks - a.ranks);
+  sorted.forEach((ability) => {
+    while (ability.ranks > 0 && used > available) {
+      ability.ranks -= 1;
+      ability.ranks = Math.min(ability.ranks, getMaxAllowedAscensionRanks(ability));
+      used = calculateAscensionPointsUsed(currentAscensionAbilities);
+    }
+  });
+}
+
+function syncAscensionStateFromAbilities() {
+  stats.forEach((stat) => {
+    if (!ascensionState.stats[stat.key]) ascensionState.stats[stat.key] = { stat: 0, bonus: 0 };
+    ascensionState.stats[stat.key].stat = 0;
+  });
+  currentSkills.forEach((skill) => {
+    const key = skillKey(skill.name);
+    if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
+    ascensionState.skills[key].bonus = 0;
+  });
+
+  currentAscensionAbilities.forEach((ability) => {
+    const mapped = ascMnemonicMap[ability.mnemonic] || "";
+    if (!mapped) return;
+    const statKey = resolveStatKeyFromAscName(mapped);
+    if (statKey) {
+      if (!ascensionState.stats[statKey]) ascensionState.stats[statKey] = { stat: 0, bonus: 0 };
+      ascensionState.stats[statKey].stat = ability.ranks;
+      return;
+    }
+    const canonical = canonicalSkillName(mapped);
+    const key = skillKey(canonical);
+    if (!key) return;
+    if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
+    ascensionState.skills[key].bonus = ability.ranks;
+  });
+}
+
+function populateAbilitiesFromAscensionState() {
+  const next = normalizeAscensionAbilities(currentAscensionAbilities);
+  next.forEach((ability) => {
+    const mapped = ascMnemonicMap[ability.mnemonic] || "";
+    if (!mapped) return;
+    const statKey = resolveStatKeyFromAscName(mapped);
+    if (statKey) {
+      ability.ranks = clamp(Math.trunc(Number(ascensionState.stats?.[statKey]?.stat) || 0), 0, ability.cap);
+      return;
+    }
+    const canonical = canonicalSkillName(mapped);
+    const key = skillKey(canonical);
+    ability.ranks = clamp(Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0), 0, ability.cap);
+  });
+  currentAscensionAbilities = next;
 }
 
 function levelFromExperience(experience) {
@@ -564,6 +881,8 @@ function initAdjustmentState() {
     ascensionState.skills[key] = { bonus: 0 };
     enhanciveState.skills[key] = { rank: 0, bonus: 0 };
   });
+  currentAscensionAbilities = normalizeAscensionAbilities(currentAscensionAbilities);
+  syncAscensionStateFromAbilities();
 }
 
 function syncSkillAdjustmentState() {
@@ -580,6 +899,7 @@ function syncSkillAdjustmentState() {
   });
   ascensionState.skills = nextAsc;
   enhanciveState.skills = nextEnh;
+  syncAscensionStateFromAbilities();
 }
 
 function getStatAdjustment(statKey) {
@@ -621,13 +941,67 @@ function getDerivedStatRows() {
   return rows;
 }
 
+function enforceStatEnhanciveRowLimits(statKey, changedKind = null) {
+  if (!enhanciveState.stats[statKey]) enhanciveState.stats[statKey] = { stat: 0, bonus: 0 };
+  let enhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats[statKey].stat) || 0));
+  let enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.stats[statKey].bonus) || 0));
+  enhStat = Math.min(enhStat, 40);
+  enhBonus = Math.min(enhBonus, 20);
+
+  const statCapForBonus = Math.max(0, Math.min(40, (20 - enhBonus) * 2 + 1));
+  const bonusCapForStat = Math.max(0, Math.min(20, 20 - Math.floor(enhStat / 2)));
+
+  if (changedKind === "stat") {
+    enhBonus = Math.min(enhBonus, bonusCapForStat);
+  } else if (changedKind === "bonus") {
+    enhStat = Math.min(enhStat, statCapForBonus);
+  } else {
+    enhStat = Math.min(enhStat, statCapForBonus);
+    enhBonus = Math.min(enhBonus, Math.max(0, Math.min(20, 20 - Math.floor(enhStat / 2))));
+  }
+
+  enhanciveState.stats[statKey].stat = enhStat;
+  enhanciveState.stats[statKey].bonus = enhBonus;
+}
+
+function enforceSkillEnhanciveRowLimits(skillKeyName, baseRanks, changedKind = null) {
+  if (!enhanciveState.skills[skillKeyName]) enhanciveState.skills[skillKeyName] = { rank: 0, bonus: 0 };
+  let enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills[skillKeyName].rank) || 0));
+  let enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills[skillKeyName].bonus) || 0));
+  enhRank = Math.min(enhRank, 50);
+  enhBonus = Math.min(enhBonus, 50);
+
+  const rankGain = (rankValue) => skillBonusFromRanks(baseRanks + rankValue) - skillBonusFromRanks(baseRanks);
+  const maxBonusForRank = (rankValue) => Math.max(0, Math.min(50, 50 - rankGain(rankValue)));
+
+  if (changedKind === "rank") {
+    enhBonus = Math.min(enhBonus, maxBonusForRank(enhRank));
+  } else if (changedKind === "bonus") {
+    while (enhRank > 0 && rankGain(enhRank) + enhBonus > 50) enhRank -= 1;
+  } else {
+    while (enhRank > 0 && rankGain(enhRank) + enhBonus > 50) enhRank -= 1;
+    enhBonus = Math.min(enhBonus, maxBonusForRank(enhRank));
+  }
+
+  enhanciveState.skills[skillKeyName].rank = enhRank;
+  enhanciveState.skills[skillKeyName].bonus = enhBonus;
+}
+
 function buildStatInputs() {
   statGrid.innerHTML = "";
-  const headers = ["Stat", "Level 0", "Base", "Bonus", "Final Stat", "Final Bonus"];
-  headers.forEach((title) => {
+  const headers = [
+    { title: "Stat", field: "stat" },
+    { title: "Level 0", field: "level0" },
+    { title: "At Level 0", field: "base-stat" },
+    { title: "Bonus", field: "base-bonus" },
+    { title: "Final Stat", field: "final-stat" },
+    { title: "Final Bonus", field: "final-bonus" },
+  ];
+  headers.forEach((headerMeta) => {
     const header = document.createElement("div");
     header.className = "stat-header";
-    header.textContent = title;
+    header.dataset.statHeader = headerMeta.field;
+    header.textContent = headerMeta.title;
     statGrid.appendChild(header);
   });
 
@@ -661,83 +1035,130 @@ function buildStatInputs() {
   });
 }
 
+function updateStatHeaderLabels() {
+  const level = clamp(Number(profileLevel?.value), 0, 100);
+  const baseHeader = statGrid?.querySelector('[data-stat-header="base-stat"]');
+  if (baseHeader) baseHeader.textContent = `At Level ${level}`;
+}
+
 function renderAscensionTables() {
-  if (!ascStatTable || !ascSkillTable) return;
-  ascStatTable.innerHTML = "";
-  stats.forEach((stat) => {
-    const row = document.createElement("tr");
-    const values = getStatAdjustment(stat.key);
-    row.innerHTML = `
-      <td>${stat.abbr}</td>
-      <td><input type="number" min="0" max="40" step="1" data-asc-stat="${stat.key}" data-kind="stat" value="${values.ascStat}" /></td>
-      <td><input type="number" min="0" max="40" step="1" data-asc-stat="${stat.key}" data-kind="bonus" value="${values.ascBonus}" /></td>
-    `;
-    ascStatTable.appendChild(row);
-  });
-  ascSkillTable.innerHTML = "";
-  currentSkills.filter((skill) => isAscensionSkillName(skill.name)).forEach((skill) => {
-    const key = skillKey(skill.name);
-    const bonus = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${skill.name}</td>
-      <td><input type="number" min="0" max="40" step="1" data-asc-skill="${key}" value="${bonus}" /></td>
-    `;
-    ascSkillTable.appendChild(row);
-  });
+  if (!ascAbilityGroups) return;
+  ascAbilityGroups.innerHTML = "";
+  const showNonZeroOnly = Boolean(ascShowTrainedOnly?.checked);
+  const visibleAbilities = showNonZeroOnly
+    ? currentAscensionAbilities.filter((ability) => Math.max(0, Math.trunc(Number(ability.ranks) || 0)) > 0)
+    : currentAscensionAbilities;
+  const groups = [
+    { key: "stat", label: "Regular Stats", open: true },
+    { key: "skill", label: "Skills", open: true },
+    { key: "resist", label: "Resistances", open: false },
+    { key: "regen", label: "Regeneration", open: false },
+    { key: "other", label: "Other", open: false },
+  ];
 
-  ascStatTable.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", () => {
-      const statKey = input.dataset.ascStat;
-      if (!ascensionState.stats[statKey]) ascensionState.stats[statKey] = { stat: 0, bonus: 0 };
-      const value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      if (input.dataset.kind === "stat") ascensionState.stats[statKey].stat = value;
-      else ascensionState.stats[statKey].bonus = value;
-      updateDerivedDisplays({ skipAscRender: true, skipEnhRender: true });
+  groups.forEach((group) => {
+    const entries = visibleAbilities.filter((ability) => getAscensionDisplayGroup(ability) === group.key);
+    if (!entries.length) return;
+
+    const wrapper = document.createElement("details");
+    wrapper.className = "asc-group";
+    if (group.open) wrapper.open = true;
+    wrapper.innerHTML = `
+      <summary>${group.label}</summary>
+      <div class="asc-group-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Ability</th>
+              <th>Ranks</th>
+              <th>Cap</th>
+              <th>ATP Cost</th>
+              <th>Next ATP</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    `;
+    const body = wrapper.querySelector("tbody");
+    entries.forEach((ability) => {
+      const row = document.createElement("tr");
+      row.dataset.ascRow = "1";
+      const cost = ascensionPointsForRanks(ability.ranks, ability);
+      const nextCost = getNextAscensionCostDisplay(ability, currentAscensionAbilities);
+      const maxByGate = getMaxAllowedAscensionRanks(ability, currentAscensionAbilities);
+      row.innerHTML = `
+        <td>${ability.name}</td>
+        <td><input type="number" min="0" max="${Math.max(maxByGate, ability.ranks)}" step="1" data-asc-ability="${ability.mnemonic}" value="${ability.ranks}" /></td>
+        <td>${ability.cap}</td>
+        <td>${cost}</td>
+        <td data-asc-field="next-cost">${nextCost.display}</td>
+      `;
+      if (nextCost.gateReason) row.title = nextCost.gateReason;
+      body?.appendChild(row);
     });
+    ascAbilityGroups.appendChild(wrapper);
   });
 
-  ascSkillTable.querySelectorAll("input").forEach((input) => {
+  if (!ascAbilityGroups.children.length) {
+    const empty = document.createElement("div");
+    empty.className = "helper";
+    empty.textContent = "No ascension abilities to display.";
+    ascAbilityGroups.appendChild(empty);
+  }
+
+  ascAbilityGroups.querySelectorAll("input[data-asc-ability]").forEach((input) => {
     input.addEventListener("input", () => {
-      const key = input.dataset.ascSkill;
-      if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
-      ascensionState.skills[key].bonus = Math.max(0, Math.trunc(Number(input.value) || 0));
-      updateDerivedDisplays({ skipAscRender: true, skipEnhRender: true });
+      const mnemonic = String(input.dataset.ascAbility || "");
+      const ability = currentAscensionAbilities.find((entry) => entry.mnemonic === mnemonic);
+      if (!ability) return;
+
+      const desired = clamp(Math.trunc(Number(input.value) || 0), 0, ability.cap);
+      const maxByGate = getMaxAllowedAscensionRanks(ability, currentAscensionAbilities);
+      const available = totalAscensionPointsAvailable();
+
+      ability.ranks = Math.min(desired, maxByGate);
+      let used = calculateAscensionPointsUsed();
+      if (used > available) {
+        let affordable = ability.ranks;
+        while (affordable > 0) {
+          affordable -= 1;
+          ability.ranks = affordable;
+          used = calculateAscensionPointsUsed();
+          if (used <= available) break;
+        }
+      }
+      input.value = String(ability.ranks);
+      syncAscensionStateFromAbilities();
+      updateDerivedDisplays({ skipSkillsRender: true, skipEnhRender: true });
     });
   });
 }
 
 function updateAscensionStatus() {
-  if (!ascStatus || !ascStatTable || !ascSkillTable) return;
-  let hasInvalid = false;
+  if (!ascStatus || !ascAbilityGroups) return;
+  const available = totalAscensionPointsAvailable();
+  const used = calculateAscensionPointsUsed();
+  const remaining = available - used;
+  const porter = currentAscensionAbilities.find((ability) => ability.mnemonic === "porter");
+  const transcend = currentAscensionAbilities.find((ability) => ability.mnemonic === "trandest");
+  const porterGate = getAscensionAbilityGate(porter);
+  const transcendGate = getAscensionAbilityGate(transcend);
+  const invalid = remaining < 0;
 
-  ascStatTable.querySelectorAll("tr").forEach((row) => {
-    const statCell = row.firstElementChild;
-    if (!statCell) return;
-    const stat = stats.find((entry) => entry.abbr === statCell.textContent?.trim());
-    if (!stat) return;
-    const statAdj = Math.max(0, Math.trunc(Number(ascensionState.stats?.[stat.key]?.stat) || 0));
-    const bonusAdj = Math.max(0, Math.trunc(Number(ascensionState.stats?.[stat.key]?.bonus) || 0));
-    const valid = statAdj <= 40 && bonusAdj <= 40;
-    row.style.color = valid ? "#1f4e42" : "#b42318";
-    if (!valid) hasInvalid = true;
+  ascAbilityGroups.querySelectorAll("tr[data-asc-row]").forEach((row) => {
+    row.style.color = invalid ? "#b42318" : "";
   });
 
-  ascSkillTable.querySelectorAll("tr").forEach((row) => {
-    const skillCell = row.firstElementChild;
-    if (!skillCell) return;
-    const key = skillKey(skillCell.textContent);
-    const bonusAdj = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const valid = bonusAdj <= 40;
-    row.style.color = valid ? "#1f4e42" : "#b42318";
-    if (!valid) hasInvalid = true;
-  });
-
-  if (hasInvalid) {
-    ascStatus.textContent = "Invalid ascension rows: stat + and bonus + max 40; skill bonus + max 40.";
+  if (invalid) {
+    ascStatus.textContent = `Ascension over budget: ${used}/${available} ATP used.`;
     ascStatus.style.color = "#b42318";
   } else {
-    ascStatus.textContent = "Ascension limits are enforced per row.";
+    const notes = [];
+    if (!porterGate.allowed && Math.max(0, Math.trunc(Number(porter?.ranks) || 0)) === 0) notes.push("Porter locked");
+    if (!transcendGate.allowed && Math.max(0, Math.trunc(Number(transcend?.ranks) || 0)) === 0) notes.push("Transcend Destiny locked");
+    const lockSuffix = notes.length ? ` | ${notes.join(", ")}` : "";
+    ascStatus.textContent = `Ascension ATP: ${used}/${available} used, ${remaining} remaining.${lockSuffix}`;
     ascStatus.style.color = "";
   }
 }
@@ -786,6 +1207,12 @@ function renderEnhanciveTables() {
       const value = Math.max(0, Math.trunc(Number(input.value) || 0));
       if (input.dataset.kind === "stat") enhanciveState.stats[statKey].stat = value;
       else enhanciveState.stats[statKey].bonus = value;
+      enforceStatEnhanciveRowLimits(statKey, input.dataset.kind);
+      const rowState = enhanciveState.stats[statKey];
+      const siblingStat = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="stat"]`);
+      const siblingBonus = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="bonus"]`);
+      if (siblingStat && document.activeElement !== siblingStat) siblingStat.value = String(rowState.stat);
+      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
       updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
     });
   });
@@ -793,10 +1220,18 @@ function renderEnhanciveTables() {
   enhSkillTable.querySelectorAll("input").forEach((input) => {
     input.addEventListener("input", () => {
       const key = input.dataset.enhSkill;
+      const skill = currentSkills.find((entry) => skillKey(entry.name) === key);
+      const baseRanks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
       if (!enhanciveState.skills[key]) enhanciveState.skills[key] = { rank: 0, bonus: 0 };
       const value = Math.max(0, Math.trunc(Number(input.value) || 0));
       if (input.dataset.kind === "rank") enhanciveState.skills[key].rank = value;
       else enhanciveState.skills[key].bonus = value;
+      enforceSkillEnhanciveRowLimits(key, baseRanks, input.dataset.kind);
+      const rowState = enhanciveState.skills[key];
+      const siblingRank = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="rank"]`);
+      const siblingBonus = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="bonus"]`);
+      if (siblingRank && document.activeElement !== siblingRank) siblingRank.value = String(rowState.rank);
+      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
       updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
     });
   });
@@ -857,8 +1292,13 @@ function updateEnhanciveDisplay() {
 
 function updateDerivedDisplays(options = {}) {
   const { skipStatsRender = false, skipSkillsRender = false, skipAscRender = false, skipEnhRender = false } = options;
+  stats.forEach((stat) => enforceStatEnhanciveRowLimits(stat.key));
+  currentSkills.forEach((skill) => enforceSkillEnhanciveRowLimits(skillKey(skill.name), Math.max(0, Math.trunc(Number(skill.ranks) || 0))));
   syncSkillAdjustmentState();
+  enforceAscensionPointBudget();
+  syncAscensionStateFromAbilities();
   if (!skipStatsRender) updateStatDerivedDisplay();
+  updateStatHeaderLabels();
   if (!skipSkillsRender) renderSkillsTable(currentSkills);
   if (skipSkillsRender) updateSkillsDerivedDisplay();
   if (!skipAscRender) renderAscensionTables();
@@ -887,7 +1327,7 @@ function updateEnhStatus() {
     enhStatus.textContent = "Invalid enhancive rows: stat limit is 40 stat / 20 bonus with 20 effective; skill limit is 50 effective.";
     enhStatus.style.color = "#b42318";
   } else {
-    enhStatus.textContent = "Enhancive limits are enforced per row.";
+    enhStatus.textContent = "Effective bonus is calculated per row and is capped by the shown limit.";
     enhStatus.style.color = "";
   }
 }
@@ -998,6 +1438,7 @@ function applyProfile(profile) {
   if (profileAscensionExperience) profileAscensionExperience.value = String(currentAscensionExperience);
   currentAscensionMilestones = clamp(Math.trunc(Number(profile.ascensionMilestones) || 0), 0, 10);
   if (profileAscensionMilestones) profileAscensionMilestones.value = String(currentAscensionMilestones);
+  currentAscensionAbilities = normalizeAscensionAbilities(Array.isArray(profile.ascensionAbilities) ? profile.ascensionAbilities : []);
 
   currentLevel0Stats = profile.level0Stats || null;
   if (currentLevel0Stats) {
@@ -1030,6 +1471,9 @@ function applyProfile(profile) {
     accessoryWeightInput.value = String(profile.defaults.accessoryWeight ?? 0);
     gearWeightInput.value = String(profile.defaults.gearWeight ?? 0);
     silversInput.value = String(profile.defaults.silvers ?? 0);
+    currentBadgeDefaults = normalizeBadgeDefaults(profile.defaults.badge);
+  } else {
+    currentBadgeDefaults = normalizeBadgeDefaults(null);
   }
 
   if (profile.skills) {
@@ -1048,6 +1492,10 @@ function applyProfile(profile) {
   } else {
     currentSkills = mergeSkillsWithCatalog([]);
     syncSkillAdjustmentState();
+  }
+  if (!Array.isArray(profile.ascensionAbilities) || !profile.ascensionAbilities.length) {
+    populateAbilitiesFromAscensionState();
+    syncAscensionStateFromAbilities();
   }
   skillsImportUnmatchedKeys = new Set();
   updateSkillsImportFlags();
@@ -1461,36 +1909,17 @@ function applyAscList(text, options = {}) {
     return;
   }
 
-  let statCount = 0;
-  let skillCount = 0;
-  const statByName = {};
-  stats.forEach((stat) => {
-    statByName[stat.label.toLowerCase()] = stat.key;
-  });
-
-  parsed.forEach((entry) => {
-    const mnemonicMapped = ascMnemonicMap[entry.mnemonic] || "";
-    const cleanedName = entry.name.toLowerCase().trim();
-    const statKey = statByName[cleanedName] || statByName[String(mnemonicMapped).toLowerCase()];
-    if (entry.cap === 40 && (entry.subcategory === "stat" || statKey)) {
-      if (statKey && ascensionState.stats[statKey]) {
-        ascensionState.stats[statKey].stat = Math.max(0, Math.min(40, entry.ranks));
-        statCount += 1;
-      }
-      return;
-    }
-
-    if (entry.cap === 50 && entry.subcategory === "skill") {
-      const canonical = canonicalSkillName(mnemonicMapped || entry.name);
-      const key = skillKey(canonical);
-      if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
-      ascensionState.skills[key].bonus = Math.max(0, Math.min(40, entry.ranks));
-      skillCount += 1;
-    }
-  });
-
+  currentAscensionAbilities = normalizeAscensionAbilities(parsed.map((entry) => ({
+    name: entry.name,
+    mnemonic: entry.mnemonic,
+    cap: entry.cap,
+    category: entry.category || (entry.mnemonic === "trandest" ? "Elite" : "Common"),
+    subcategory: entry.subcategory,
+    ranks: entry.ranks,
+  })));
+  syncAscensionStateFromAbilities();
   updateDerivedDisplays();
-  ascImportStatus.textContent = `ASC LIST loaded: ${statCount} stat row(s), ${skillCount} skill row(s).`;
+  ascImportStatus.textContent = `ASC LIST loaded: ${parsed.length} ability row(s).`;
   ascImportStatus.style.color = "";
 }
 
@@ -1574,7 +2003,18 @@ function comparableProfile(record) {
     accessoryWeight: Math.max(0, Number(record?.defaults?.accessoryWeight) || 0),
     gearWeight: Math.max(0, Number(record?.defaults?.gearWeight) || 0),
     silvers: Math.max(0, Number(record?.defaults?.silvers) || 0),
+    badge: normalizeBadgeDefaults(record?.defaults?.badge),
   };
+
+  const ascensionAbilities = normalizeAscensionAbilities(Array.isArray(record?.ascensionAbilities) ? record.ascensionAbilities : [])
+    .map((entry) => ({
+      name: entry.name,
+      mnemonic: entry.mnemonic,
+      cap: entry.cap,
+      category: entry.category,
+      subcategory: entry.subcategory,
+      ranks: entry.ranks,
+    }));
 
   return {
     name: String(record?.name || "").trim(),
@@ -1584,6 +2024,7 @@ function comparableProfile(record) {
     experience: Math.max(0, Math.trunc(Number(record?.experience) || experienceForLevel(record?.level))),
     ascensionExperience: Math.max(0, Math.trunc(Number(record?.ascensionExperience) || 0)),
     ascensionMilestones: clamp(Math.trunc(Number(record?.ascensionMilestones) || 0), 0, 10),
+    ascensionAbilities,
     level0Stats: normalizeLevel0Stats(record?.level0Stats),
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1640,14 +2081,6 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
     const selectedLevel0 = selectedProfile.level0Stats?.[stat.key] ?? null;
     toggleDiffHighlight(level0Input, currentLevel0 !== selectedLevel0);
 
-    const ascStatInputs = ascStatTable.querySelectorAll(`input[data-asc-stat="${stat.key}"]`);
-    ascStatInputs.forEach((input) => {
-      const kind = input.dataset.kind;
-      const currentValue = currentProfile.ascension.stats?.[stat.key]?.[kind] ?? 0;
-      const selectedValue = selectedProfile.ascension.stats?.[stat.key]?.[kind] ?? 0;
-      toggleDiffHighlight(input, currentValue !== selectedValue);
-    });
-
     const enhStatInputs = enhStatTable.querySelectorAll(`input[data-enh-stat="${stat.key}"]`);
     enhStatInputs.forEach((input) => {
       const kind = input.dataset.kind;
@@ -1667,10 +2100,12 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
     toggleDiffHighlight(input, currentRanks !== selectedRanks);
   });
 
-  ascSkillTable.querySelectorAll('input[data-asc-skill]').forEach((input) => {
-    const key = input.dataset.ascSkill;
-    const currentValue = currentProfile.ascension.skills?.[key]?.bonus ?? 0;
-    const selectedValue = selectedProfile.ascension.skills?.[key]?.bonus ?? 0;
+  const currentAscByMnemonic = new Map((currentProfile.ascensionAbilities || []).map((entry) => [entry.mnemonic, entry]));
+  const selectedAscByMnemonic = new Map((selectedProfile.ascensionAbilities || []).map((entry) => [entry.mnemonic, entry]));
+  ascAbilityGroups?.querySelectorAll('input[data-asc-ability]').forEach((input) => {
+    const mnemonic = input.dataset.ascAbility;
+    const currentValue = currentAscByMnemonic.get(mnemonic)?.ranks ?? 0;
+    const selectedValue = selectedAscByMnemonic.get(mnemonic)?.ranks ?? 0;
     toggleDiffHighlight(input, currentValue !== selectedValue);
   });
 
@@ -1716,6 +2151,15 @@ function buildCurrentProfileRecord(nameOverride = null) {
     };
   });
 
+  const ascensionAbilities = normalizeAscensionAbilities(currentAscensionAbilities).map((entry) => ({
+    name: entry.name,
+    mnemonic: entry.mnemonic,
+    cap: entry.cap,
+    category: entry.category,
+    subcategory: entry.subcategory,
+    ranks: entry.ranks,
+  }));
+
   return {
     name: (nameOverride == null ? profileName.value : nameOverride).trim(),
     race: races.find((race) => race.key === profileRace.value)?.name || "Human",
@@ -1724,6 +2168,7 @@ function buildCurrentProfileRecord(nameOverride = null) {
     experience: Math.max(0, Math.trunc(Number(profileExperience.value) || 0)),
     ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
     ascensionMilestones: clamp(Math.trunc(Number(currentAscensionMilestones) || 0), 0, 10),
+    ascensionAbilities,
     level0Stats: currentLevel0Stats,
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
@@ -1735,6 +2180,7 @@ function buildCurrentProfileRecord(nameOverride = null) {
       accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
       gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
       silvers: Math.max(0, Number(silversInput.value) || 0),
+      badge: normalizeBadgeDefaults(currentBadgeDefaults),
     },
   };
 }
@@ -1774,7 +2220,8 @@ function updateProfileActionState() {
 
 function applySectionDefaultVisibility() {
   if (quickStartSection) quickStartSection.open = !Boolean(profileSelect.value);
-  if (adjustmentsSection) adjustmentsSection.open = false;
+  if (ascensionSection) ascensionSection.open = false;
+  if (enhanciveSection) enhanciveSection.open = false;
 }
 
 function reloadSelectedProfile(showStatus = false) {
@@ -1836,6 +2283,8 @@ function resetEditorForNewProfile() {
   currentLevel0Stats = defaultStatMap(50);
   currentBaseStats = defaultStatMap(50);
   currentAscensionExperience = 0;
+  currentAscensionAbilities = buildDefaultAscensionAbilities();
+  currentBadgeDefaults = normalizeBadgeDefaults(null);
   initAdjustmentState();
   updateDerivedDisplays();
   applyingProfile = false;
@@ -2167,6 +2616,11 @@ document.querySelector("main.calculator").addEventListener("change", () => {
 
 skillsShowTrainedOnly?.addEventListener("change", () => {
   renderSkillsTable(currentSkills);
+});
+
+ascShowTrainedOnly?.addEventListener("change", () => {
+  renderAscensionTables();
+  updateAscensionStatus();
 });
 
 runProfileTestsBtn?.addEventListener("click", runProfileSelfTests);

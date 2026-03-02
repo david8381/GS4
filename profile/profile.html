@@ -101,72 +101,6 @@
           </div>
         </details>
 
-        <details class="collapsible-section" id="adjustmentsSection">
-          <summary>Ascension + Enhancives</summary>
-          <div class="collapsible-body">
-            <section class="calc-panel profile-grid">
-              <div class="table-panel ascension-panel">
-                <h2>Ascension</h2>
-                <h3>Stat Adjustments</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Stat</th>
-                      <th>Asc Stat +</th>
-                      <th>Asc Bonus +</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ascStatTable"></tbody>
-                </table>
-                <h3>Skill Adjustments</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Skill</th>
-                      <th>Asc Bonus +</th>
-                    </tr>
-                  </thead>
-                  <tbody id="ascSkillTable"></tbody>
-                </table>
-                <div class="helper" id="ascStatus">Ascension limits are enforced per row.</div>
-              </div>
-
-              <div class="table-panel enhancive-panel">
-                <h2>Enhancives</h2>
-                <h3>Stat Enhancives</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Stat</th>
-                      <th>Enh Stat +</th>
-                      <th>Enh Bonus +</th>
-                      <th>Eff/Limit</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhStatTable"></tbody>
-                </table>
-                <h3>Skill Enhancives</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Skill</th>
-                      <th>Enh Rank +</th>
-                      <th>Enh Bonus +</th>
-                      <th>Eff/Limit</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhSkillTable"></tbody>
-                </table>
-                <div class="helper" id="enhStatus">Enhancive limits are enforced per row.</div>
-              </div>
-            </section>
-            <div class="inline-actions">
-              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
-              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
-            </div>
-          </div>
-        </details>
-
         <details class="collapsible-section" id="generalSection" open>
           <summary>General Character Information</summary>
           <div class="collapsible-body">
@@ -218,6 +152,69 @@
                   <div class="helper">Enter milestones completed (0-10).</div>
                 </div>
                 <div class="helper" id="atpEstimateStatus">Total ATP from milestones + asc exp: —</div>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="ascensionSection">
+          <summary>Ascension</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="table-panel">
+                <div class="inline-actions">
+                  <h2>Ascension Abilities</h2>
+                  <label class="checkbox-row">
+                    <input id="ascShowTrainedOnly" type="checkbox" />
+                    Show only non-zero
+                  </label>
+                </div>
+                <div id="ascAbilityGroups"></div>
+                <div class="helper" id="ascStatus">Ascension limits are enforced per row.</div>
+              </div>
+            </section>
+            <div class="inline-actions">
+              <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
+              <button class="btn save-profile-btn profile-update-btn" type="button">Update Profile</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section" id="enhanciveSection">
+          <summary>Enhancives</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="table-panel enhancive-panel">
+                <h2>Enhancives</h2>
+                <h3>Stat Enhancives</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Stat</th>
+                      <th>Enh Stat +</th>
+                      <th>Enh Bonus +</th>
+                      <th>Effective Bonus / Limit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhStatTable"></tbody>
+                </table>
+                <h3>Skill Enhancives</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Skill</th>
+                      <th>Enh Rank +</th>
+                      <th>Enh Bonus +</th>
+                      <th>Effective Bonus / Limit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhSkillTable"></tbody>
+                </table>
+                <div class="helper" id="enhStatus">Effective bonus is calculated per row and is capped by the shown limit.</div>
               </div>
             </section>
             <div class="inline-actions">

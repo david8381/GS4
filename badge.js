@@ -234,7 +234,7 @@ const boostDefs = buildBoostDefs();
 const boostById = new Map(boostDefs.map((def) => [def.id, def]));
 
 const state = {
-  lifetimeBp: 300000,
+  lifetimeBp: 0,
   components: [0, 0, 0, 0, 0],
   boosts: [
     { id: 1, value: 0 },
