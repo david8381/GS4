@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spell Sets + Combat Modifiers</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="spells">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Spell Planning</p>
+          <h1>Spell Sets + Combat Modifiers</h1>
+          <p>
+            Build named spell sets for a character profile. Select a set to preview spell-driven changes to DS, TD,
+            CS, AS, Bolt DS, and Bolt AS.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="header-bridge" aria-hidden="true">
+              <select id="profileSelectCalc">
+                <option value="">Select from Profile</option>
+              </select>
+              <button id="profileLoadCalc" type="button">Load</button>
+            </div>
+
+            <div class="input-group">
+              <label for="profileSelectCalc">Character Profile</label>
+              <div class="input-row">
+                <button class="btn" id="profileReloadCalc" type="button">Reload from Profile</button>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="spellSetSelect">Spell Set</label>
+              <div class="input-row">
+                <select id="spellSetSelect">
+                  <option value="">None</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="spellSetName">Set Name</label>
+              <div class="input-row">
+                <input id="spellSetName" type="text" placeholder="e.g. Self Cast Only" />
+              </div>
+            </div>
+
+            <div class="input-group inline-actions">
+              <button class="btn" id="spellSetCreate" type="button">Create Set</button>
+              <button class="btn" id="spellSetSave" type="button">Update Set</button>
+              <button class="btn ghost" id="spellSetDelete" type="button">Delete Set</button>
+            </div>
+            <div class="helper" id="spellSetStatus">Select a profile to manage spell sets.</div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Selected Set</div>
+              <div class="summary-value" id="selectedSpellSetName">None</div>
+              <div class="summary-sub" id="selectedSpellSetCount">0 spells</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Known Modifier Coverage</div>
+              <div class="summary-value" id="knownCoverageValue">0 / 0</div>
+              <div class="summary-sub" id="knownCoverageSub">Known / Total spell effects</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Add Spell To Set</h2>
+          <div class="input-group">
+            <div class="input-row">
+              <select id="spellSelect"></select>
+              <label class="checkbox-row">
+                <input id="spellSelfCast" type="checkbox" />
+                Self-cast
+              </label>
+              <button class="btn" id="spellAdd" type="button">Add Spell</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Set Spells</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Spell</th>
+                <th>Circle</th>
+                <th>Self-Cast</th>
+                <th>Effect</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="spellSetTable"></tbody>
+          </table>
+        </section>
+
+        <section class="table-panel">
+          <h2>Spell-Driven Combat Modifiers</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Delta From Spell Set</th>
+              </tr>
+            </thead>
+            <tbody id="spellEffectTable"></tbody>
+          </table>
+          <div class="helper" id="spellEffectStatus">Preview currently includes known fixed or formula-derived buffs from the selected set.</div>
+        </section>
+
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Buff_spells" target="_blank" rel="noopener noreferrer">GSWiki: Buff Spells</a></li>
+                <li><a href="https://gswiki.play.net/Defensive_strength" target="_blank" rel="noopener noreferrer">GSWiki: Defensive Strength</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="site.js" defer></script>
+    <script src="data/spells.js"></script>
+    <script src="spells.js"></script>
+  </body>
+</html>
