@@ -37,81 +37,76 @@
 
           <div class="input-block">
             <label for="race">Race</label>
-            <div class="input-row">
+            <div class="input-row compare-row">
+              <span class="unit">Profile 1</span>
               <select id="race"></select>
+              <span class="unit">Profile 2</span>
+              <select id="raceFuture"></select>
             </div>
 
             <div class="input-group">
               <label for="strStat">Strength (stat)</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="strStat" type="number" min="1" max="200" step="1" value="70" />
+                <span class="unit">Profile 2</span>
+                <input id="strDelta" type="number" min="1" max="200" step="1" value="70" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="conStat">Constitution (stat)</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="conStat" type="number" min="1" max="200" step="1" value="60" />
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="strDelta">What-if Strength change</label>
-              <div class="input-row">
-                <input id="strDelta" type="number" min="-200" max="200" step="1" value="0" />
-                <span class="unit">stat</span>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="conDelta">What-if Constitution change</label>
-              <div class="input-row">
-                <input id="conDelta" type="number" min="-200" max="200" step="1" value="0" />
-                <span class="unit">stat</span>
+                <span class="unit">Profile 2</span>
+                <input id="conDelta" type="number" min="1" max="200" step="1" value="60" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="pfBonus">Physical Fitness bonus</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="pfBonus" type="number" min="0" step="1" value="0" />
-                <span class="unit">bonus</span>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="pfDelta">What-if Physical Fitness bonus change</label>
-              <div class="input-row">
-                <input id="pfDelta" type="number" min="-200" max="200" step="1" value="0" />
-                <span class="unit">bonus</span>
+                <span class="unit">Profile 2</span>
+                <input id="pfDelta" type="number" min="0" step="1" value="0" />
               </div>
             </div>
 
             <div class="input-group inline-actions">
-              <button class="btn" id="profileStatsReload" type="button" disabled>Reload from Profile</button>
+              <button class="btn" id="profileStatsReload" type="button" disabled>Reload Profile 1</button>
+              <button class="btn ghost" id="matchProfile1" type="button">Sync / Copy Prof 1 to 2</button>
             </div>
 
           </div>
 
           <div class="input-block">
             <label for="gearWeight">Carried gear weight (no armor)</label>
-            <div class="input-row">
+            <div class="input-row compare-row">
+              <span class="unit">Profile 1</span>
               <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
-              <span class="unit">lbs</span>
+              <span class="unit">Profile 2</span>
+              <input id="gearDelta" type="number" min="0" max="9999" step="0.1" value="0" />
             </div>
 
             <div class="input-group">
               <label for="silvers">Silvers carried</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="silvers" type="number" min="0" step="1" value="0" />
-                <span class="unit">coins</span>
+                <span class="unit">Profile 2</span>
+                <input id="silversDelta" type="number" min="0" max="999999999" step="1" value="0" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="armorAsg">Armor type (ASG)</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <select id="armorAsg"></select>
+                <span class="unit">Profile 2</span>
+                <select id="armorAsgFuture"></select>
               </div>
             </div>
 
@@ -121,26 +116,32 @@
                 <input id="useCustomArmorBase" type="checkbox" />
                 Use item-specific base weight instead of ASG standard
               </label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="armorBaseWeight" type="number" min="0" step="0.1" value="0" disabled />
-                <span class="unit">lbs</span>
+                <span class="unit">Profile 2</span>
+                <input id="armorBaseWeightDelta" type="number" min="0" max="999" step="0.1" value="0" disabled />
               </div>
               <div class="helper">Optional: for unusual materials (e.g. very heavy native base weights).</div>
             </details>
 
             <div class="input-group">
               <label for="armorWeight">Armor actual weight</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">lbs</span>
+                <span class="unit">Profile 2</span>
+                <input id="armorWeightDelta" type="number" min="0" max="999" step="0.1" value="0" />
               </div>
             </div>
 
             <div class="input-group">
               <label for="accessoryWeight">Armor accessories weight</label>
-              <div class="input-row">
+              <div class="input-row compare-row">
+                <span class="unit">Profile 1</span>
                 <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">lbs</span>
+                <span class="unit">Profile 2</span>
+                <input id="accessoryWeightDelta" type="number" min="0" max="999" step="0.1" value="0" />
               </div>
             </div>
 

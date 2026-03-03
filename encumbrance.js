@@ -1,4 +1,5 @@
 const raceSelect = document.getElementById("race");
+const raceFutureSelect = document.getElementById("raceFuture");
 const strInput = document.getElementById("strStat");
 const conInput = document.getElementById("conStat");
 const strDeltaInput = document.getElementById("strDelta");
@@ -8,17 +9,24 @@ const profileLoad = document.getElementById("profileLoad");
 const profileDefaultsSave = document.getElementById("profileDefaultsSave");
 const profileDefaultsReload = document.getElementById("profileDefaultsReload");
 const profileStatsReload = document.getElementById("profileStatsReload");
+const matchProfile1Btn = document.getElementById("matchProfile1");
 const profileDefaultsStatus = document.getElementById("profileDefaultsStatus");
 const useEnhanced = document.getElementById("useEnhanced");
 
 const gearWeightInput = document.getElementById("gearWeight");
 const silversInput = document.getElementById("silvers");
+const gearDeltaInput = document.getElementById("gearDelta");
+const silversDeltaInput = document.getElementById("silversDelta");
 const armorAsgSelect = document.getElementById("armorAsg");
+const armorAsgFutureSelect = document.getElementById("armorAsgFuture");
 const armorWeightInput = document.getElementById("armorWeight");
+const armorWeightDeltaInput = document.getElementById("armorWeightDelta");
 const useCustomArmorBaseInput = document.getElementById("useCustomArmorBase");
 const armorBaseWeightInput = document.getElementById("armorBaseWeight");
+const armorBaseWeightDeltaInput = document.getElementById("armorBaseWeightDelta");
 const armorBaseDetails = useCustomArmorBaseInput?.closest("details") || null;
 const accessoryWeightInput = document.getElementById("accessoryWeight");
+const accessoryWeightDeltaInput = document.getElementById("accessoryWeightDelta");
 const pfBonusInput = document.getElementById("pfBonus");
 const pfDeltaInput = document.getElementById("pfDelta");
 const resultsBody = document.getElementById("results");
@@ -29,6 +37,7 @@ const equipmentFields = [
   armorWeightInput,
   useCustomArmorBaseInput,
   armorBaseWeightInput,
+  armorBaseWeightDeltaInput,
   accessoryWeightInput,
 ];
 const runEncumbranceTestsBtn = document.getElementById("runEncumbranceTests");
@@ -84,6 +93,19 @@ function fillSelect(select, items) {
     option.textContent = item.name;
     select.appendChild(option);
   });
+}
+
+function matchFutureToCurrent() {
+  if (raceFutureSelect) raceFutureSelect.value = raceSelect.value;
+  strDeltaInput.value = strInput.value;
+  conDeltaInput.value = conInput.value;
+  pfDeltaInput.value = pfBonusInput.value;
+  gearDeltaInput.value = gearWeightInput.value;
+  silversDeltaInput.value = silversInput.value;
+  if (armorAsgFutureSelect) armorAsgFutureSelect.value = armorAsgSelect.value;
+  armorWeightDeltaInput.value = armorWeightInput.value;
+  accessoryWeightDeltaInput.value = accessoryWeightInput.value;
+  armorBaseWeightDeltaInput.value = armorBaseWeightInput.value;
 }
 
 function loadProfiles() {
@@ -156,6 +178,7 @@ function applyProfile(profile) {
   useCustomArmorBaseInput.checked = hasCustomBase;
   armorBaseWeightInput.disabled = !hasCustomBase;
   armorBaseWeightInput.value = String(profile.defaults?.armorBaseWeight ?? armorBaseWeightInput.value);
+  armorBaseWeightDeltaInput.disabled = !hasCustomBase;
   if (armorBaseDetails) armorBaseDetails.open = hasCustomBase;
   accessoryWeightInput.value = String(profile.defaults?.accessoryWeight ?? accessoryWeightInput.value);
   const pfSkill = profile.skills?.find((skill) => skill.name.toLowerCase() === "physical fitness");
@@ -249,6 +272,9 @@ function applySavedEquipmentDefaults(profile) {
   useCustomArmorBaseInput.checked = defaults.useCustomArmorBase;
   armorBaseWeightInput.disabled = !defaults.useCustomArmorBase;
   armorBaseWeightInput.value = String(defaults.armorBaseWeight);
+  if (armorBaseWeightDeltaInput) {
+    armorBaseWeightDeltaInput.disabled = !defaults.useCustomArmorBase;
+  }
   if (armorBaseDetails) armorBaseDetails.open = defaults.useCustomArmorBase;
   accessoryWeightInput.value = String(defaults.accessoryWeight);
 }
@@ -460,13 +486,14 @@ function updateResults() {
   resultsBody.innerHTML = "";
 
   const race = getRace();
+  const futureRace = races.find((entry) => entry.key === raceFutureSelect?.value) || race;
   const strStat = clamp(Number(strInput.value), 1, MAX_STAT_VALUE);
   const conStat = clamp(Number(conInput.value), 1, MAX_STAT_VALUE);
-  const strDelta = clamp(Number(strDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
-  const conDelta = clamp(Number(conDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
-  const pfDelta = clamp(Number(pfDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
+  const futureStr = clamp(Number(strDeltaInput.value), 1, MAX_STAT_VALUE);
+  const futureCon = clamp(Number(conDeltaInput.value), 1, MAX_STAT_VALUE);
 
   const armor = armorAsg.find((item) => item.key === armorAsgSelect.value) || armorAsg[0];
+  const futureArmor = armorAsg.find((item) => item.key === armorAsgFutureSelect?.value) || armor;
 
   const inputs = {
     gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
@@ -481,13 +508,19 @@ function updateResults() {
 
   const current = computeResults({ str: strStat, con: conStat }, inputs, race);
   const futureInputs = {
-    ...inputs,
-    pfBonus: Math.max(0, inputs.pfBonus + pfDelta),
+    gearWeight: Math.max(0, Number(gearDeltaInput?.value) || 0),
+    silvers: Math.max(0, Number(silversDeltaInput?.value) || 0),
+    armorStandard: useCustomArmorBaseInput.checked
+      ? Math.max(0, Number(armorBaseWeightDeltaInput?.value) || 0)
+      : futureArmor.standardWeight,
+    armorActual: Math.max(0, Number(armorWeightDeltaInput?.value) || 0),
+    accessoryWeight: Math.max(0, Number(accessoryWeightDeltaInput?.value) || 0),
+    pfBonus: Math.max(0, Number(pfDeltaInput?.value) || 0),
   };
   const future = computeResults(
-    { str: clamp(strStat + strDelta, 1, MAX_STAT_VALUE), con: clamp(conStat + conDelta, 1, MAX_STAT_VALUE) },
+    { str: futureStr, con: futureCon },
     futureInputs,
-    race
+    futureRace
   );
 
   renderRow(
@@ -505,7 +538,7 @@ function updateResults() {
   renderRow("Encumbrance %", formatPercent(current.encPercent), formatPercent(future.encPercent));
   renderRow("Encumbrance tier", current.encMessage, future.encMessage);
   renderRow("Encumbrance penalty (CMAN/SMR)", `${current.smrPenalty}%`, `${future.smrPenalty}%`);
-  renderRow("Armor CMAN penalty (ASG)", `${armor.cmanPenalty}`, `${armor.cmanPenalty}`);
+  renderRow("Armor CMAN penalty (ASG)", `${armor.cmanPenalty}`, `${futureArmor.cmanPenalty}`);
 
   renderRow("Max carry (items)", `${formatNumber(current.maxCarry)} lbs`, `${formatNumber(future.maxCarry)} lbs`);
   renderRow("Silver cap", `${formatNumber(current.silverCap)} lbs`, `${formatNumber(future.silverCap)} lbs`);
@@ -515,7 +548,10 @@ function updateResults() {
 }
 
 fillSelect(raceSelect, races);
+fillSelect(raceFutureSelect, races);
 fillSelect(armorAsgSelect, armorAsg);
+fillSelect(armorAsgFutureSelect, armorAsg);
+matchFutureToCurrent();
 updateArmorWeight();
 if (armorBaseDetails) armorBaseDetails.open = Boolean(useCustomArmorBaseInput?.checked);
 updateResults();
@@ -524,7 +560,9 @@ let profiles = loadProfiles();
 refreshProfileSelect(profiles);
 
 [raceSelect, strInput, conInput, strDeltaInput, conDeltaInput, gearWeightInput, silversInput, armorAsgSelect,
-  armorWeightInput, useCustomArmorBaseInput, armorBaseWeightInput, accessoryWeightInput, pfBonusInput, pfDeltaInput, useEnhanced].forEach((input) => {
+  armorAsgFutureSelect, gearDeltaInput, silversDeltaInput, armorWeightInput, armorWeightDeltaInput,
+  useCustomArmorBaseInput, armorBaseWeightInput, armorBaseWeightDeltaInput, accessoryWeightInput, accessoryWeightDeltaInput,
+  pfBonusInput, pfDeltaInput, useEnhanced].forEach((input) => {
   input.addEventListener("input", updateResults);
 });
 
@@ -532,14 +570,23 @@ armorAsgSelect.addEventListener("change", () => {
   updateArmorWeight();
   updateResults();
 });
+raceSelect.addEventListener("change", updateResults);
+raceFutureSelect?.addEventListener("change", updateResults);
+armorAsgFutureSelect?.addEventListener("change", updateResults);
 
 useCustomArmorBaseInput.addEventListener("change", () => {
   armorBaseWeightInput.disabled = !useCustomArmorBaseInput.checked;
+  if (armorBaseWeightDeltaInput) armorBaseWeightDeltaInput.disabled = !useCustomArmorBaseInput.checked;
   if (armorBaseDetails) armorBaseDetails.open = useCustomArmorBaseInput.checked;
   if (!useCustomArmorBaseInput.checked) {
     const selected = armorAsg.find((item) => item.key === armorAsgSelect.value);
     if (selected) armorBaseWeightInput.value = String(selected.standardWeight);
   }
+  updateResults();
+});
+
+matchProfile1Btn?.addEventListener("click", () => {
+  matchFutureToCurrent();
   updateResults();
 });
 

@@ -225,6 +225,23 @@ body {
   margin-top: 12px;
 }
 
+.compare-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.compare-row .unit {
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.compare-row > :nth-child(3) {
+  border-left: 1px solid #d5ccbe;
+  padding-left: 10px;
+}
+
 .input-group {
   margin-top: 12px;
 }
