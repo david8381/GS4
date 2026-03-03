@@ -40,6 +40,9 @@ const reloadProfileButtons = Array.from(document.querySelectorAll(".profile-relo
 
 const armorAsgSelect = document.getElementById("armorAsg");
 const armorWeightInput = document.getElementById("armorWeight");
+const useCustomArmorBaseInput = document.getElementById("useCustomArmorBase");
+const armorBaseWeightInput = document.getElementById("armorBaseWeight");
+const armorBaseDetails = useCustomArmorBaseInput?.closest("details") || null;
 const accessoryWeightInput = document.getElementById("accessoryWeight");
 const gearWeightInput = document.getElementById("gearWeight");
 const silversInput = document.getElementById("silvers");
@@ -1468,11 +1471,24 @@ function applyProfile(profile) {
   if (profile.defaults) {
     armorAsgSelect.value = profile.defaults.armorAsg || "none";
     armorWeightInput.value = String(profile.defaults.armorWeight ?? 0);
+    const hasCustomBase = Boolean(profile.defaults.useCustomArmorBase);
+    if (useCustomArmorBaseInput) useCustomArmorBaseInput.checked = hasCustomBase;
+    if (armorBaseWeightInput) {
+      armorBaseWeightInput.disabled = !hasCustomBase;
+      armorBaseWeightInput.value = String(profile.defaults.armorBaseWeight ?? 0);
+    }
+    if (armorBaseDetails) armorBaseDetails.open = hasCustomBase;
     accessoryWeightInput.value = String(profile.defaults.accessoryWeight ?? 0);
     gearWeightInput.value = String(profile.defaults.gearWeight ?? 0);
     silversInput.value = String(profile.defaults.silvers ?? 0);
     currentBadgeDefaults = normalizeBadgeDefaults(profile.defaults.badge);
   } else {
+    if (useCustomArmorBaseInput) useCustomArmorBaseInput.checked = false;
+    if (armorBaseWeightInput) {
+      armorBaseWeightInput.value = "0";
+      armorBaseWeightInput.disabled = true;
+    }
+    if (armorBaseDetails) armorBaseDetails.open = false;
     currentBadgeDefaults = normalizeBadgeDefaults(null);
   }
 
@@ -1509,6 +1525,9 @@ function updateArmorWeight() {
   const selected = armorAsg.find((item) => item.key === armorAsgSelect.value);
   if (!selected) return;
   armorWeightInput.value = String(selected.standardWeight);
+  if (!useCustomArmorBaseInput?.checked && armorBaseWeightInput) {
+    armorBaseWeightInput.value = String(selected.standardWeight);
+  }
 }
 
 function getSkillTrainingRowName(skillName) {
@@ -2000,6 +2019,8 @@ function comparableProfile(record) {
   const defaults = {
     armorAsg: record?.defaults?.armorAsg || "none",
     armorWeight: Math.max(0, Number(record?.defaults?.armorWeight) || 0),
+    useCustomArmorBase: Boolean(record?.defaults?.useCustomArmorBase),
+    armorBaseWeight: Math.max(0, Number(record?.defaults?.armorBaseWeight) || 0),
     accessoryWeight: Math.max(0, Number(record?.defaults?.accessoryWeight) || 0),
     gearWeight: Math.max(0, Number(record?.defaults?.gearWeight) || 0),
     silvers: Math.max(0, Number(record?.defaults?.silvers) || 0),
@@ -2071,6 +2092,8 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
 
   toggleDiffHighlight(armorAsgSelect, currentProfile.defaults.armorAsg !== selectedProfile.defaults.armorAsg);
   toggleDiffHighlight(armorWeightInput, currentProfile.defaults.armorWeight !== selectedProfile.defaults.armorWeight);
+  toggleDiffHighlight(useCustomArmorBaseInput, currentProfile.defaults.useCustomArmorBase !== selectedProfile.defaults.useCustomArmorBase);
+  toggleDiffHighlight(armorBaseWeightInput, currentProfile.defaults.armorBaseWeight !== selectedProfile.defaults.armorBaseWeight);
   toggleDiffHighlight(accessoryWeightInput, currentProfile.defaults.accessoryWeight !== selectedProfile.defaults.accessoryWeight);
   toggleDiffHighlight(gearWeightInput, currentProfile.defaults.gearWeight !== selectedProfile.defaults.gearWeight);
   toggleDiffHighlight(silversInput, currentProfile.defaults.silvers !== selectedProfile.defaults.silvers);
@@ -2177,6 +2200,8 @@ function buildCurrentProfileRecord(nameOverride = null) {
     defaults: {
       armorAsg: armorAsgSelect.value,
       armorWeight: Math.max(0, Number(armorWeightInput.value) || 0),
+      useCustomArmorBase: Boolean(useCustomArmorBaseInput?.checked),
+      armorBaseWeight: Math.max(0, Number(armorBaseWeightInput?.value) || 0),
       accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
       gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
       silvers: Math.max(0, Number(silversInput.value) || 0),
@@ -2275,6 +2300,12 @@ function resetEditorForNewProfile() {
 
   armorAsgSelect.value = "none";
   updateArmorWeight();
+  if (useCustomArmorBaseInput) useCustomArmorBaseInput.checked = false;
+  if (armorBaseWeightInput) {
+    armorBaseWeightInput.value = "0";
+    armorBaseWeightInput.disabled = true;
+  }
+  if (armorBaseDetails) armorBaseDetails.open = false;
   accessoryWeightInput.value = "0";
   gearWeightInput.value = "0";
   silversInput.value = "0";
@@ -2554,6 +2585,14 @@ skillsImport.addEventListener("input", () => {
 });
 
 armorAsgSelect.addEventListener("change", updateArmorWeight);
+useCustomArmorBaseInput?.addEventListener("change", () => {
+  if (armorBaseWeightInput) armorBaseWeightInput.disabled = !useCustomArmorBaseInput.checked;
+  if (armorBaseDetails) armorBaseDetails.open = useCustomArmorBaseInput.checked;
+  if (!useCustomArmorBaseInput.checked) {
+    const selected = armorAsg.find((item) => item.key === armorAsgSelect.value);
+    if (selected && armorBaseWeightInput) armorBaseWeightInput.value = String(selected.standardWeight);
+  }
+});
 
 profileLevel.addEventListener("input", () => {
   const level = clamp(Number(profileLevel.value), 0, 100);

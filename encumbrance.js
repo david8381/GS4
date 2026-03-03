@@ -15,10 +15,21 @@ const gearWeightInput = document.getElementById("gearWeight");
 const silversInput = document.getElementById("silvers");
 const armorAsgSelect = document.getElementById("armorAsg");
 const armorWeightInput = document.getElementById("armorWeight");
+const useCustomArmorBaseInput = document.getElementById("useCustomArmorBase");
+const armorBaseWeightInput = document.getElementById("armorBaseWeight");
+const armorBaseDetails = useCustomArmorBaseInput?.closest("details") || null;
 const accessoryWeightInput = document.getElementById("accessoryWeight");
 const pfBonusInput = document.getElementById("pfBonus");
 const resultsBody = document.getElementById("results");
-const equipmentFields = [gearWeightInput, silversInput, armorAsgSelect, armorWeightInput, accessoryWeightInput];
+const equipmentFields = [
+  gearWeightInput,
+  silversInput,
+  armorAsgSelect,
+  armorWeightInput,
+  useCustomArmorBaseInput,
+  armorBaseWeightInput,
+  accessoryWeightInput,
+];
 const runEncumbranceTestsBtn = document.getElementById("runEncumbranceTests");
 const encumbranceTestOutput = document.getElementById("encumbranceTestOutput");
 
@@ -140,6 +151,11 @@ function applyProfile(profile) {
   silversInput.value = String(profile.defaults?.silvers ?? silversInput.value);
   armorAsgSelect.value = profile.defaults?.armorAsg ?? armorAsgSelect.value;
   armorWeightInput.value = String(profile.defaults?.armorWeight ?? armorWeightInput.value);
+  const hasCustomBase = Boolean(profile.defaults?.useCustomArmorBase);
+  useCustomArmorBaseInput.checked = hasCustomBase;
+  armorBaseWeightInput.disabled = !hasCustomBase;
+  armorBaseWeightInput.value = String(profile.defaults?.armorBaseWeight ?? armorBaseWeightInput.value);
+  if (armorBaseDetails) armorBaseDetails.open = hasCustomBase;
   accessoryWeightInput.value = String(profile.defaults?.accessoryWeight ?? accessoryWeightInput.value);
   const pfSkill = profile.skills?.find((skill) => skill.name.toLowerCase() === "physical fitness");
   const pfValue = pfSkill?.bonus ?? profile.defaults?.pfBonus;
@@ -163,6 +179,8 @@ function currentProfileSnapshot() {
     silvers: Number(silversInput.value) || 0,
     armorAsg: armorAsgSelect.value,
     armorWeight: Number(armorWeightInput.value) || 0,
+    useCustomArmorBase: Boolean(useCustomArmorBaseInput.checked),
+    armorBaseWeight: Number(armorBaseWeightInput.value) || 0,
     accessoryWeight: Number(accessoryWeightInput.value) || 0,
     pfBonus: Number(pfBonusInput.value) || 0,
   };
@@ -174,6 +192,8 @@ function currentDefaultsSnapshot() {
     silvers: Math.max(0, Number(silversInput.value) || 0),
     armorAsg: armorAsgSelect.value,
     armorWeight: Math.max(0, Number(armorWeightInput.value) || 0),
+    useCustomArmorBase: Boolean(useCustomArmorBaseInput.checked),
+    armorBaseWeight: Math.max(0, Number(armorBaseWeightInput.value) || 0),
     accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
   };
 }
@@ -213,6 +233,8 @@ function savedDefaultsSnapshot(profile) {
     silvers: Math.max(0, Number(profile?.defaults?.silvers) || 0),
     armorAsg: profile?.defaults?.armorAsg || "none",
     armorWeight: Math.max(0, Number(profile?.defaults?.armorWeight) || 0),
+    useCustomArmorBase: Boolean(profile?.defaults?.useCustomArmorBase),
+    armorBaseWeight: Math.max(0, Number(profile?.defaults?.armorBaseWeight) || 0),
     accessoryWeight: Math.max(0, Number(profile?.defaults?.accessoryWeight) || 0),
   };
 }
@@ -223,6 +245,10 @@ function applySavedEquipmentDefaults(profile) {
   silversInput.value = String(defaults.silvers);
   armorAsgSelect.value = defaults.armorAsg;
   armorWeightInput.value = String(defaults.armorWeight);
+  useCustomArmorBaseInput.checked = defaults.useCustomArmorBase;
+  armorBaseWeightInput.disabled = !defaults.useCustomArmorBase;
+  armorBaseWeightInput.value = String(defaults.armorBaseWeight);
+  if (armorBaseDetails) armorBaseDetails.open = defaults.useCustomArmorBase;
   accessoryWeightInput.value = String(defaults.accessoryWeight);
 }
 
@@ -235,6 +261,8 @@ function updateEquipmentDiffHighlights(profile) {
   if (current.silvers !== saved.silvers) silversInput.classList.add("changed-from-profile");
   if (current.armorAsg !== saved.armorAsg) armorAsgSelect.classList.add("changed-from-profile");
   if (current.armorWeight !== saved.armorWeight) armorWeightInput.classList.add("changed-from-profile");
+  if (current.useCustomArmorBase !== saved.useCustomArmorBase) useCustomArmorBaseInput.classList.add("changed-from-profile");
+  if (current.armorBaseWeight !== saved.armorBaseWeight) armorBaseWeightInput.classList.add("changed-from-profile");
   if (current.accessoryWeight !== saved.accessoryWeight) accessoryWeightInput.classList.add("changed-from-profile");
 }
 
@@ -422,6 +450,9 @@ function updateArmorWeight() {
   const selected = armorAsg.find((item) => item.key === armorAsgSelect.value);
   if (!selected) return;
   armorWeightInput.value = String(selected.standardWeight);
+  if (!useCustomArmorBaseInput.checked) {
+    armorBaseWeightInput.value = String(selected.standardWeight);
+  }
 }
 
 function updateResults() {
@@ -438,7 +469,9 @@ function updateResults() {
   const inputs = {
     gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
     silvers: Math.max(0, Number(silversInput.value) || 0),
-    armorStandard: armor.standardWeight,
+    armorStandard: useCustomArmorBaseInput.checked
+      ? Math.max(0, Number(armorBaseWeightInput.value) || 0)
+      : armor.standardWeight,
     armorActual: Math.max(0, Number(armorWeightInput.value) || 0),
     accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
     pfBonus: Math.max(0, Number(pfBonusInput.value) || 0),
@@ -478,18 +511,29 @@ function updateResults() {
 fillSelect(raceSelect, races);
 fillSelect(armorAsgSelect, armorAsg);
 updateArmorWeight();
+if (armorBaseDetails) armorBaseDetails.open = Boolean(useCustomArmorBaseInput?.checked);
 updateResults();
 
 let profiles = loadProfiles();
 refreshProfileSelect(profiles);
 
 [raceSelect, strInput, conInput, strDeltaInput, conDeltaInput, gearWeightInput, silversInput, armorAsgSelect,
-  armorWeightInput, accessoryWeightInput, pfBonusInput, useEnhanced].forEach((input) => {
+  armorWeightInput, useCustomArmorBaseInput, armorBaseWeightInput, accessoryWeightInput, pfBonusInput, useEnhanced].forEach((input) => {
   input.addEventListener("input", updateResults);
 });
 
 armorAsgSelect.addEventListener("change", () => {
   updateArmorWeight();
+  updateResults();
+});
+
+useCustomArmorBaseInput.addEventListener("change", () => {
+  armorBaseWeightInput.disabled = !useCustomArmorBaseInput.checked;
+  if (armorBaseDetails) armorBaseDetails.open = useCustomArmorBaseInput.checked;
+  if (!useCustomArmorBaseInput.checked) {
+    const selected = armorAsg.find((item) => item.key === armorAsgSelect.value);
+    if (selected) armorBaseWeightInput.value = String(selected.standardWeight);
+  }
   updateResults();
 });
 
@@ -536,6 +580,8 @@ if (profileDefaultsSave) {
     profile.defaults.silvers = defaults.silvers;
     profile.defaults.armorAsg = defaults.armorAsg;
     profile.defaults.armorWeight = defaults.armorWeight;
+    profile.defaults.useCustomArmorBase = defaults.useCustomArmorBase;
+    profile.defaults.armorBaseWeight = defaults.armorBaseWeight;
     profile.defaults.accessoryWeight = defaults.accessoryWeight;
 
     profiles = profileList.map((entry) => (entry.id === selected ? profile : entry));
@@ -612,7 +658,17 @@ window.addEventListener("focus", () => {
 
 function runEncumbranceSelfTests() {
   const human = races.find((race) => race.key === "human");
+  const halfling = races.find((race) => race.key === "halfling");
+  const giantman = races.find((race) => race.key === "giantman");
   const noneArmor = armorAsg.find((item) => item.key === "none");
+  const fullPlate = armorAsg.find((item) => item.key === "asg20");
+  const chain = armorAsg.find((item) => item.key === "asg13");
+
+  function armorBenefitLine(race, asgLabel, baseWeight, actualWeight) {
+    const benefit = armorAdjustment(race, baseWeight, actualWeight);
+    return `Race=${race.name} | ASG=${asgLabel} | Base=${baseWeight} | Actual=${actualWeight} | Encumbrance Benefit=${formatNumber(benefit)} lbs`;
+  }
+
   const tests = [
     {
       name: "T1 body weight increases with STR/CON",
@@ -649,6 +705,75 @@ function runEncumbranceSelfTests() {
       },
       check: (got) => got.pf < got.base,
     },
+    {
+      name: "T4 standard full plate gives zero armor benefit at standard weight",
+      run: () => {
+        const benefit = armorAdjustment(human, fullPlate.standardWeight, fullPlate.standardWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(human, "asg20", fullPlate.standardWeight, fullPlate.standardWeight),
+        };
+      },
+      check: (got) => got.benefit === 0,
+    },
+    {
+      name: "T5 custom heavy-base plate reduced to 75 gives positive benefit",
+      run: () => {
+        const baseWeight = 150;
+        const actualWeight = 75;
+        const benefit = armorAdjustment(human, baseWeight, actualWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(human, "asg20", baseWeight, actualWeight),
+        };
+      },
+      check: (got) => got.benefit > 0,
+    },
+    {
+      name: "T6 heavier than base gives negative armor adjustment",
+      run: () => {
+        const baseWeight = chain.standardWeight;
+        const actualWeight = 35;
+        const benefit = armorAdjustment(halfling, baseWeight, actualWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(halfling, "asg13", baseWeight, actualWeight),
+        };
+      },
+      check: (got) => got.benefit < 0,
+    },
+    {
+      name: "T7 race encumbrance factor scales armor benefit",
+      run: () => {
+        const baseWeight = fullPlate.standardWeight;
+        const actualWeight = 60;
+        const halflingBenefit = armorAdjustment(halfling, baseWeight, actualWeight);
+        const giantmanBenefit = armorAdjustment(giantman, baseWeight, actualWeight);
+        return {
+          halflingBenefit,
+          giantmanBenefit,
+          details: `${armorBenefitLine(halfling, "asg20", baseWeight, actualWeight)} | ${armorBenefitLine(giantman, "asg20", baseWeight, actualWeight)}`,
+        };
+      },
+      check: (got) => got.giantmanBenefit > got.halflingBenefit,
+    },
+    {
+      name: "T8 max item weight drops as encumbrance rises",
+      run: () => {
+        const base = computeResults(
+          { str: 70, con: 70 },
+          { gearWeight: 0, silvers: 0, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 0 },
+          human
+        );
+        const burdened = computeResults(
+          { str: 70, con: 70 },
+          { gearWeight: 250, silvers: 50000, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 0 },
+          human
+        );
+        return { base: base.maxItemWeight, burdened: burdened.maxItemWeight };
+      },
+      check: (got) => got.burdened < got.base,
+    },
   ];
 
   let pass = 0;
@@ -658,6 +783,9 @@ function runEncumbranceSelfTests() {
     const ok = Boolean(test.check(got));
     if (ok) pass += 1;
     lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
+    if (got && typeof got === "object" && typeof got.details === "string") {
+      lines.push(` ${got.details}`);
+    }
     if (!ok) lines.push(` got: ${JSON.stringify(got)}`);
   });
   lines.push("");

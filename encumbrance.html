@@ -107,6 +107,19 @@
               </div>
             </div>
 
+            <details class="input-group">
+              <summary>Advanced: custom armor base weight</summary>
+              <label class="checkbox-row" for="useCustomArmorBase">
+                <input id="useCustomArmorBase" type="checkbox" />
+                Use item-specific base weight instead of ASG standard
+              </label>
+              <div class="input-row">
+                <input id="armorBaseWeight" type="number" min="0" step="0.1" value="0" disabled />
+                <span class="unit">lbs</span>
+              </div>
+              <div class="helper">Optional: for unusual materials (e.g. very heavy native base weights).</div>
+            </details>
+
             <div class="input-group">
               <label for="armorWeight">Armor actual weight</label>
               <div class="input-row">
