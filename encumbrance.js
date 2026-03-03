@@ -547,12 +547,71 @@ function updateResults() {
   updateProfileDefaultsSaveState();
 }
 
+function isColumnTabbable(element) {
+  if (!element || element.disabled) return false;
+  if (element.closest("details:not([open])")) return false;
+  return true;
+}
+
+function setupColumnTabbing() {
+  const profile1Flow = [
+    raceSelect,
+    strInput,
+    conInput,
+    pfBonusInput,
+    gearWeightInput,
+    silversInput,
+    armorAsgSelect,
+    armorBaseWeightInput,
+    armorWeightInput,
+    accessoryWeightInput,
+  ];
+  const profile2Flow = [
+    raceFutureSelect,
+    strDeltaInput,
+    conDeltaInput,
+    pfDeltaInput,
+    gearDeltaInput,
+    silversDeltaInput,
+    armorAsgFutureSelect,
+    armorBaseWeightDeltaInput,
+    armorWeightDeltaInput,
+    accessoryWeightDeltaInput,
+  ];
+  const grouped = new Map();
+  profile1Flow.forEach((element) => {
+    if (element) grouped.set(element, profile1Flow);
+  });
+  profile2Flow.forEach((element) => {
+    if (element) grouped.set(element, profile2Flow);
+  });
+
+  grouped.forEach((flow, element) => {
+    element.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab") return;
+      const activeFlow = flow.filter(isColumnTabbable);
+      const index = activeFlow.indexOf(element);
+      if (index === -1) return;
+      if (!event.shiftKey && index < activeFlow.length - 1) {
+        event.preventDefault();
+        activeFlow[index + 1].focus();
+        return;
+      }
+      if (event.shiftKey && index > 0) {
+        event.preventDefault();
+        activeFlow[index - 1].focus();
+      }
+    });
+  });
+}
+
 fillSelect(raceSelect, races);
 fillSelect(raceFutureSelect, races);
 fillSelect(armorAsgSelect, armorAsg);
 fillSelect(armorAsgFutureSelect, armorAsg);
 matchFutureToCurrent();
 updateArmorWeight();
+setupColumnTabbing();
 if (armorBaseDetails) armorBaseDetails.open = Boolean(useCustomArmorBaseInput?.checked);
 updateResults();
 
