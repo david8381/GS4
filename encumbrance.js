@@ -20,6 +20,7 @@ const armorBaseWeightInput = document.getElementById("armorBaseWeight");
 const armorBaseDetails = useCustomArmorBaseInput?.closest("details") || null;
 const accessoryWeightInput = document.getElementById("accessoryWeight");
 const pfBonusInput = document.getElementById("pfBonus");
+const pfDeltaInput = document.getElementById("pfDelta");
 const resultsBody = document.getElementById("results");
 const equipmentFields = [
   gearWeightInput,
@@ -463,6 +464,7 @@ function updateResults() {
   const conStat = clamp(Number(conInput.value), 1, MAX_STAT_VALUE);
   const strDelta = clamp(Number(strDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
   const conDelta = clamp(Number(conDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
+  const pfDelta = clamp(Number(pfDeltaInput.value), -MAX_STAT_VALUE, MAX_STAT_VALUE);
 
   const armor = armorAsg.find((item) => item.key === armorAsgSelect.value) || armorAsg[0];
 
@@ -478,9 +480,13 @@ function updateResults() {
   };
 
   const current = computeResults({ str: strStat, con: conStat }, inputs, race);
+  const futureInputs = {
+    ...inputs,
+    pfBonus: Math.max(0, inputs.pfBonus + pfDelta),
+  };
   const future = computeResults(
     { str: clamp(strStat + strDelta, 1, MAX_STAT_VALUE), con: clamp(conStat + conDelta, 1, MAX_STAT_VALUE) },
-    inputs,
+    futureInputs,
     race
   );
 
@@ -518,7 +524,7 @@ let profiles = loadProfiles();
 refreshProfileSelect(profiles);
 
 [raceSelect, strInput, conInput, strDeltaInput, conDeltaInput, gearWeightInput, silversInput, armorAsgSelect,
-  armorWeightInput, useCustomArmorBaseInput, armorBaseWeightInput, accessoryWeightInput, pfBonusInput, useEnhanced].forEach((input) => {
+  armorWeightInput, useCustomArmorBaseInput, armorBaseWeightInput, accessoryWeightInput, pfBonusInput, pfDeltaInput, useEnhanced].forEach((input) => {
   input.addEventListener("input", updateResults);
 });
 
