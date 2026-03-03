@@ -434,7 +434,9 @@ function computeResults(stats, inputs, race) {
   const encumbrance = Math.max(0, rawEncumbrance - pfReduction);
 
   const encPercent = bodyWeight > 0 ? (encumbrance / bodyWeight) * 100 : 0;
-  const smrPenalty = Math.ceil(encPercent);
+  const maxCarry = 1.5 * bodyWeight + adjustedCapacity;
+  const silverCap = 1.99 * bodyWeight + adjustedCapacity;
+  const maxItemWeight = Math.max(0, 1.5 * bodyWeight - encumbrance);
 
   return {
     bodyWeight,
@@ -448,7 +450,9 @@ function computeResults(stats, inputs, race) {
     encumbrance,
     encPercent,
     encMessage: encumbranceMessage(encPercent),
-    smrPenalty,
+    maxCarry,
+    silverCap,
+    maxItemWeight,
   };
 }
 
@@ -530,6 +534,9 @@ function updateResults() {
   renderRow("Encumbrance weight", `${formatNumber(current.encumbrance)} lbs`, `${formatNumber(future.encumbrance)} lbs`);
   renderRow("Encumbrance %", formatPercent(current.encPercent), formatPercent(future.encPercent));
   renderRow("Encumbrance tier", current.encMessage, future.encMessage);
+  renderRow("Get/Take total cap (non-silver)", `${formatNumber(current.maxCarry)} lbs`, `${formatNumber(future.maxCarry)} lbs`);
+  renderRow("Gather/Get silver cap", `${formatNumber(current.silverCap)} lbs (${formatNumber(current.silverCap * 160, 0)} silvers)`, `${formatNumber(future.silverCap)} lbs (${formatNumber(future.silverCap * 160, 0)} silvers)`);
+  renderRow("Single-item pickup cap", `${formatNumber(current.maxItemWeight)} lbs`, `${formatNumber(future.maxItemWeight)} lbs`);
   updateProfileLoadButtonState();
   updateProfileDefaultsSaveState();
 }
