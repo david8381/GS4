@@ -717,7 +717,46 @@ function runEncumbranceSelfTests() {
       check: (got) => got.benefit === 0,
     },
     {
-      name: "T5 custom heavy-base plate reduced to 75 gives positive benefit",
+      name: "T5 wiki armor example: Human full plate 75->60 yields +15.00",
+      run: () => {
+        const baseWeight = 75;
+        const actualWeight = 60;
+        const benefit = armorAdjustment(human, baseWeight, actualWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(human, "asg20", baseWeight, actualWeight),
+        };
+      },
+      check: (got) => got.benefit === 15,
+    },
+    {
+      name: "T6 wiki armor example: Halfling half plate 50->60 yields -5.00",
+      run: () => {
+        const baseWeight = 50;
+        const actualWeight = 60;
+        const benefit = armorAdjustment(halfling, baseWeight, actualWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(halfling, "asg19", baseWeight, actualWeight),
+        };
+      },
+      check: (got) => got.benefit === -5,
+    },
+    {
+      name: "T7 wiki armor example: Giantman brig 25->22 yields +3.99",
+      run: () => {
+        const baseWeight = 25;
+        const actualWeight = 22;
+        const benefit = armorAdjustment(giantman, baseWeight, actualWeight);
+        return {
+          benefit,
+          details: armorBenefitLine(giantman, "asg12", baseWeight, actualWeight),
+        };
+      },
+      check: (got) => Math.abs(got.benefit - 3.99) < 0.001,
+    },
+    {
+      name: "T8 custom heavy-base plate reduced to 75 gives positive benefit",
       run: () => {
         const baseWeight = 150;
         const actualWeight = 75;
@@ -730,7 +769,7 @@ function runEncumbranceSelfTests() {
       check: (got) => got.benefit > 0,
     },
     {
-      name: "T6 heavier than base gives negative armor adjustment",
+      name: "T9 heavier than base gives negative armor adjustment",
       run: () => {
         const baseWeight = chain.standardWeight;
         const actualWeight = 35;
@@ -743,7 +782,7 @@ function runEncumbranceSelfTests() {
       check: (got) => got.benefit < 0,
     },
     {
-      name: "T7 race encumbrance factor scales armor benefit",
+      name: "T10 race encumbrance factor scales armor benefit",
       run: () => {
         const baseWeight = fullPlate.standardWeight;
         const actualWeight = 60;
@@ -758,7 +797,31 @@ function runEncumbranceSelfTests() {
       check: (got) => got.giantmanBenefit > got.halflingBenefit,
     },
     {
-      name: "T8 max item weight drops as encumbrance rises",
+      name: "T11 wiki capacity example: Human 207 lbs / STR 70 => 52.78 unenc",
+      run: () => {
+        const unenc = computeUnencumbered(70, 207);
+        return { unenc, details: "Race=Human | Body=207 | STR=70 | Expected Unenc=52.78" };
+      },
+      check: (got) => Math.abs(got.unenc - 52.78) < 0.001,
+    },
+    {
+      name: "T12 wiki capacity example: Giantman 360 lbs / STR 100 => 145.8 unenc",
+      run: () => {
+        const unenc = computeUnencumbered(100, 360);
+        return { unenc, details: "Race=Giantman | Body=360 | STR=100 | Expected Unenc=145.8" };
+      },
+      check: (got) => Math.abs(got.unenc - 145.8) < 0.001,
+    },
+    {
+      name: "T13 wiki capacity example: Halfling 90 lbs / STR 50 => 13.95 unenc",
+      run: () => {
+        const unenc = computeUnencumbered(50, 90);
+        return { unenc, details: "Race=Halfling | Body=90 | STR=50 | Expected Unenc=13.95" };
+      },
+      check: (got) => Math.abs(got.unenc - 13.95) < 0.001,
+    },
+    {
+      name: "T14 max item weight drops as encumbrance rises",
       run: () => {
         const base = computeResults(
           { str: 70, con: 70 },
