@@ -436,10 +436,6 @@ function computeResults(stats, inputs, race) {
   const encPercent = bodyWeight > 0 ? (encumbrance / bodyWeight) * 100 : 0;
   const smrPenalty = Math.ceil(encPercent);
 
-  const maxCarry = 1.5 * bodyWeight + adjustedCapacity;
-  const silverCap = 1.99 * bodyWeight + adjustedCapacity;
-  const maxItemWeight = Math.max(0, 1.5 * bodyWeight - encumbrance);
-
   return {
     bodyWeight,
     effectiveStr,
@@ -453,9 +449,6 @@ function computeResults(stats, inputs, race) {
     encPercent,
     encMessage: encumbranceMessage(encPercent),
     smrPenalty,
-    maxCarry,
-    silverCap,
-    maxItemWeight,
   };
 }
 
@@ -539,10 +532,6 @@ function updateResults() {
   renderRow("Encumbrance tier", current.encMessage, future.encMessage);
   renderRow("Encumbrance penalty (CMAN/SMR)", `${current.smrPenalty}%`, `${future.smrPenalty}%`);
   renderRow("Armor CMAN penalty (ASG)", `${armor.cmanPenalty}`, `${futureArmor.cmanPenalty}`);
-
-  renderRow("Max carry (items)", `${formatNumber(current.maxCarry)} lbs`, `${formatNumber(future.maxCarry)} lbs`);
-  renderRow("Silver cap", `${formatNumber(current.silverCap)} lbs`, `${formatNumber(future.silverCap)} lbs`);
-  renderRow("Max single item weight", `${formatNumber(current.maxItemWeight)} lbs`, `${formatNumber(future.maxItemWeight)} lbs`);
   updateProfileLoadButtonState();
   updateProfileDefaultsSaveState();
 }
@@ -933,7 +922,7 @@ function runEncumbranceSelfTests() {
       check: (got) => Math.abs(got.unenc - 13.95) < 0.001,
     },
     {
-      name: "T14 max item weight drops as encumbrance rises",
+      name: "T14 greater carry increases encumbrance",
       run: () => {
         const base = computeResults(
           { str: 70, con: 70 },
@@ -945,9 +934,9 @@ function runEncumbranceSelfTests() {
           { gearWeight: 250, silvers: 50000, armorStandard: noneArmor.standardWeight, armorActual: 0, accessoryWeight: 0, pfBonus: 0 },
           human
         );
-        return { base: base.maxItemWeight, burdened: burdened.maxItemWeight };
+        return { base: base.encumbrance, burdened: burdened.encumbrance };
       },
-      check: (got) => got.burdened < got.base,
+      check: (got) => got.burdened > got.base,
     },
   ];
 
