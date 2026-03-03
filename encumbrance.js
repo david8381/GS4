@@ -530,8 +530,6 @@ function updateResults() {
   renderRow("Encumbrance weight", `${formatNumber(current.encumbrance)} lbs`, `${formatNumber(future.encumbrance)} lbs`);
   renderRow("Encumbrance %", formatPercent(current.encPercent), formatPercent(future.encPercent));
   renderRow("Encumbrance tier", current.encMessage, future.encMessage);
-  renderRow("Encumbrance penalty (CMAN/SMR)", `${current.smrPenalty}%`, `${future.smrPenalty}%`);
-  renderRow("Armor CMAN penalty (ASG)", `${armor.cmanPenalty}`, `${futureArmor.cmanPenalty}`);
   updateProfileLoadButtonState();
   updateProfileDefaultsSaveState();
 }
