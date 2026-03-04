@@ -21,6 +21,8 @@ const skillsStatus = document.getElementById("skillsStatus");
 const skillsShowTrainedOnly = document.getElementById("skillsShowTrainedOnly");
 const ascImport = document.getElementById("ascImport");
 const ascImportStatus = document.getElementById("ascImportStatus");
+const ascMilestonesImport = document.getElementById("ascMilestonesImport");
+const ascMilestonesImportStatus = document.getElementById("ascMilestonesImportStatus");
 const ascShowTrainedOnly = document.getElementById("ascShowTrainedOnly");
 const skillsTable = document.getElementById("skillsTable");
 const tpExpPtp = document.getElementById("tpExpPtp");
@@ -262,12 +264,16 @@ function getSelectedRaceName() {
   return races.find((race) => race.key === profileRace.value)?.name || "Human";
 }
 
+function stripMarkupTags(value) {
+  return String(value || "").replace(/<[^>]+>/g, "").trim();
+}
+
 function parseInfoBlock(text) {
   const nameMatch = text.match(/Name:\s*([^\n]+?)\s+Race:\s*([A-Za-z -]+?)(?:\s+Profession:|$)/i);
   if (!nameMatch) return null;
 
   const result = {
-    name: nameMatch[1].trim().split(/\s{2,}/)[0],
+    name: stripMarkupTags(nameMatch[1].trim().split(/\s{2,}/)[0]),
     race: normalizeRaceName(nameMatch[2].trim()),
     stats: {},
   };
@@ -303,7 +309,7 @@ function parseInfoStartBlock(text) {
   let race = "";
   let profession = "";
   if (headerMatch) {
-    name = headerMatch[1].trim();
+    name = stripMarkupTags(headerMatch[1].trim());
     const tail = headerMatch[2].trim().replace(/^[^A-Za-z]*/, "");
     const parts = tail.split(/\s+/);
     if (parts.length >= 2) {
@@ -660,6 +666,18 @@ function parseExpBlock(text) {
     hintedLevel: hintedLevelMatch ? clamp(Number(hintedLevelMatch[1]), 0, 100) : null,
     ascensionExperience: ascExpMatch ? Math.max(0, Number(ascExpMatch[1].replace(/,/g, "")) || 0) : 0,
   };
+}
+
+function parseAscMilestonesBlock(text) {
+  const source = String(text || "");
+  if (!/Ascension Milestones are as follows:/i.test(source)) return null;
+  const lines = source.split(/\r?\n/);
+  let reached = 0;
+  lines.forEach((line) => {
+    const m = line.match(/^\s*\d+\.\s+.*\s+(Yes|No)\s*$/i);
+    if (m && m[1].toLowerCase() === "yes") reached += 1;
+  });
+  return clamp(reached, 0, 10);
 }
 
 function estimateTotalAscensionPoints(ascensionExperience, ascensionMilestones) {
@@ -2326,6 +2344,7 @@ function resetEditorForNewProfile() {
   expImport.value = "";
   skillsImport.value = "";
   ascImport.value = "";
+  if (ascMilestonesImport) ascMilestonesImport.value = "";
   importStatus.textContent = "Run INFO START. Paste full output.";
   importStatus.style.color = "";
   expImportStatus.textContent = "Paste EXP to load level and experience.";
@@ -2335,6 +2354,10 @@ function resetEditorForNewProfile() {
   updateSkillsStatusMessage();
   ascImportStatus.textContent = "Paste ASC LIST to load current ascension ranks.";
   ascImportStatus.style.color = "";
+  if (ascMilestonesImportStatus) {
+    ascMilestonesImportStatus.textContent = "Paste ASC MILESTONES to load milestones reached.";
+    ascMilestonesImportStatus.style.color = "";
+  }
 
   armorAsgSelect.value = "none";
   updateArmorWeight();
@@ -2683,6 +2706,34 @@ ascImport.addEventListener("input", () => {
   applyAscList(ascImport.value, { showError: false });
 });
 
+ascMilestonesImport?.addEventListener("input", () => {
+  const text = String(ascMilestonesImport.value || "");
+  if (!text.trim()) {
+    if (ascMilestonesImportStatus) {
+      ascMilestonesImportStatus.textContent = "Paste ASC MILESTONES to load milestones reached.";
+      ascMilestonesImportStatus.style.color = "";
+    }
+    return;
+  }
+
+  const reached = parseAscMilestonesBlock(text);
+  if (reached == null) {
+    if (ascMilestonesImportStatus) {
+      ascMilestonesImportStatus.textContent = "Could not parse ASC MILESTONES output.";
+      ascMilestonesImportStatus.style.color = "#b42318";
+    }
+    return;
+  }
+
+  currentAscensionMilestones = reached;
+  if (profileAscensionMilestones) profileAscensionMilestones.value = String(reached);
+  updateDerivedDisplays();
+  if (ascMilestonesImportStatus) {
+    ascMilestonesImportStatus.textContent = `ASC MILESTONES loaded: ${reached}/10 reached.`;
+    ascMilestonesImportStatus.style.color = "";
+  }
+});
+
 document.querySelector("main.calculator").addEventListener("input", () => {
   if (!applyingProfile) updateProfileActionState();
 });
@@ -2747,6 +2798,10 @@ function importGstoolsPayloadFromHash() {
     if (typeof blocks.ascList === "string" && blocks.ascList.trim()) {
       ascImport.value = blocks.ascList;
       ascImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.ascMilestones === "string" && blocks.ascMilestones.trim() && ascMilestonesImport) {
+      ascMilestonesImport.value = blocks.ascMilestones;
+      ascMilestonesImport.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
