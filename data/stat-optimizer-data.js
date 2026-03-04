@@ -8,8 +8,8 @@
   };
 
   const solverDefaults = {
-    mode: "fast",
-    maxSeconds: 5,
+    mode: "constraint_free_auto",
+    maxSeconds: 3,
     fastRestarts: 12,
     fastIterations: 2500,
   };

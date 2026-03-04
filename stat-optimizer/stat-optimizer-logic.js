@@ -17,6 +17,11 @@
     return Number.isFinite(n) ? n : fallback;
   }
 
+  function toNumber(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
   function normalizeStartStats(startStats, minStat, maxStat) {
     const normalized = {};
     STAT_KEYS.forEach((key) => {
@@ -730,8 +735,11 @@
     const { data, constraints, objectivePreset, profession, raceName, minimums } = params;
     const restarts = toInt(params?.fastRestarts, 12);
     const iterations = toInt(params?.fastIterations, 2500);
-    const limitMs = Math.max(1, toInt(params?.maxSeconds, 5)) * 1000;
+    const limitMs = Math.max(50, toNumber(params?.maxSeconds, 5) * 1000);
     const startTime = Date.now();
+    const shortBudget = limitMs < 1000;
+    const effectiveRestarts = shortBudget ? Math.min(4, restarts) : restarts;
+    const effectiveIterations = shortBudget ? Math.min(220, iterations) : iterations;
 
     const localConstraints = {
       ...constraints,
@@ -746,7 +754,7 @@
         ...params,
         constraints: localConstraints,
         startStats: deterministicBounded,
-        maxIterations: Math.max(iterations, 3500),
+        maxIterations: shortBudget ? effectiveIterations : Math.max(effectiveIterations, 900),
         deadlineMs: startTime + limitMs,
       });
       if (deterministic.ok && (!hasAnyMinimums(minimums) || deterministic.meetsMinimums)) {
@@ -767,7 +775,7 @@
         ...params,
         constraints: localConstraints,
         startStats: boundedSeed,
-        maxIterations: Math.max(iterations, 3500),
+        maxIterations: shortBudget ? effectiveIterations : Math.max(effectiveIterations, 900),
         deadlineMs: startTime + limitMs,
       });
       if (bounded.ok && (!hasAnyMinimums(minimums) || bounded.meetsMinimums)) {
@@ -786,7 +794,7 @@
         ...params,
         constraints: localConstraints,
         startStats: boundedSeedStats,
-        maxIterations: iterations,
+        maxIterations: effectiveIterations,
         deadlineMs: startTime + limitMs,
       });
       if (seeded.ok && (!hasAnyMinimums(minimums) || seeded.meetsMinimums)) {
@@ -795,7 +803,7 @@
     }
 
     let timedOut = false;
-    for (let i = 0; i < restarts; i += 1) {
+    for (let i = 0; i < effectiveRestarts; i += 1) {
       if (Date.now() - startTime >= limitMs) {
         timedOut = true;
         break;
@@ -805,7 +813,7 @@
         ...params,
         constraints: localConstraints,
         startStats: seed,
-        maxIterations: iterations,
+        maxIterations: effectiveIterations,
         deadlineMs: startTime + limitMs,
       });
       if (!local.ok) continue;
@@ -893,7 +901,7 @@
     });
 
     for (let iteration = 0; iteration < maxIterations; iteration += 1) {
-      if ((iteration & 63) === 0 && Number.isFinite(deadlineMs) && Date.now() >= deadlineMs) {
+      if ((iteration & 7) === 0 && Number.isFinite(deadlineMs) && Date.now() >= deadlineMs) {
         current.timedOut = true;
         break;
       }
@@ -909,7 +917,15 @@
       const orderedReceivers = [...STAT_KEYS].sort((a, b) => statWeights[b] - statWeights[a]);
 
       for (const donor of orderedDonors) {
+        if (Number.isFinite(deadlineMs) && Date.now() >= deadlineMs) {
+          current.timedOut = true;
+          break;
+        }
         for (const receiver of orderedReceivers) {
+        if (Number.isFinite(deadlineMs) && Date.now() >= deadlineMs) {
+          current.timedOut = true;
+          break;
+        }
         if (donor === receiver) continue;
         if (!canDecreaseStat(current.startStats, donor, constraints)) continue;
         const candidateStats = { ...current.startStats };
@@ -936,6 +952,7 @@
           improved = true;
         }
       }
+        if (current.timedOut) break;
       }
 
       if (!improved) break;
@@ -991,7 +1008,7 @@
     } = params;
 
     const startTime = Date.now();
-    const limitMs = Math.max(1, toInt(maxSeconds, 5)) * 1000;
+    const limitMs = Math.max(50, toNumber(maxSeconds, 5) * 1000);
 
     const totalPoints = toInt(constraints.totalPoints, 640);
     const minStat = toInt(constraints.minStat, 20);
@@ -1156,6 +1173,7 @@
     STAT_KEYS,
     clamp,
     toInt,
+    toNumber,
     normalizeStartStats,
     sumStats,
     countAbove,

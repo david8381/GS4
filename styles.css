@@ -881,8 +881,17 @@ body[data-page="stat-optimizer"] .compact-field .input-row {
 
 body[data-page="stat-optimizer"] .solver-inline-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-columns: minmax(320px, 2fr) minmax(140px, 0.8fr);
   gap: 10px 12px;
+}
+
+body[data-page="stat-optimizer"] #maxSeconds {
+  width: 88px;
+  max-width: 100%;
+}
+
+body[data-page="stat-optimizer"] #maxSecondsGroup.compact-field {
+  grid-template-columns: 96px minmax(0, 1fr);
 }
 
 body[data-page="stat-optimizer"] .tp-inline {
@@ -1076,6 +1085,48 @@ body[data-page="stat-optimizer"] .table-panel td:first-child {
 .optimizer-run-actions {
   display: inline-flex;
   gap: 4px;
+}
+
+main.calculator.solver-running {
+  position: relative;
+}
+
+main.calculator.solver-running::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(107, 114, 128, 0.2);
+  pointer-events: none;
+  z-index: 20;
+}
+
+main.calculator.solver-running #stopSolver {
+  position: relative;
+  z-index: 21;
+}
+
+body[data-page="stat-optimizer"] .optimizer-current-delta {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid #16a34a;
+  border-radius: 6px;
+  background: #ecfdf3;
+  color: #166534;
+  font-weight: 600;
+}
+
+body[data-page="stat-optimizer"] .optimizer-current-delta:empty {
+  display: none;
+}
+
+body[data-page="stat-optimizer"] .optimizer-solver-warning {
+  margin-top: 8px;
+  color: #b42318;
+  font-weight: 600;
+}
+
+body[data-page="stat-optimizer"] .optimizer-solver-warning:empty {
+  display: none;
 }
 
 @media (max-width: 720px) {

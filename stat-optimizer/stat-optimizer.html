@@ -20,10 +20,6 @@
         <section class="calc-intro">
           <p class="eyebrow">GS4 Stat Optimizer</p>
           <h1>Stat Optimizer</h1>
-          <p>
-            Solve for starting stats under creation limits. Choose a fast best-found mode or an exact mode that
-            can prove optimality when it finishes.
-          </p>
         </section>
 
         <section class="calc-panel">
@@ -36,12 +32,6 @@
 
           <div class="input-block">
             <h2>Scenario</h2>
-            <div class="input-group compact-field">
-              <label for="useCase">Use case</label>
-              <div class="input-row">
-                <select id="useCase"></select>
-              </div>
-            </div>
             <div class="input-group compact-field">
               <label for="race">Race</label>
               <div class="input-row">
@@ -71,6 +61,47 @@
             </div>
           </div>
 
+        </section>
+
+        <section class="input-block">
+          <h2>Solver</h2>
+          <div class="solver-inline-grid">
+            <div class="input-group compact-field">
+              <label for="solverMode">Solver mode</label>
+              <div class="input-row">
+                <select id="solverMode">
+                  <option value="constraint_free_auto">Constraint-Free Auto Solver</option>
+                  <option value="exact">Optimum Guaranteed Solver</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group compact-field" id="maxSecondsGroup">
+              <label for="maxSeconds">Max seconds</label>
+              <div class="input-row">
+                <input id="maxSeconds" type="number" min="0.1" step="0.1" value="3.0" />
+              </div>
+            </div>
+          </div>
+          <div class="helper optimizer-solver-warning" id="constraintFreeWarning"></div>
+          <div class="input-group inline-actions">
+            <button class="btn" id="runSolver" type="button">Run Optimizer</button>
+            <button class="btn ghost" id="stopSolver" type="button" disabled>Stop</button>
+          </div>
+          <div class="helper" id="solverStatus">Ready.</div>
+          <div class="helper" id="solverProgress"></div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Recommended Build (Comparison)</h2>
+          <div class="helper" id="resultSummary">Run optimizer to see a recommended start stat layout.</div>
+          <div class="helper optimizer-current-delta" id="resultCurrentLevelDelta"></div>
+          <div class="optimizer-result-wrap">
+            <table>
+              <thead id="resultStatsHead"></thead>
+              <tbody id="resultStatsBody"></tbody>
+            </table>
+          </div>
+          <div class="helper" id="resultTotals"></div>
         </section>
 
         <details class="collapsible-section input-block">
@@ -145,7 +176,7 @@
           </div>
         </details>
 
-        <details class="collapsible-section input-block">
+        <details class="collapsible-section input-block" id="manualRunSection">
           <summary>Add Manual Run</summary>
           <div class="collapsible-body">
             <div class="input-group compact-field">
@@ -165,47 +196,6 @@
             <div class="helper" id="manualRunPreview"></div>
           </div>
         </details>
-
-        <section class="input-block">
-          <h2>Solver</h2>
-          <div class="solver-inline-grid">
-            <div class="input-group compact-field">
-              <label for="solverMode">Solver mode</label>
-              <div class="input-row">
-                <select id="solverMode">
-                  <option value="fast">Fast Solver</option>
-                  <option value="exact">Optimum Guaranteed Solver</option>
-                </select>
-              </div>
-            </div>
-            <div class="input-group compact-field" id="maxSecondsGroup">
-              <label for="maxSeconds">Max seconds (time budget)</label>
-              <div class="input-row">
-                <input id="maxSeconds" type="number" min="1" max="120" step="1" value="5" />
-              </div>
-            </div>
-          </div>
-          <div class="input-group inline-actions">
-            <button class="btn" id="runSolver" type="button">Run Optimizer</button>
-            <button class="btn ghost" id="resumeSolver" type="button" disabled>Resume</button>
-          </div>
-          <div class="helper" id="solverStatus">Ready.</div>
-          <div class="helper" id="resumeStatus">Resume is available only when solver inputs are unchanged.</div>
-          <div class="helper" id="solverProgress"></div>
-        </section>
-
-        <section class="table-panel">
-          <h2>Recommended Build (Comparison)</h2>
-          <div class="helper" id="resultSummary">Run optimizer to see a recommended start stat layout.</div>
-          <div class="helper" id="resultCurrentLevelDelta"></div>
-          <div class="optimizer-result-wrap">
-            <table>
-              <thead id="resultStatsHead"></thead>
-              <tbody id="resultStatsBody"></tbody>
-            </table>
-          </div>
-          <div class="helper" id="resultTotals"></div>
-        </section>
 
         <details class="collapsible-section">
           <summary>References</summary>

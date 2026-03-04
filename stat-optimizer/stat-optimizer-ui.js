@@ -14,7 +14,6 @@
   const profileSelect = document.getElementById("profileSelect");
   const profileLoad = document.getElementById("profileLoad");
 
-  const useCaseSelect = document.getElementById("useCase");
   const raceSelect = document.getElementById("race");
   const professionSelect = document.getElementById("profession");
   const targetLevelInput = document.getElementById("targetLevel");
@@ -24,7 +23,9 @@
   const solverModeSelect = document.getElementById("solverMode");
   const maxSecondsGroup = document.getElementById("maxSecondsGroup");
   const maxSecondsInput = document.getElementById("maxSeconds");
+  const constraintFreeWarning = document.getElementById("constraintFreeWarning");
   const runSolverBtn = document.getElementById("runSolver");
+  const stopSolverBtn = document.getElementById("stopSolver");
   const resumeSolverBtn = document.getElementById("resumeSolver");
   const solverStatus = document.getElementById("solverStatus");
   const resumeStatus = document.getElementById("resumeStatus");
@@ -51,6 +52,7 @@
   const resultStatsHead = document.getElementById("resultStatsHead");
   const resultStatsBody = document.getElementById("resultStatsBody");
   const resultTotals = document.getElementById("resultTotals");
+  const manualRunSection = document.getElementById("manualRunSection");
   const manualRunLabelInput = document.getElementById("manualRunLabel");
   const manualStartStatsBody = document.getElementById("manualStartStatsBody");
   const manualStartClearBtn = document.getElementById("manualStartClear");
@@ -61,10 +63,24 @@
   const manualRunPreview = document.getElementById("manualRunPreview");
   const runHistory = [];
   let resumeContext = null;
-
-  const useCases = [
-    { key: "stats", name: "Maximize stats with constraints" },
-  ];
+  const runningSolverState = {
+    active: false,
+    stopRequested: false,
+    mode: "constraint_free_auto",
+    modeLabel: "Constraint-Free Auto",
+    maxElapsedSeconds: 0,
+    iteration: 0,
+    noImproveStreak: 0,
+    startedAtMs: 0,
+    paramsBase: null,
+    bestResult: null,
+    lockSnapshot: null,
+    constraint_free_autoCurrentMax: 100,
+    constraint_free_autoAttempts: 0,
+    constraint_free_autoLastDiagnostic: "",
+    constraint_free_autoOptimizing: false,
+    constraint_free_autoOptimizeIterations: 0,
+  };
 
   function loadProfiles() {
     try {
@@ -87,13 +103,12 @@
   }
 
   function initializeStaticInputs() {
-    fillSelect(useCaseSelect, useCases);
     fillSelect(raceSelect, data.races || []);
     fillSelect(professionSelect, (data.professions || []).map((name) => ({ key: name, name })));
 
     const defaults = config.solverDefaults;
-    solverModeSelect.value = defaults.mode;
-    maxSecondsInput.value = String(defaults.maxSeconds);
+    if (solverModeSelect) solverModeSelect.value = defaults.mode || "exact";
+    if (maxSecondsInput) maxSecondsInput.value = String(defaults.maxSeconds);
     targetLevelInput.value = "100";
     if (tpBiasSlider) tpBiasSlider.value = "50";
     updateTpBiasLabel();
@@ -476,9 +491,11 @@
     startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
       input.value = "";
     });
+    if (finalAllMinStatInput) finalAllMinStatInput.value = "";
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateResumeAvailability();
   }
 
@@ -610,7 +627,45 @@
   }
 
   function updateSolverModeUI() {
-    maxSecondsGroup.hidden = false;
+    if (!maxSecondsGroup) return;
+    const mode = solverModeSelect?.value || "exact";
+    const show = mode === "exact";
+    maxSecondsGroup.hidden = !show;
+    maxSecondsGroup.style.display = show ? "" : "none";
+    updateSajehnAvailability();
+  }
+
+  function updateSajehnAvailability() {
+    if (!constraintFreeWarning) return;
+    const mode = solverModeSelect?.value || "exact";
+    if (mode !== "constraint_free_auto") {
+      constraintFreeWarning.textContent = "";
+      return;
+    }
+    if (hasAnyActiveConstraints()) {
+      constraintFreeWarning.textContent = "Warning: constraints are filled out but will not be utilized in Constraint-Free Auto Solver.";
+    } else {
+      constraintFreeWarning.textContent = "";
+    }
+  }
+
+  function hasAnyActiveConstraints() {
+    const positive = (input) => Math.max(0, logic.toInt(input?.value, 0)) > 0;
+    if (positive(minPtpInput) || positive(minMtpInput) || positive(minStartPtpInput) || positive(minStartMtpInput)) {
+      return true;
+    }
+
+    const hasMinFinal = Array.from(minFinalStatsBody?.querySelectorAll("input[data-min-final]") || [])
+      .some((input) => String(input.value || "").trim() !== "" && Math.max(0, logic.toInt(input.value, 0)) > 0);
+    if (hasMinFinal) return true;
+
+    const hasStartMin = Array.from(startConstraintMinBody?.querySelectorAll("input[data-start-min]") || [])
+      .some((input) => String(input.value || "").trim() !== "" && Math.max(0, logic.toInt(input.value, 0)) > 0);
+    if (hasStartMin) return true;
+
+    const hasStartMax = Array.from(startConstraintMaxBody?.querySelectorAll("input[data-start-max]") || [])
+      .some((input) => String(input.value || "").trim() !== "" && Math.max(0, logic.toInt(input.value, 0)) > 0);
+    return hasStartMax;
   }
 
   function initializeProfileSelect() {
@@ -861,7 +916,6 @@
       mtpWeight: params.objectivePreset?.mtpWeight ?? null,
       constraints: params.constraints,
       minimums: params.minimums,
-      useCase: useCaseSelect?.value || "",
     });
   }
 
@@ -873,7 +927,7 @@
 
   function updateResumeAvailability() {
     const available = canResumeWithCurrentInputs();
-    if (resumeSolverBtn) resumeSolverBtn.disabled = !available;
+    if (resumeSolverBtn) resumeSolverBtn.disabled = runningSolverState.active || !available;
     if (resumeStatus) {
       if (available) {
         resumeStatus.textContent = `Resume ready for ${resumeContext.mode.toUpperCase()} with unchanged inputs.`;
@@ -889,7 +943,8 @@
   }
 
   function buildSolveParams() {
-    const mode = solverModeSelect.value === "exact" ? "exact" : "fast";
+    const selectedMode = solverModeSelect?.value || "constraint_free_auto";
+    const mode = selectedMode === "exact" ? "exact" : "fast";
     const mtpWeightPct = logic.clamp(logic.toInt(tpBiasSlider?.value, 50), 0, 100);
     const ptpWeight = (100 - mtpWeightPct) / 100;
     const mtpWeight = mtpWeightPct / 100;
@@ -902,6 +957,7 @@
 
     return {
       mode,
+      selectedMode,
       data,
       profileLogic,
       constraints: constraintsFromInputs(),
@@ -911,9 +967,11 @@
       targetExperience: -1,
       minimums: minimumsFromInputs(),
       objectivePreset,
-      maxSeconds: logic.toInt(maxSecondsInput.value, config.solverDefaults.maxSeconds),
+      maxSeconds: Math.max(0.1, Number(maxSecondsInput?.value || config.solverDefaults.maxSeconds)),
       fastRestarts: config.solverDefaults.fastRestarts,
       fastIterations: config.solverDefaults.fastIterations,
+      iterationSliceSeconds: 0.25,
+      maxElapsedSeconds: Math.max(0.1, Number(maxSecondsInput?.value || config.solverDefaults.maxSeconds)),
       onProgress: (progress) => {
         const elapsed = (progress.elapsedMs / 1000).toFixed(2);
         const eta = progress.etaSeconds == null || !Number.isFinite(progress.etaSeconds) || progress.etaSeconds > 86400
@@ -924,13 +982,207 @@
     };
   }
 
+  function setSolverControlsForRun(isRunning) {
+    runningSolverState.active = isRunning;
+    if (!isRunning) runningSolverState.stopRequested = false;
+    setUiLockedForRun(isRunning);
+    if (runSolverBtn) runSolverBtn.disabled = isRunning ? true : false;
+    if (stopSolverBtn) stopSolverBtn.disabled = !isRunning;
+    if (resumeSolverBtn) resumeSolverBtn.disabled = isRunning || !canResumeWithCurrentInputs();
+  }
+
+  function setUiLockedForRun(isRunning) {
+    const scope = document.querySelector("main.calculator");
+    if (!scope) return;
+    scope.classList.toggle("solver-running", isRunning);
+
+    if (isRunning) {
+      const snapshot = new Map();
+      const controls = scope.querySelectorAll("input, select, button, textarea");
+      controls.forEach((control) => {
+        if (!(control instanceof HTMLInputElement
+          || control instanceof HTMLSelectElement
+          || control instanceof HTMLButtonElement
+          || control instanceof HTMLTextAreaElement)) return;
+        if (control.id === "stopSolver") return;
+        snapshot.set(control, Boolean(control.disabled));
+        control.disabled = true;
+      });
+      runningSolverState.lockSnapshot = snapshot;
+      return;
+    }
+
+    const snapshot = runningSolverState.lockSnapshot;
+    if (snapshot instanceof Map) {
+      snapshot.forEach((wasDisabled, control) => {
+        if (control && control.isConnected) {
+          control.disabled = wasDisabled;
+        }
+      });
+    }
+    runningSolverState.lockSnapshot = null;
+  }
+
+  function bestSummaryText(result) {
+    if (!result?.build?.metrics) return "No best build yet.";
+    const m = result.build.metrics;
+    const order = ["str", "con", "dex", "agi", "dis", "aur", "log", "int", "wis", "inf"];
+    const finalStats = order
+      .map((key) => `${key.toUpperCase()} ${logic.toInt(m.finalStats?.[key], 0)}`)
+      .join(", ");
+    return `Current best: total stats ${m.overall}, PTP ${m.ptp}, MTP ${m.mtp}. Final stats: ${finalStats}.`;
+  }
+
+  function setSolverProgressLines(line1, line2, line3) {
+    if (!solverProgress) return;
+    solverProgress.innerHTML = `${line1}<br>${line2}<br>${line3}`;
+  }
+
+  function buildIterationParams(baseParams, iteration, bestResult) {
+    const params = {
+      ...baseParams,
+      onProgress: baseParams.onProgress,
+    };
+    if (bestResult?.build?.startStats) {
+      params.seedStartStats = { ...bestResult.build.startStats };
+    }
+    if (bestResult?.build?.ok && baseParams.mode === "exact") {
+      params.initialBestBuild = bestResult.build;
+    }
+
+    params.maxSeconds = Math.max(0.1, Number(baseParams.maxSeconds || 1));
+    return params;
+  }
+
+  function finalizeIterativeSolve(statusText, tone = "ok") {
+    const best = runningSolverState.bestResult;
+    if (best?.build) {
+      best._label = `Run ${runHistory.length + 1}`;
+      renderResult(best);
+      const canResume = best.status === "timeout" || (best.status === "best_found" && !best.provenOptimal);
+      resumeContext = {
+        signature: createSolverSignature(runningSolverState.paramsBase),
+        canResume,
+        mode: runningSolverState.paramsBase?.mode || "fast",
+        bestStartStats: best?.build?.startStats ? { ...best.build.startStats } : null,
+        bestBuild: best?.build?.ok ? best.build : null,
+      };
+    }
+    setStatus(statusText, tone);
+    updateResumeAvailability();
+    setSolverControlsForRun(false);
+  }
+
+  function runIterativeStep() {
+    if (!runningSolverState.active) return;
+    if (runningSolverState.stopRequested) {
+      const elapsed = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
+      finalizeIterativeSolve(`Stopped after ${elapsed}s. ${bestSummaryText(runningSolverState.bestResult)}`, "ok");
+      return;
+    }
+
+    runningSolverState.iteration += 1;
+    const params = buildIterationParams(
+      runningSolverState.paramsBase,
+      runningSolverState.iteration,
+      runningSolverState.bestResult
+    );
+    const result = logic.solve(params);
+    const improved = Boolean(
+      result?.build && (!runningSolverState.bestResult?.build
+        || logic.compareVectors(result.build.vector, runningSolverState.bestResult.build.vector) > 0)
+    );
+    if (improved) {
+      runningSolverState.bestResult = result;
+      runningSolverState.noImproveStreak = 0;
+    } else if (!runningSolverState.bestResult && result?.build) {
+      runningSolverState.bestResult = result;
+      runningSolverState.noImproveStreak = 0;
+    } else {
+      runningSolverState.noImproveStreak += 1;
+    }
+
+    const elapsed = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
+    const elapsedSeconds = Number(elapsed);
+    const modeName = runningSolverState.modeLabel || (runningSolverState.mode === "exact" ? "Exact" : "Fast");
+    const best = runningSolverState.bestResult?.build?.metrics || null;
+    const line1 = `${modeName} iteration ${runningSolverState.iteration}, elapsed ${elapsed}s${improved ? " (improved)" : ""}`;
+    const line2 = best
+      ? `Total stats ${best.overall}, PTP ${best.ptp}, MTP ${best.mtp}`
+      : "Total stats --, PTP --, MTP --";
+    const line3 = best
+      ? `STR ${best.finalStats.str} CON ${best.finalStats.con} DEX ${best.finalStats.dex} AGI ${best.finalStats.agi} DIS ${best.finalStats.dis} AUR ${best.finalStats.aur} LOG ${best.finalStats.log} INT ${best.finalStats.int} WIS ${best.finalStats.wis} INF ${best.finalStats.inf}`
+      : "No best build yet";
+    setSolverProgressLines(line1, line2, line3);
+
+    if (runningSolverState.mode === "exact" && result?.provenOptimal) {
+      runningSolverState.bestResult = result;
+      finalizeIterativeSolve(`Done in ${elapsed}s. Optimal solution proven.`, "ok");
+      return;
+    }
+
+    if (runningSolverState.mode === "exact"
+      && Number.isFinite(runningSolverState.maxElapsedSeconds)
+      && runningSolverState.maxElapsedSeconds > 0
+      && elapsedSeconds >= runningSolverState.maxElapsedSeconds) {
+      finalizeIterativeSolve(`Done in ${elapsed}s. Reached max seconds (${runningSolverState.maxElapsedSeconds}).`, "ok");
+      return;
+    }
+
+    setTimeout(runIterativeStep, 0);
+  }
+
+  function setAllFinalMinStats(value) {
+    const finalTarget = logic.clamp(logic.toInt(value, 0), 0, 100);
+    minFinalStatsBody?.querySelectorAll("input[data-min-final]").forEach((input) => {
+      input.value = String(finalTarget);
+    });
+  }
+
+  function applySuggestedRangesToStartBounds() {
+    const suggested = computeSuggestedRanges();
+    startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
+      const key = input.dataset.startMin;
+      input.value = String(suggested[key]?.minSuggested ?? getLevel0FloorByKey(key));
+    });
+    startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
+      const key = input.dataset.startMax;
+      input.value = String(suggested[key]?.maxSuggested ?? 100);
+    });
+  }
+
+  function buildConstraintFreeBounds(finalMin) {
+    const minStartStats = {};
+    const maxStartStats = {};
+    const minFinalStats = {};
+    (data.stats || []).forEach((stat) => {
+      const key = stat.key;
+      const floor = getLevel0FloorByKey(key);
+      const minSuggested = computeSuggestedStartForTarget(key, finalMin, floor);
+      const maxSuggestedRaw = computeSuggestedStartForTarget(key, 100, floor);
+      const maxSuggested = Math.max(minSuggested, maxSuggestedRaw);
+      minStartStats[key] = minSuggested;
+      maxStartStats[key] = maxSuggested;
+      minFinalStats[key] = finalMin;
+    });
+    return { minStartStats, maxStartStats, minFinalStats };
+  }
+
   function runSolver(options = {}) {
     const resume = Boolean(options.resume);
     solverProgress.textContent = "";
     const params = buildSolveParams();
+    if (!resume && params.selectedMode === "constraint_free_auto") {
+      runSajehnAlgorithm();
+      return;
+    }
 
     if (!params.profession) {
       setStatus("Select a profession first.", "error");
+      return;
+    }
+    if (runningSolverState.active) {
+      setStatus("Solver is already running. Stop it before starting a new run.", "error");
       return;
     }
     if (resume && !canResumeWithCurrentInputs()) {
@@ -946,50 +1198,165 @@
       }
     }
 
-    const started = performance.now();
-    if (resume) {
-      setStatus(params.mode === "exact" ? "Resuming exact solver..." : "Resuming fast solver...");
-    } else {
-      setStatus(params.mode === "exact" ? "Running exact solver..." : "Running fast solver...");
+    runningSolverState.mode = params.mode;
+    runningSolverState.modeLabel = params.mode === "exact" ? "Exact" : "Fast";
+    runningSolverState.maxElapsedSeconds = Number(params.maxElapsedSeconds || 0);
+    runningSolverState.iteration = 0;
+    runningSolverState.noImproveStreak = 0;
+    runningSolverState.startedAtMs = performance.now();
+    runningSolverState.paramsBase = { ...params };
+    runningSolverState.bestResult = params.initialBestBuild?.ok
+      ? { status: "best_found", provenOptimal: false, build: params.initialBestBuild }
+      : null;
+    runningSolverState.stopRequested = false;
+    setSolverControlsForRun(true);
+
+    setStatus(resume ? "Resuming exact solver (continuous)..." : "Running exact solver (continuous)...");
+    setTimeout(runIterativeStep, 0);
+  }
+
+  function runSajehnAlgorithm() {
+    if (runningSolverState.active) {
+      setStatus("Solver is already running. Stop it before starting a new run.", "error");
+      return;
     }
 
-    setTimeout(() => {
-      const result = logic.solve(params);
-      result._label = `Run ${runHistory.length + 1}`;
-      const elapsedMs = performance.now() - started;
+    const baseParams = buildSolveParams();
+    baseParams.mode = "fast";
+    baseParams.maxSeconds = 0.25;
 
-      if (result.status === "infeasible") {
-        setStatus(result.message || "No feasible solution.", "error");
-        if (result.diagnostic) {
-          solverProgress.textContent = `Diagnostic: ${result.diagnostic}`;
-        }
-        renderResult(result);
+    runningSolverState.mode = "constraint_free_auto";
+    runningSolverState.modeLabel = "Constraint-Free Auto";
+    runningSolverState.iteration = 0;
+    runningSolverState.startedAtMs = performance.now();
+    runningSolverState.paramsBase = { ...baseParams };
+    runningSolverState.bestResult = null;
+    runningSolverState.stopRequested = false;
+    runningSolverState.noImproveStreak = 0;
+    runningSolverState.constraint_free_autoCurrentMax = 100;
+    runningSolverState.constraint_free_autoAttempts = 0;
+    runningSolverState.constraint_free_autoLastDiagnostic = "";
+    runningSolverState.constraint_free_autoOptimizing = false;
+    runningSolverState.constraint_free_autoOptimizeIterations = 0;
+    setSolverControlsForRun(true);
+    setStatus("Running Constraint-Free Auto Solver...", "ok");
+    setTimeout(runSajehnStep, 0);
+  }
+
+  function runSajehnStep() {
+    if (!runningSolverState.active || runningSolverState.mode !== "constraint_free_auto") return;
+
+    if (runningSolverState.stopRequested) {
+      const elapsed = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
+      if (runningSolverState.bestResult?.build) {
+        finalizeIterativeSolve(`Stopped after ${elapsed}s. ${bestSummaryText(runningSolverState.bestResult)}`, "ok");
+      } else {
+        setStatus(`Stopped after ${elapsed}s. No feasible build found yet.`, "ok");
+        setSolverProgressLines(
+          "Constraint-Free Auto Solver stopped",
+          `Attempts: ${runningSolverState.constraint_free_autoAttempts}`,
+          runningSolverState.constraint_free_autoLastDiagnostic || "No diagnostic."
+        );
+        setSolverControlsForRun(false);
+      }
+      return;
+    }
+
+    const finalMin = runningSolverState.constraint_free_autoCurrentMax;
+    if (finalMin < 0) {
+      setStatus("Constraint-Free Auto Solver could not find a feasible build from Min final 100 down to 0.", "error");
+      setSolverProgressLines(
+        "Constraint-Free Auto Solver complete",
+        `Attempts: ${runningSolverState.constraint_free_autoAttempts}`,
+        runningSolverState.constraint_free_autoLastDiagnostic || "No diagnostic."
+      );
+      setSolverControlsForRun(false);
+      return;
+    }
+
+    if (!runningSolverState.constraint_free_autoOptimizing) {
+      runningSolverState.constraint_free_autoAttempts += 1;
+    }
+    const internalBounds = buildConstraintFreeBounds(finalMin);
+
+    const elapsed = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
+    const baseLine = `Constraint-Free Auto Solver: max final ${finalMin}, attempt ${runningSolverState.constraint_free_autoAttempts}, elapsed ${elapsed}s`;
+
+    const params = { ...runningSolverState.paramsBase };
+    if (runningSolverState.bestResult?.build?.startStats) {
+      params.seedStartStats = { ...runningSolverState.bestResult.build.startStats };
+    }
+    params.minimums = {
+      minPtp: 0,
+      minMtp: 0,
+      minStartPtp: 0,
+      minStartMtp: 0,
+      minFinalStats: internalBounds.minFinalStats,
+      minStartStats: internalBounds.minStartStats,
+      maxStartStats: internalBounds.maxStartStats,
+    };
+    const result = logic.solve(params);
+
+    if (!runningSolverState.constraint_free_autoOptimizing) {
+      const line1 = `${baseLine} (search)`;
+      if (result?.build) {
+        runningSolverState.bestResult = result;
+        runningSolverState.noImproveStreak = 0;
+        runningSolverState.constraint_free_autoOptimizing = true;
+        runningSolverState.constraint_free_autoOptimizeIterations = 0;
+        const best = result.build.metrics;
+        setSolverProgressLines(
+          line1,
+          `Feasible found. Total stats ${best.overall}, PTP ${best.ptp}, MTP ${best.mtp}`,
+          "Optimizing this max final until 3 no-improve iterations."
+        );
+        setTimeout(runSajehnStep, 0);
         return;
       }
 
-      const status = result.provenOptimal
-        ? `Done in ${(elapsedMs / 1000).toFixed(2)}s. Optimal solution proven.`
-        : `Done in ${(elapsedMs / 1000).toFixed(2)}s. ${result.status === "timeout" ? "Timed out before proof." : "Best found."}`;
-      setStatus(status, "ok");
+      runningSolverState.constraint_free_autoLastDiagnostic = result?.diagnostic || result?.message || "No feasible build.";
+      setSolverProgressLines(line1, "No solution at this max final.", runningSolverState.constraint_free_autoLastDiagnostic);
+      runningSolverState.constraint_free_autoCurrentMax -= 1;
+      setTimeout(runSajehnStep, 0);
+      return;
+    }
 
-      if (result.nodesExplored || result.leavesExplored) {
-        const eta = result.etaSeconds == null || !Number.isFinite(result.etaSeconds) || result.etaSeconds > 86400
-          ? "ETA unknown"
-          : `Estimated additional time: ${Math.max(0, result.etaSeconds).toFixed(1)}s`;
-        solverProgress.textContent = `Explored ${Number(result.nodesExplored || 0).toLocaleString()} nodes and ${Number(result.leavesExplored || 0).toLocaleString()} leaves. ${eta}.`;
-      }
+    runningSolverState.constraint_free_autoOptimizeIterations += 1;
+    const improved = Boolean(
+      result?.build && (!runningSolverState.bestResult?.build
+        || logic.compareVectors(result.build.vector, runningSolverState.bestResult.build.vector) > 0)
+    );
+    if (improved) {
+      runningSolverState.bestResult = result;
+      runningSolverState.noImproveStreak = 0;
+    } else {
+      runningSolverState.noImproveStreak += 1;
+    }
 
-      const canResume = result.status === "timeout" || (result.status === "best_found" && !result.provenOptimal);
-      resumeContext = {
-        signature: createSolverSignature(params),
-        canResume,
-        mode: params.mode,
-        bestStartStats: result?.build?.startStats ? { ...result.build.startStats } : null,
-        bestBuild: result?.build?.ok ? result.build : null,
-      };
-      updateResumeAvailability();
-      renderResult(result);
-    }, 0);
+    if (result?.build) {
+      const best = runningSolverState.bestResult?.build?.metrics || result.build.metrics;
+      const line1 = `${baseLine} (optimize ${runningSolverState.constraint_free_autoOptimizeIterations}, no-improve ${runningSolverState.noImproveStreak}/3${improved ? ", improved" : ""})`;
+      const line2 = `Total stats ${best.overall}, PTP ${best.ptp}, MTP ${best.mtp}`;
+      const line3 = `STR ${best.finalStats.str} CON ${best.finalStats.con} DEX ${best.finalStats.dex} AGI ${best.finalStats.agi} DIS ${best.finalStats.dis} AUR ${best.finalStats.aur} LOG ${best.finalStats.log} INT ${best.finalStats.int} WIS ${best.finalStats.wis} INF ${best.finalStats.inf}`;
+      setSolverProgressLines(line1, line2, line3);
+    } else {
+      runningSolverState.constraint_free_autoLastDiagnostic = result?.diagnostic || result?.message || "No feasible build.";
+      setSolverProgressLines(
+        `${baseLine} (optimize ${runningSolverState.constraint_free_autoOptimizeIterations}, no-improve ${runningSolverState.noImproveStreak}/3)`,
+        "No improvement on this iteration.",
+        runningSolverState.constraint_free_autoLastDiagnostic
+      );
+    }
+
+    if (runningSolverState.noImproveStreak >= 3) {
+      finalizeIterativeSolve(
+        `Constraint-Free Auto Solver optimized max final ${finalMin} in ${elapsed}s (stopped after 3 no-improve iterations).`,
+        "ok"
+      );
+      return;
+    }
+
+    setTimeout(runSajehnStep, 0);
   }
 
   function addManualRun() {
@@ -1060,6 +1427,13 @@
       manualRunStatus.textContent = `Loaded ${entry.label} into manual run inputs for adjustment.`;
       manualRunStatus.style.color = "#1f7a4d";
     }
+
+    if (manualRunSection instanceof HTMLDetailsElement) {
+      manualRunSection.open = true;
+      manualRunSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    const firstManualInput = manualStartStatsBody?.querySelector("input[data-manual-start]");
+    firstManualInput?.focus();
   }
 
   function deleteRun(runIndex) {
@@ -1078,8 +1452,13 @@
   }
 
   runSolverBtn.addEventListener("click", () => runSolver({ resume: false }));
+  stopSolverBtn?.addEventListener("click", () => {
+    if (!runningSolverState.active) return;
+    runningSolverState.stopRequested = true;
+  });
   resumeSolverBtn?.addEventListener("click", () => runSolver({ resume: true }));
-  solverModeSelect.addEventListener("change", () => {
+  maxSecondsInput?.addEventListener("input", updateResumeAvailability);
+  solverModeSelect?.addEventListener("change", () => {
     updateSolverModeUI();
     updateResumeAvailability();
   });
@@ -1091,18 +1470,21 @@
   professionSelect?.addEventListener("change", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateManualValidation();
     updateResumeAvailability();
   });
   raceSelect?.addEventListener("change", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateManualValidation();
     updateResumeAvailability();
   });
   targetLevelInput?.addEventListener("input", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateManualValidation();
     updateResumeAvailability();
   });
@@ -1130,6 +1512,7 @@
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateResumeAvailability();
   });
   startConstraintMinBody?.addEventListener("input", (event) => {
@@ -1138,6 +1521,7 @@
     enforceStartConstraintPair("min", input.dataset.startMin);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateResumeAvailability();
   });
   startConstraintMaxBody?.addEventListener("input", (event) => {
@@ -1146,14 +1530,25 @@
     enforceStartConstraintPair("max", input.dataset.startMax);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
+    updateSajehnAvailability();
     updateResumeAvailability();
   });
-  minPtpInput?.addEventListener("input", updateResumeAvailability);
-  minMtpInput?.addEventListener("input", updateResumeAvailability);
-  minStartPtpInput?.addEventListener("input", updateResumeAvailability);
-  minStartMtpInput?.addEventListener("input", updateResumeAvailability);
-  useCaseSelect?.addEventListener("change", updateResumeAvailability);
-  maxSecondsInput?.addEventListener("input", updateResumeAvailability);
+  minPtpInput?.addEventListener("input", () => {
+    updateSajehnAvailability();
+    updateResumeAvailability();
+  });
+  minMtpInput?.addEventListener("input", () => {
+    updateSajehnAvailability();
+    updateResumeAvailability();
+  });
+  minStartPtpInput?.addEventListener("input", () => {
+    updateSajehnAvailability();
+    updateResumeAvailability();
+  });
+  minStartMtpInput?.addEventListener("input", () => {
+    updateSajehnAvailability();
+    updateResumeAvailability();
+  });
   manualStartStatsBody.addEventListener("input", updateManualValidation);
   resultStatsHead.addEventListener("click", (event) => {
     const adjustButton = event.target.closest(".optimizer-copy-run");
@@ -1177,5 +1572,6 @@
   initializeProfileSelect();
   applySelectedProfileFromPicker();
   updateCurrentLevelTpDelta();
+  updateSajehnAvailability();
   updateResumeAvailability();
 })();
