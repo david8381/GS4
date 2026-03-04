@@ -2782,6 +2782,7 @@ function importGstoolsPayloadFromHash() {
     const jsonText = decodeBase64UrlUtf8(encoded);
     const payload = JSON.parse(jsonText);
     const blocks = payload?.blocks || {};
+    const payloadCharacterName = stripMarkupTags(payload?.character || "");
 
     if (typeof blocks.infoStart === "string" && blocks.infoStart.trim()) {
       infoImport.value = blocks.infoStart;
@@ -2804,6 +2805,12 @@ function importGstoolsPayloadFromHash() {
       ascMilestonesImport.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
+    if (!profileName.value.trim() && payloadCharacterName) {
+      profileName.value = payloadCharacterName;
+    }
+
+    // Auto-create/update + select profile after hash import.
+    handleProfileSave();
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
     importStatus.style.color = "";
     const cleanUrl = `${window.location.pathname}${window.location.search}`;
