@@ -1,6 +1,7 @@
 const profileSelect = document.getElementById("profileSelect");
 const profileApply = document.getElementById("profileApply");
 const profileDelete = document.getElementById("profileDelete");
+const profileDeleteTop = document.getElementById("profileDeleteTop");
 const profileSave = document.getElementById("profileSave");
 const profileExportJson = document.getElementById("profileExportJson");
 const profileName = document.getElementById("profileName");
@@ -48,6 +49,7 @@ const runProfileTestsBtn = document.getElementById("runProfileTests");
 const profileTestOutputEl = document.getElementById("profileTestOutput");
 const saveProfileButtons = Array.from(document.querySelectorAll(".save-profile-btn"));
 const reloadProfileButtons = Array.from(document.querySelectorAll(".profile-reload-btn"));
+const deleteProfileButtons = [profileDelete, profileDeleteTop].filter(Boolean);
 
 const armorAsgSelect = document.getElementById("armorAsg");
 const armorWeightInput = document.getElementById("armorWeight");
@@ -2274,6 +2276,9 @@ function updateProfileActionState() {
   const hasName = currentComparable.name.length > 0;
 
   profileApply.disabled = !selected;
+  deleteProfileButtons.forEach((button) => {
+    button.disabled = !selected;
+  });
   profileApply.classList.remove("attention", "success-attention");
   reloadProfileButtons.forEach((button) => {
     button.disabled = !selected;
@@ -2423,9 +2428,13 @@ profileSelect.addEventListener("change", () => {
   }
 });
 
-profileDelete.addEventListener("click", () => {
+function handleProfileDelete() {
   const selected = profileSelect.value;
   if (!selected) return;
+  const selectedProfile = findProfile(profiles, selected);
+  const displayName = selectedProfile?.name || "this profile";
+  const confirmed = window.confirm(`Delete profile "${displayName}"? This cannot be undone.`);
+  if (!confirmed) return;
   profiles = profiles.filter((profile) => profile.id !== selected);
   saveProfiles(profiles);
   refreshProfileSelect(profiles);
@@ -2433,6 +2442,10 @@ profileDelete.addEventListener("click", () => {
   resetEditorForNewProfile();
   applySectionDefaultVisibility();
   updateProfileActionState();
+}
+
+deleteProfileButtons.forEach((button) => {
+  button.addEventListener("click", handleProfileDelete);
 });
 
 function handleProfileSave() {
