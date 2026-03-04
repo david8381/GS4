@@ -2701,3 +2701,62 @@ ascShowTrainedOnly?.addEventListener("change", () => {
 });
 
 runProfileTestsBtn?.addEventListener("click", runProfileSelfTests);
+
+function decodeBase64UrlUtf8(input) {
+  if (!input) return "";
+  const normalized = String(input).replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function importGstoolsPayloadFromHash() {
+  const rawHash = String(window.location.hash || "").replace(/^#/, "");
+  if (!rawHash) return;
+
+  let encoded = "";
+  if (rawHash.startsWith("gstools=")) {
+    encoded = rawHash.slice("gstools=".length);
+  } else if (rawHash.includes("=")) {
+    const hashParams = new URLSearchParams(rawHash);
+    encoded = hashParams.get("gstools") || "";
+  } else {
+    return;
+  }
+  if (!encoded) return;
+
+  try {
+    const jsonText = decodeBase64UrlUtf8(encoded);
+    const payload = JSON.parse(jsonText);
+    const blocks = payload?.blocks || {};
+
+    if (typeof blocks.infoStart === "string" && blocks.infoStart.trim()) {
+      infoImport.value = blocks.infoStart;
+      infoImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.skills === "string" && blocks.skills.trim()) {
+      skillsImport.value = blocks.skills;
+      skillsImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.exp === "string" && blocks.exp.trim()) {
+      expImport.value = blocks.exp;
+      expImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.ascList === "string" && blocks.ascList.trim()) {
+      ascImport.value = blocks.ascList;
+      ascImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    importStatus.textContent = "Imported quick-start blocks from gstools payload.";
+    importStatus.style.color = "";
+    const cleanUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.replaceState(null, "", cleanUrl);
+  } catch (_error) {
+    importStatus.textContent = "Could not import gstools payload from URL hash.";
+    importStatus.style.color = "#b42318";
+  }
+}
+
+importGstoolsPayloadFromHash();
