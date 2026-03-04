@@ -71,7 +71,7 @@
               <div class="input-row">
                 <select id="solverMode">
                   <option value="constraint_free_auto">Constraint-Free Auto Solver</option>
-                  <option value="exact">Optimum Guaranteed Solver</option>
+                  <option value="exact">Solve w/ Constraints</option>
                 </select>
               </div>
             </div>
@@ -102,17 +102,12 @@
             </table>
           </div>
           <div class="helper" id="resultTotals"></div>
+          <div class="helper" id="resultEditStatus"></div>
         </section>
 
         <details class="collapsible-section input-block">
-          <summary>Final Constraints</summary>
+          <summary>Final Constraints - Set Target Level Requirements</summary>
           <div class="collapsible-body">
-            <div class="input-group tp-inline">
-              <label for="minPtp">Min total PTP</label>
-              <input id="minPtp" type="number" min="0" step="1" value="0" />
-              <label for="minMtp">Min total MTP</label>
-              <input id="minMtp" type="number" min="0" step="1" value="0" />
-            </div>
             <div class="input-group compact-field">
               <label for="finalAllMinStat">Set all stats to</label>
               <div class="input-row">
@@ -133,14 +128,8 @@
         </details>
 
         <details class="collapsible-section input-block">
-          <summary>Starting Constraints</summary>
+          <summary>Starting Constraints - Set Level 0 Requirements</summary>
           <div class="collapsible-body">
-            <div class="input-group tp-inline">
-              <label for="minStartPtp">Min start PTP</label>
-              <input id="minStartPtp" type="number" min="0" step="1" value="0" />
-              <label for="minStartMtp">Min start MTP</label>
-              <input id="minStartMtp" type="number" min="0" step="1" value="0" />
-            </div>
             <div class="helper">Start stat constraints (level-0):</div>
             <div class="stat-constraint-row stat-constraint-row-head">
               <div class="stat-constraint-row-label"></div>
@@ -173,27 +162,6 @@
               <li>Suggested range: floor to max start needed to satisfy current Min final target at the selected level.</li>
               <li>Use suggested range as a starting point, then tweak to satisfy total allocation.</li>
             </ul>
-          </div>
-        </details>
-
-        <details class="collapsible-section input-block" id="manualRunSection">
-          <summary>Add Manual Run</summary>
-          <div class="collapsible-body">
-            <div class="input-group compact-field">
-              <label for="manualRunLabel">Run label</label>
-              <div class="input-row">
-                <input id="manualRunLabel" type="text" placeholder="e.g. My Current Build" />
-              </div>
-            </div>
-            <div class="helper" id="manualAllocationStatus">Level-0 points remaining: 660</div>
-            <div class="optimizer-stat-min-grid" id="manualStartStatsBody"></div>
-            <div class="inline-actions">
-              <button class="btn ghost btn tiny" id="manualStartClear" type="button">Clear</button>
-              <button class="btn" id="addManualRun" type="button">Add Manual Run</button>
-            </div>
-            <div class="helper" id="manualRunStatus">Enter level-0 stats (prime bonuses already included).</div>
-            <div class="helper" id="manualConstraintWarning"></div>
-            <div class="helper" id="manualRunPreview"></div>
           </div>
         </details>
 

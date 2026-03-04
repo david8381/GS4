@@ -626,6 +626,35 @@ textarea {
   text-align: center;
 }
 
+.tp-summary-table {
+  margin-top: 10px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.tp-summary-table th,
+.tp-summary-table td {
+  border-top: 1px solid #e7dfd3;
+  padding: 6px 8px;
+}
+
+.tp-summary-table thead th {
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.tp-summary-table tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: #3f3b45;
+}
+
+.tp-summary-table tbody td {
+  text-align: center;
+}
+
 .skills-group-row td {
   font-weight: 700;
   font-size: 0.82rem;
@@ -1085,6 +1114,20 @@ body[data-page="stat-optimizer"] .table-panel td:first-child {
 .optimizer-run-actions {
   display: inline-flex;
   gap: 4px;
+}
+
+body[data-page="stat-optimizer"] .optimizer-run-dim {
+  opacity: 0.45;
+}
+
+body[data-page="stat-optimizer"] .optimizer-run-editing {
+  background-color: #ecfdf3 !important;
+  border-color: #16a34a !important;
+}
+
+body[data-page="stat-optimizer"] td input[data-inline-edit] {
+  width: 64px;
+  padding: 4px 6px;
 }
 
 main.calculator.solver-running {

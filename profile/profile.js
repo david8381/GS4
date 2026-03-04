@@ -23,8 +23,17 @@ const ascImport = document.getElementById("ascImport");
 const ascImportStatus = document.getElementById("ascImportStatus");
 const ascShowTrainedOnly = document.getElementById("ascShowTrainedOnly");
 const skillsTable = document.getElementById("skillsTable");
-const tpEstimateStatus = document.getElementById("tpEstimateStatus");
-const tpSpentStatus = document.getElementById("tpSpentStatus");
+const tpExpPtp = document.getElementById("tpExpPtp");
+const tpExpMtp = document.getElementById("tpExpMtp");
+const tpSpentPtp = document.getElementById("tpSpentPtp");
+const tpSpentMtp = document.getElementById("tpSpentMtp");
+const tpLeftPtp = document.getElementById("tpLeftPtp");
+const tpLeftMtp = document.getElementById("tpLeftMtp");
+const tpConvertedPhyToMnt = document.getElementById("tpConvertedPhyToMnt");
+const tpConvertedMntToPhy = document.getElementById("tpConvertedMntToPhy");
+const tpShortfallRow = document.getElementById("tpShortfallRow");
+const tpShortfallPtp = document.getElementById("tpShortfallPtp");
+const tpShortfallMtp = document.getElementById("tpShortfallMtp");
 const ascAbilityGroups = document.getElementById("ascAbilityGroups");
 const ascStatus = document.getElementById("ascStatus");
 const enhStatTable = document.getElementById("enhStatTable");
@@ -838,11 +847,18 @@ function summarizeTrainingPointConversion(totalTp, spentTp) {
 }
 
 function updateTrainingPointEstimateDisplay() {
-  if (!tpEstimateStatus || !tpSpentStatus) return;
+  if (!tpExpPtp || !tpExpMtp || !tpSpentPtp || !tpSpentMtp || !tpLeftPtp || !tpLeftMtp) return;
   const profession = profileProfession.value;
   if (!profession) {
-    tpEstimateStatus.textContent = "Total TP from EXP: —";
-    tpSpentStatus.textContent = "Total TP Spent: —";
+    tpExpPtp.textContent = "—";
+    tpExpMtp.textContent = "—";
+    tpSpentPtp.textContent = "—";
+    tpSpentMtp.textContent = "—";
+    tpLeftPtp.textContent = "—";
+    tpLeftMtp.textContent = "—";
+    if (tpConvertedPhyToMnt) tpConvertedPhyToMnt.textContent = "—";
+    if (tpConvertedMntToPhy) tpConvertedMntToPhy.textContent = "—";
+    if (tpShortfallRow) tpShortfallRow.hidden = true;
     return;
   }
   const experience = Math.max(0, Math.trunc(Number(profileExperience.value) || 0));
@@ -851,13 +867,35 @@ function updateTrainingPointEstimateDisplay() {
   const spentTp = estimateSpentTrainingPointsFromRanks(currentSkills, profession, level);
   const conversion = summarizeTrainingPointConversion(totalTp, spentTp);
 
-  tpEstimateStatus.textContent = `Total TP from EXP: ${totalTp.ptp}/${totalTp.mtp} (PTP/MTP)`;
-  tpSpentStatus.textContent = `Total TP Spent: ${spentTp.ptp}/${spentTp.mtp} (PTP/MTP) | Points Left: ${conversion.pointsLeftPtp}/${conversion.pointsLeftMtp} | Converted (Phy->Mnt / Mnt->Phy): ${conversion.phyToMnt}/${conversion.mntToPhy}`;
-  if (conversion.remainingDeficitPtp > 0 || conversion.remainingDeficitMtp > 0) {
-    tpSpentStatus.textContent += ` | Shortfall: ${conversion.remainingDeficitPtp}/${conversion.remainingDeficitMtp}`;
-    tpSpentStatus.style.color = "#b42318";
-  } else {
-    tpSpentStatus.style.color = "";
+  tpExpPtp.textContent = String(totalTp.ptp);
+  tpExpMtp.textContent = String(totalTp.mtp);
+  tpSpentPtp.textContent = String(spentTp.ptp);
+  tpSpentMtp.textContent = String(spentTp.mtp);
+  tpLeftPtp.textContent = String(conversion.pointsLeftPtp);
+  tpLeftMtp.textContent = String(conversion.pointsLeftMtp);
+  if (tpConvertedPhyToMnt) tpConvertedPhyToMnt.textContent = String(conversion.phyToMnt);
+  if (tpConvertedMntToPhy) tpConvertedMntToPhy.textContent = String(conversion.mntToPhy);
+
+  const hasShortfall = conversion.remainingDeficitPtp > 0 || conversion.remainingDeficitMtp > 0;
+  if (tpShortfallRow) {
+    tpShortfallRow.hidden = !hasShortfall;
+    tpShortfallRow.style.color = hasShortfall ? "#b42318" : "";
+  }
+  if (tpShortfallPtp) tpShortfallPtp.textContent = String(conversion.remainingDeficitPtp);
+  if (tpShortfallMtp) tpShortfallMtp.textContent = String(conversion.remainingDeficitMtp);
+  if (tpLeftPtp) tpLeftPtp.style.color = hasShortfall ? "#b42318" : "";
+  if (tpLeftMtp) tpLeftMtp.style.color = hasShortfall ? "#b42318" : "";
+  if (tpSpentPtp) tpSpentPtp.style.color = hasShortfall ? "#b42318" : "";
+  if (tpSpentMtp) tpSpentMtp.style.color = hasShortfall ? "#b42318" : "";
+  if (tpExpPtp) tpExpPtp.style.color = "";
+  if (tpExpMtp) tpExpMtp.style.color = "";
+  if (tpConvertedPhyToMnt) tpConvertedPhyToMnt.style.color = "";
+  if (tpConvertedMntToPhy) tpConvertedMntToPhy.style.color = "";
+  if (!hasShortfall) {
+    if (tpLeftPtp) tpLeftPtp.style.color = "";
+    if (tpLeftMtp) tpLeftMtp.style.color = "";
+    if (tpSpentPtp) tpSpentPtp.style.color = "";
+    if (tpSpentMtp) tpSpentMtp.style.color = "";
   }
 }
 

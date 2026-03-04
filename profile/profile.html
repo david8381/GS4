@@ -131,7 +131,7 @@
                 <div class="input-group">
                   <label for="profileExperience">Experience</label>
                   <div class="input-row">
-                    <input id="profileExperience" type="number" min="0" step="1" value="0" />
+                    <input id="profileExperience" type="number" min="0" step="2500" value="0" />
                   </div>
                   <div class="helper">Enter experience to derive level, or set level to auto-fill a baseline experience.</div>
                 </div>
@@ -139,7 +139,7 @@
                 <div class="input-group">
                   <label for="profileAscensionExperience">Ascension Experience</label>
                   <div class="input-row">
-                    <input id="profileAscensionExperience" type="number" min="0" step="1" value="0" />
+                    <input id="profileAscensionExperience" type="number" min="0" step="50000" value="0" />
                   </div>
                   <div class="helper">Enter ascension exp directly if not importing EXP output.</div>
                 </div>
@@ -264,8 +264,42 @@
                   </thead>
                   <tbody id="skillsTable"></tbody>
                 </table>
-                <div class="helper" id="tpEstimateStatus">Total TP from EXP: —</div>
-                <div class="helper" id="tpSpentStatus">Total TP Spent: —</div>
+                <table class="tp-summary-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>PTP</th>
+                      <th>MTP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>Total TP from EXP</th>
+                      <td id="tpExpPtp">—</td>
+                      <td id="tpExpMtp">—</td>
+                    </tr>
+                    <tr>
+                      <th>Total TP Spent</th>
+                      <td id="tpSpentPtp">—</td>
+                      <td id="tpSpentMtp">—</td>
+                    </tr>
+                    <tr>
+                      <th>Points Left</th>
+                      <td id="tpLeftPtp">—</td>
+                      <td id="tpLeftMtp">—</td>
+                    </tr>
+                    <tr>
+                      <th>Converted (Phy->Mnt / Mnt->Phy)</th>
+                      <td id="tpConvertedPhyToMnt">—</td>
+                      <td id="tpConvertedMntToPhy">—</td>
+                    </tr>
+                    <tr id="tpShortfallRow" hidden>
+                      <th>Shortfall</th>
+                      <td id="tpShortfallPtp">0</td>
+                      <td id="tpShortfallMtp">0</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
             <div class="inline-actions">

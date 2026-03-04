@@ -31,10 +31,6 @@
   const resumeStatus = document.getElementById("resumeStatus");
   const solverProgress = document.getElementById("solverProgress");
 
-  const minPtpInput = document.getElementById("minPtp");
-  const minMtpInput = document.getElementById("minMtp");
-  const minStartPtpInput = document.getElementById("minStartPtp");
-  const minStartMtpInput = document.getElementById("minStartMtp");
   const finalAllMinStatInput = document.getElementById("finalAllMinStat");
   const applyFinalAllMinStatBtn = document.getElementById("applyFinalAllMinStat");
   const clearMinFinalStatsBtn = document.getElementById("clearMinFinalStats");
@@ -52,6 +48,7 @@
   const resultStatsHead = document.getElementById("resultStatsHead");
   const resultStatsBody = document.getElementById("resultStatsBody");
   const resultTotals = document.getElementById("resultTotals");
+  const resultEditStatus = document.getElementById("resultEditStatus");
   const manualRunSection = document.getElementById("manualRunSection");
   const manualRunLabelInput = document.getElementById("manualRunLabel");
   const manualStartStatsBody = document.getElementById("manualStartStatsBody");
@@ -62,6 +59,13 @@
   const manualConstraintWarning = document.getElementById("manualConstraintWarning");
   const manualRunPreview = document.getElementById("manualRunPreview");
   const runHistory = [];
+  const inlineEditState = {
+    active: false,
+    runIndex: -1,
+    draftLevel0Stats: null,
+    message: "",
+    tone: "",
+  };
   let resumeContext = null;
   const runningSolverState = {
     active: false,
@@ -483,8 +487,6 @@
     minFinalStatsBody?.querySelectorAll("input[data-min-final]").forEach((input) => {
       input.value = "";
     });
-    if (minStartPtpInput) minStartPtpInput.value = "0";
-    if (minStartMtpInput) minStartMtpInput.value = "0";
     startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
       input.value = "";
     });
@@ -649,12 +651,15 @@
     }
   }
 
-  function hasAnyActiveConstraints() {
-    const positive = (input) => Math.max(0, logic.toInt(input?.value, 0)) > 0;
-    if (positive(minPtpInput) || positive(minMtpInput) || positive(minStartPtpInput) || positive(minStartMtpInput)) {
-      return true;
-    }
+  function autoSelectConstraintSolverIfNeeded() {
+    if (!solverModeSelect) return;
+    if (solverModeSelect.value !== "constraint_free_auto") return;
+    if (!hasAnyActiveConstraints()) return;
+    solverModeSelect.value = "exact";
+    updateSolverModeUI();
+  }
 
+  function hasAnyActiveConstraints() {
     const hasMinFinal = Array.from(minFinalStatsBody?.querySelectorAll("input[data-min-final]") || [])
       .some((input) => String(input.value || "").trim() !== "" && Math.max(0, logic.toInt(input.value, 0)) > 0);
     if (hasMinFinal) return true;
@@ -782,10 +787,6 @@
   function minimumsFromInputs() {
     const { minStartStats, maxStartStats } = readStartStatBounds();
     return {
-      minPtp: Math.max(0, logic.toInt(minPtpInput.value, 0)),
-      minMtp: Math.max(0, logic.toInt(minMtpInput.value, 0)),
-      minStartPtp: Math.max(0, logic.toInt(minStartPtpInput?.value, 0)),
-      minStartMtp: Math.max(0, logic.toInt(minStartMtpInput?.value, 0)),
       minFinalStats: readMinimumFinalStats(),
       minStartStats,
       maxStartStats,
@@ -804,18 +805,22 @@
     groupRow.appendChild(statHead);
 
     runHistory.forEach((entry, index) => {
+      const editing = inlineEditState.active && inlineEditState.runIndex === index;
       const th = document.createElement("th");
       th.innerHTML = `
         <div class="optimizer-run-head">
           <span>${entry.label}</span>
           <div class="optimizer-run-actions">
-            <button type="button" class="btn ghost btn tiny optimizer-copy-run" data-run-index="${index}">Adjust</button>
+            ${editing
+              ? `<button type="button" class="btn ghost btn tiny optimizer-inline-done" data-run-index="${index}">Done</button>`
+              : `<button type="button" class="btn ghost btn tiny optimizer-copy-run" data-run-index="${index}">Adjust</button>`}
             <button type="button" class="btn ghost btn tiny optimizer-delete-run" data-run-index="${index}">Delete</button>
           </div>
         </div>
       `;
       th.colSpan = 2;
-      th.className = `optimizer-run-band optimizer-run-band-${index % 4}`;
+      const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
+      th.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       groupRow.appendChild(th);
     });
     resultStatsHead.appendChild(groupRow);
@@ -824,11 +829,13 @@
     runHistory.forEach((_, index) => {
       const startTh = document.createElement("th");
       startTh.textContent = "Start";
-      startTh.className = `optimizer-run-band optimizer-run-band-${index % 4}`;
+      const editing = inlineEditState.active && inlineEditState.runIndex === index;
+      const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
+      startTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(startTh);
       const targetTh = document.createElement("th");
       targetTh.textContent = "Target";
-      targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}`;
+      targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(targetTh);
     });
     resultStatsHead.appendChild(subRow);
@@ -842,14 +849,21 @@
       row.appendChild(statCell);
 
       runHistory.forEach((entry, index) => {
-        const build = entry.build;
+        const build = getDisplayBuildForRun(entry, index);
+        const editing = inlineEditState.active && inlineEditState.runIndex === index;
+        const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
         const startCell = document.createElement("td");
-        startCell.textContent = String(build.level0Stats[key]);
-        startCell.className = `optimizer-run-band optimizer-run-band-${index % 4}`;
+        if (editing) {
+          const draftValue = logic.toInt(inlineEditState.draftLevel0Stats?.[key], logic.toInt(build.level0Stats[key], 0));
+          startCell.innerHTML = `<input type="number" min="1" max="100" step="1" value="${draftValue}" data-inline-edit="${key}" />`;
+        } else {
+          startCell.textContent = String(build.level0Stats[key]);
+        }
+        startCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(startCell);
         const targetCell = document.createElement("td");
         targetCell.textContent = String(build.metrics.finalStats[key]);
-        targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}`;
+        targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(targetCell);
       });
       resultStatsBody.appendChild(row);
@@ -861,22 +875,137 @@
     totalsLabel.textContent = "Totals";
     totalsRow.appendChild(totalsLabel);
     runHistory.forEach((entry, index) => {
+      const build = getDisplayBuildForRun(entry, index);
       const totalCell = document.createElement("td");
       totalCell.colSpan = 2;
-      totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell`;
+      const editing = inlineEditState.active && inlineEditState.runIndex === index;
+      const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
+      totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       totalCell.innerHTML = `
-        <div>PTP ${entry.build.metrics.ptp} / MTP ${entry.build.metrics.mtp}</div>
-        <div class="optimizer-totals-sub">Total Stats ${entry.build.metrics.overall}</div>
+        <div>PTP ${build.metrics.ptp} / MTP ${build.metrics.mtp}</div>
+        <div class="optimizer-totals-sub">Start PTP ${build.metrics.startPtp} / Start MTP ${build.metrics.startMtp}</div>
+        <div class="optimizer-totals-sub">Total Stats ${build.metrics.overall}</div>
       `;
       totalsRow.appendChild(totalCell);
     });
     resultStatsBody.appendChild(totalsRow);
   }
 
+  function buildPreviewFromDraft(draftLevel0Stats) {
+    if (!draftLevel0Stats) return null;
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    const profession = professionSelect?.value || "";
+    if (!profession) return null;
+    const targetLevel = logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100);
+    const targetExperience = logic.deriveExperienceTarget(data, targetLevel, -1);
+    const effectiveLevel = logic.levelFromExperience(data?.levelThresholds || [], targetExperience);
+
+    const computedAtTarget = profileLogic.computeStatsFromLevel0({
+      stats: data.stats,
+      level0Stats: draftLevel0Stats,
+      level: effectiveLevel,
+      raceName,
+      profession,
+      baseGrowthRates: data.baseGrowthRates,
+      raceGrowthModifiers: data.raceGrowthModifiers,
+    });
+    const finalStats = logic.computeFinalStatSummary(computedAtTarget);
+    const tpTotals = logic.estimateTotalTrainingPointsFromExperience({
+      data,
+      profileLogic,
+      experience: targetExperience,
+      raceName,
+      profession,
+      level0Stats: draftLevel0Stats,
+    });
+    const startTp = logic.trainingPointsPerLevelForStats(draftLevel0Stats, profession, data?.professionPrimeReqs);
+
+    return {
+      metrics: {
+        ptp: tpTotals.ptp,
+        mtp: tpTotals.mtp,
+        startPtp: startTp.ptpPerLevel,
+        startMtp: startTp.mtpPerLevel,
+        overall: finalStats.total,
+        finalStats,
+        level0Stats: draftLevel0Stats,
+        level: effectiveLevel,
+        experience: targetExperience,
+      },
+      level0Stats: draftLevel0Stats,
+    };
+  }
+
+  function getDisplayBuildForRun(entry, index) {
+    if (!(inlineEditState.active && inlineEditState.runIndex === index)) return entry.build;
+    const preview = buildPreviewFromDraft(inlineEditState.draftLevel0Stats);
+    return preview || entry.build;
+  }
+
+  function setInlineEditStatus(message, tone = "") {
+    inlineEditState.message = message || "";
+    inlineEditState.tone = tone;
+    if (!resultEditStatus) return;
+    resultEditStatus.textContent = inlineEditState.message;
+    resultEditStatus.style.color = tone === "error" ? "#b42318" : tone === "ok" ? "#1f7a4d" : "";
+  }
+
+  function startInlineEditCopy(runIndex) {
+    const source = runHistory[runIndex];
+    if (!source?.build?.level0Stats) return;
+    const copyLabel = `${source.label} (copy)`;
+    runHistory.push({
+      label: copyLabel,
+      build: source.build,
+      status: "manual",
+    });
+    inlineEditState.active = true;
+    inlineEditState.runIndex = runHistory.length - 1;
+    inlineEditState.draftLevel0Stats = { ...source.build.level0Stats };
+    setInlineEditStatus("Editing copied run inline. Changes apply when values are valid.", "");
+    renderResultTable();
+    const firstInput = resultStatsBody?.querySelector("input[data-inline-edit]");
+    firstInput?.focus();
+  }
+
+  function applyInlineEditInput(statKey, rawValue) {
+    if (!inlineEditState.active || inlineEditState.runIndex < 0) return;
+    if (!Object.prototype.hasOwnProperty.call(inlineEditState.draftLevel0Stats || {}, statKey)) return;
+    const value = logic.clamp(logic.toInt(rawValue, 0), 1, 100);
+    inlineEditState.draftLevel0Stats[statKey] = value;
+
+    const params = buildSolveParams();
+    const startStats = toBaseStartFromPrimeIncluded(inlineEditState.draftLevel0Stats);
+    const evaluated = logic.evaluateBuild({
+      ...params,
+      startStats,
+    });
+
+    if (evaluated.ok) {
+      runHistory[inlineEditState.runIndex].build = evaluated;
+      setInlineEditStatus("Inline edit is valid.", "ok");
+    } else {
+      const reasons = evaluated.validation?.errors?.join(" ") || evaluated.reason || "Inline edit is invalid.";
+      setInlineEditStatus(reasons, "error");
+    }
+    renderResultTable();
+  }
+
+  function finishInlineEdit() {
+    if (!inlineEditState.active) return;
+    inlineEditState.active = false;
+    inlineEditState.runIndex = -1;
+    inlineEditState.draftLevel0Stats = null;
+    setInlineEditStatus("Done adjusting run.", "ok");
+    renderResultTable();
+    updateCurrentLevelTpDelta();
+  }
+
   function renderResult(result) {
     if (!result?.build) {
       resultSummary.textContent = result?.message || "No result for this run.";
       if (resultCurrentLevelDelta) resultCurrentLevelDelta.textContent = "";
+      if (!inlineEditState.active) setInlineEditStatus("");
       return;
     }
 
@@ -897,6 +1026,7 @@
 
     resultTotals.textContent = `Run ${runHistory.length} added. Start values are level-0 stats (prime bonuses already included).`;
     updateCurrentLevelTpDelta();
+    if (!inlineEditState.active) setInlineEditStatus("");
   }
 
   function setStatus(text, tone = "") {
@@ -1088,6 +1218,17 @@
       runningSolverState.bestResult
     );
     const result = logic.solve(params);
+    if (runningSolverState.mode === "exact" && !result?.build && result?.status === "infeasible") {
+      const elapsedNow = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
+      const reason = result?.message || "No feasible build satisfies current constraints.";
+      setSolverProgressLines(
+        `Solve w/ Constraints iteration ${runningSolverState.iteration}, elapsed ${elapsedNow}s`,
+        "Total stats --, PTP --, MTP --",
+        reason
+      );
+      finalizeIterativeSolve(`No feasible build for current constraints (${elapsedNow}s). ${reason}`, "error");
+      return;
+    }
     const improved = Boolean(
       result?.build && (!runningSolverState.bestResult?.build
         || logic.compareVectors(result.build.vector, runningSolverState.bestResult.build.vector) > 0)
@@ -1171,6 +1312,7 @@
   function runSolver(options = {}) {
     const resume = Boolean(options.resume);
     solverProgress.textContent = "";
+    autoSelectConstraintSolverIfNeeded();
     const params = buildSolveParams();
     if (!resume && params.selectedMode === "constraint_free_auto") {
       runSajehnAlgorithm();
@@ -1199,7 +1341,7 @@
     }
 
     runningSolverState.mode = params.mode;
-    runningSolverState.modeLabel = params.mode === "exact" ? "Exact" : "Fast";
+    runningSolverState.modeLabel = params.mode === "exact" ? "Solve w/ Constraints" : "Fast";
     runningSolverState.maxElapsedSeconds = Number(params.maxElapsedSeconds || 0);
     runningSolverState.iteration = 0;
     runningSolverState.noImproveStreak = 0;
@@ -1211,7 +1353,10 @@
     runningSolverState.stopRequested = false;
     setSolverControlsForRun(true);
 
-    setStatus(resume ? "Resuming exact solver (continuous)..." : "Running exact solver (continuous)...");
+    setStatus(
+      resume ? "Resuming Solve w/ Constraints..." : "Running Solve w/ Constraints...",
+      "ok"
+    );
     setTimeout(runIterativeStep, 0);
   }
 
@@ -1287,10 +1432,6 @@
       params.seedStartStats = { ...runningSolverState.bestResult.build.startStats };
     }
     params.minimums = {
-      minPtp: 0,
-      minMtp: 0,
-      minStartPtp: 0,
-      minStartMtp: 0,
       minFinalStats: internalBounds.minFinalStats,
       minStartStats: internalBounds.minStartStats,
       maxStartStats: internalBounds.maxStartStats,
@@ -1439,6 +1580,16 @@
   function deleteRun(runIndex) {
     if (runIndex < 0 || runIndex >= runHistory.length) return;
     const [removed] = runHistory.splice(runIndex, 1);
+    if (inlineEditState.active) {
+      if (inlineEditState.runIndex === runIndex) {
+        inlineEditState.active = false;
+        inlineEditState.runIndex = -1;
+        inlineEditState.draftLevel0Stats = null;
+        setInlineEditStatus("");
+      } else if (inlineEditState.runIndex > runIndex) {
+        inlineEditState.runIndex -= 1;
+      }
+    }
     renderResultTable();
     if (runHistory.length === 0) {
       resultSummary.textContent = "Run optimizer to see a recommended start stat layout.";
@@ -1509,6 +1660,7 @@
   initializeStaticInputs();
   renderManualStartInputs();
   minFinalStatsBody?.addEventListener("input", () => {
+    autoSelectConstraintSolverIfNeeded();
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
@@ -1518,6 +1670,7 @@
   startConstraintMinBody?.addEventListener("input", (event) => {
     const input = event.target.closest("input[data-start-min]");
     if (!input) return;
+    autoSelectConstraintSolverIfNeeded();
     enforceStartConstraintPair("min", input.dataset.startMin);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
@@ -1527,35 +1680,26 @@
   startConstraintMaxBody?.addEventListener("input", (event) => {
     const input = event.target.closest("input[data-start-max]");
     if (!input) return;
+    autoSelectConstraintSolverIfNeeded();
     enforceStartConstraintPair("max", input.dataset.startMax);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
-  minPtpInput?.addEventListener("input", () => {
-    updateSajehnAvailability();
-    updateResumeAvailability();
-  });
-  minMtpInput?.addEventListener("input", () => {
-    updateSajehnAvailability();
-    updateResumeAvailability();
-  });
-  minStartPtpInput?.addEventListener("input", () => {
-    updateSajehnAvailability();
-    updateResumeAvailability();
-  });
-  minStartMtpInput?.addEventListener("input", () => {
-    updateSajehnAvailability();
-    updateResumeAvailability();
-  });
   manualStartStatsBody.addEventListener("input", updateManualValidation);
   resultStatsHead.addEventListener("click", (event) => {
+    const doneButton = event.target.closest(".optimizer-inline-done");
+    if (doneButton) {
+      finishInlineEdit();
+      return;
+    }
+
     const adjustButton = event.target.closest(".optimizer-copy-run");
     if (adjustButton) {
       const runIndex = logic.toInt(adjustButton.dataset.runIndex, -1);
       if (runIndex < 0) return;
-      copyRunToManual(runIndex);
+      startInlineEditCopy(runIndex);
       return;
     }
 
@@ -1565,6 +1709,12 @@
       if (runIndex < 0) return;
       deleteRun(runIndex);
     }
+  });
+  resultStatsBody.addEventListener("input", (event) => {
+    const input = event.target.closest("input[data-inline-edit]");
+    if (!input) return;
+    const key = input.dataset.inlineEdit;
+    applyInlineEditInput(key, input.value);
   });
   updateManualValidation();
   updateFinalFromCurrentMaxRow();

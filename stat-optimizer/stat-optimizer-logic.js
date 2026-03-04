@@ -272,10 +272,6 @@
   function minimumDeficit(metrics, minimums) {
     if (!minimums) return 0;
     let deficit = 0;
-    deficit += Math.max(0, toInt(minimums.minPtp, 0) - toInt(metrics?.ptp, 0));
-    deficit += Math.max(0, toInt(minimums.minMtp, 0) - toInt(metrics?.mtp, 0));
-    deficit += Math.max(0, toInt(minimums.minStartPtp, 0) - toInt(metrics?.startPtp, 0));
-    deficit += Math.max(0, toInt(minimums.minStartMtp, 0) - toInt(metrics?.startMtp, 0));
     const minFinalStats = minimums.minFinalStats || {};
     const minStartStats = minimums.minStartStats || {};
     const maxStartStats = minimums.maxStartStats || {};
@@ -298,10 +294,6 @@
 
   function hasAnyMinimums(minimums) {
     if (!minimums) return false;
-    if (toInt(minimums.minPtp, 0) > 0) return true;
-    if (toInt(minimums.minMtp, 0) > 0) return true;
-    if (toInt(minimums.minStartPtp, 0) > 0) return true;
-    if (toInt(minimums.minStartMtp, 0) > 0) return true;
     const minFinalStats = minimums.minFinalStats || {};
     const minStartStats = minimums.minStartStats || {};
     const maxStartStats = minimums.maxStartStats || {};
@@ -314,10 +306,6 @@
 
   function satisfiesMinimums(metrics, minimums) {
     if (!minimums) return true;
-    if (toInt(minimums.minPtp, 0) > toInt(metrics?.ptp, 0)) return false;
-    if (toInt(minimums.minMtp, 0) > toInt(metrics?.mtp, 0)) return false;
-    if (toInt(minimums.minStartPtp, 0) > toInt(metrics?.startPtp, 0)) return false;
-    if (toInt(minimums.minStartMtp, 0) > toInt(metrics?.startMtp, 0)) return false;
     const minFinalStats = minimums.minFinalStats || {};
     const minStartStats = minimums.minStartStats || {};
     const maxStartStats = minimums.maxStartStats || {};
