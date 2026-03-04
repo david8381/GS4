@@ -49,15 +49,6 @@
   const resultStatsBody = document.getElementById("resultStatsBody");
   const resultTotals = document.getElementById("resultTotals");
   const resultEditStatus = document.getElementById("resultEditStatus");
-  const manualRunSection = document.getElementById("manualRunSection");
-  const manualRunLabelInput = document.getElementById("manualRunLabel");
-  const manualStartStatsBody = document.getElementById("manualStartStatsBody");
-  const manualStartClearBtn = document.getElementById("manualStartClear");
-  const addManualRunBtn = document.getElementById("addManualRun");
-  const manualAllocationStatus = document.getElementById("manualAllocationStatus");
-  const manualRunStatus = document.getElementById("manualRunStatus");
-  const manualConstraintWarning = document.getElementById("manualConstraintWarning");
-  const manualRunPreview = document.getElementById("manualRunPreview");
   const runHistory = [];
   const inlineEditState = {
     active: false,
@@ -302,83 +293,6 @@
     updateResumeAvailability();
   }
 
-  function renderManualStartInputs() {
-    manualStartStatsBody.innerHTML = "";
-    const targetLevel = logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100);
-    (data.stats || []).forEach((stat) => {
-      const cell = document.createElement("label");
-      cell.className = "optimizer-min-stat";
-      cell.innerHTML = `
-        <span>${stat.abbr}</span>
-        <input id="manual-start-${stat.key}" type="number" min="1" max="100" step="1" value="" data-manual-start="${stat.key}" />
-        <span class="manual-target-stat" data-manual-target="${stat.key}">L${targetLevel}: --</span>
-      `;
-      manualStartStatsBody.appendChild(cell);
-    });
-  }
-
-  function readManualStartStats() {
-    const payload = {};
-    manualStartStatsBody.querySelectorAll("input[data-manual-start]").forEach((input) => {
-      const raw = String(input.value || "").trim();
-      payload[input.dataset.manualStart] = raw ? logic.toInt(raw, 0) : 0;
-    });
-    return payload;
-  }
-
-  function getManualLevel0Budget() {
-    const constraints = constraintsFromInputs();
-    const primeCount = logic.getPrimeStatKeys(data, professionSelect?.value).length;
-    return constraints.totalPoints + (primeCount * 10);
-  }
-
-  function manualInputsHaveAnyBlank() {
-    return Array.from(manualStartStatsBody.querySelectorAll("input[data-manual-start]"))
-      .some((input) => String(input.value || "").trim() === "");
-  }
-
-  function validateManualLevel0Inputs(level0Stats) {
-    const primeKeys = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
-    const invalidKeys = [];
-    let hasBlank = false;
-
-    manualStartStatsBody.querySelectorAll("input[data-manual-start]").forEach((input) => {
-      const key = input.dataset.manualStart;
-      const raw = String(input.value || "").trim();
-      if (!raw) {
-        hasBlank = true;
-        input.classList.remove("manual-input-invalid", "manual-input-valid");
-        return;
-      }
-
-      const value = logic.toInt(raw, 0);
-      const min = primeKeys.has(key) ? 30 : 20;
-      const isValid = value >= min && value <= 100;
-      input.classList.toggle("manual-input-invalid", !isValid);
-      input.classList.toggle("manual-input-valid", isValid);
-      if (!isValid) invalidKeys.push(key);
-    });
-
-    return {
-      hasBlank,
-      invalidKeys,
-      hasInvalid: invalidKeys.length > 0,
-      level0Stats,
-    };
-  }
-
-  function clearManualStartStats() {
-    if (manualRunLabelInput) manualRunLabelInput.value = "";
-    manualStartStatsBody.querySelectorAll("input[data-manual-start]").forEach((input) => {
-      input.value = "";
-    });
-    updateManualValidation();
-    if (manualRunStatus) {
-      manualRunStatus.textContent = "Enter starting stats (must satisfy creation rules) and add to comparison.";
-      manualRunStatus.style.color = "";
-    }
-  }
-
   function toBaseStartFromPrimeIncluded(level0Stats) {
     const prime = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
     const base = {};
@@ -388,99 +302,6 @@
       base[key] = prime.has(key) ? Math.max(1, value - 10) : value;
     });
     return base;
-  }
-
-  function renderManualFinalStatsPreview(level0Stats) {
-    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
-    const profession = professionSelect?.value || "";
-    const targetLevel = logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100);
-    const targetNodes = manualStartStatsBody.querySelectorAll("[data-manual-target]");
-
-    if (!profession || !targetNodes.length) return;
-
-    let hasBlanks = false;
-    const computed = profileLogic.computeStatsFromLevel0({
-      stats: data.stats,
-      level0Stats,
-      level: targetLevel,
-      raceName,
-      profession,
-      baseGrowthRates: data.baseGrowthRates,
-      raceGrowthModifiers: data.raceGrowthModifiers,
-    });
-
-    targetNodes.forEach((node) => {
-      const key = node.dataset.manualTarget;
-      const sourceInput = manualStartStatsBody.querySelector(`input[data-manual-start="${key}"]`);
-      const raw = String(sourceInput?.value || "").trim();
-      if (!raw) {
-        hasBlanks = true;
-        node.textContent = `L${targetLevel}: --`;
-        return;
-      }
-      const value = logic.toInt(computed?.[key]?.base, logic.toInt(level0Stats?.[key], 0));
-      node.textContent = `L${targetLevel}: ${value}`;
-    });
-
-    if (manualRunPreview) {
-      if (hasBlanks) {
-        manualRunPreview.textContent = `Projected TP at level ${targetLevel}: -- (enter all start stats)`;
-        return;
-      }
-      const experience = logic.deriveExperienceTarget(data, targetLevel, -1);
-      const totalTp = logic.estimateTotalTrainingPointsFromExperience({
-        data,
-        profileLogic,
-        experience,
-        raceName,
-        profession,
-        level0Stats,
-      });
-      manualRunPreview.textContent = `Projected TP at level ${targetLevel}: PTP ${totalTp.ptp} / MTP ${totalTp.mtp}`;
-    }
-  }
-
-  function updateManualValidation() {
-    const enteredLevel0Stats = readManualStartStats();
-    renderManualFinalStatsPreview(enteredLevel0Stats);
-    const inputValidation = validateManualLevel0Inputs(enteredLevel0Stats);
-    const startStats = toBaseStartFromPrimeIncluded(enteredLevel0Stats);
-    const constraints = constraintsFromInputs();
-    const validation = logic.validateStartStats(startStats, constraints);
-    const remaining = getManualLevel0Budget() - logic.sumStats(enteredLevel0Stats);
-
-    if (manualAllocationStatus) {
-      manualAllocationStatus.textContent = `Level-0 points remaining: ${remaining}`;
-      manualAllocationStatus.style.color = remaining === 0 ? "#1f7a4d" : "#b42318";
-    }
-
-    if (!manualRunStatus) return;
-    if (manualConstraintWarning) {
-      manualConstraintWarning.textContent = "";
-      manualConstraintWarning.style.color = "";
-    }
-    if (inputValidation.hasBlank) {
-      manualRunStatus.textContent = "Enter all 10 level-0 stats to validate this manual run.";
-      manualRunStatus.style.color = "#b42318";
-      return;
-    }
-    if (inputValidation.hasInvalid) {
-      manualRunStatus.textContent = "Fix highlighted stats (prime stats min 30, others min 20, max 100).";
-      manualRunStatus.style.color = "#b42318";
-      return;
-    }
-    if (validation.ok) {
-      manualRunStatus.textContent = "Manual starting stats are valid.";
-      manualRunStatus.style.color = "#1f7a4d";
-      return;
-    }
-
-    manualRunStatus.textContent = validation.errors.join(" ");
-    manualRunStatus.style.color = "#b42318";
-    if (manualConstraintWarning) {
-      manualConstraintWarning.textContent = `GS creation-limit warning: ${validation.errors.join(" ")}`;
-      manualConstraintWarning.style.color = "#b42318";
-    }
   }
 
   function clearMinimumFinalStats() {
@@ -698,7 +519,6 @@
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
-    updateManualValidation();
     updateResumeAvailability();
   }
 
@@ -1500,83 +1320,6 @@
     setTimeout(runSajehnStep, 0);
   }
 
-  function addManualRun() {
-    const enteredLevel0Stats = readManualStartStats();
-    const inputValidation = validateManualLevel0Inputs(enteredLevel0Stats);
-    if (inputValidation.hasBlank) {
-      if (manualRunStatus) {
-        manualRunStatus.textContent = "Enter all 10 level-0 stats before adding a manual run.";
-        manualRunStatus.style.color = "#b42318";
-      }
-      return;
-    }
-    if (inputValidation.hasInvalid) {
-      if (manualRunStatus) {
-        manualRunStatus.textContent = "Fix highlighted stats before adding a manual run.";
-        manualRunStatus.style.color = "#b42318";
-      }
-      return;
-    }
-    const params = buildSolveParams();
-    const startStats = toBaseStartFromPrimeIncluded(enteredLevel0Stats);
-    const evaluated = logic.evaluateBuild({
-      ...params,
-      startStats,
-    });
-
-    if (!evaluated.ok) {
-      if (manualRunStatus) {
-        const reasons = evaluated.validation?.errors?.join(" ") || evaluated.reason || "Manual run is invalid.";
-        manualRunStatus.textContent = reasons;
-        manualRunStatus.style.color = "#b42318";
-      }
-      return;
-    }
-
-    const labelRaw = (manualRunLabelInput?.value || "").trim();
-    const manualCount = runHistory.filter((entry) => entry.label.startsWith("Manual")).length + 1;
-    const manualRun = {
-      status: "manual",
-      provenOptimal: false,
-      build: evaluated,
-      _label: labelRaw || `Manual ${manualCount}`,
-    };
-    renderResult(manualRun);
-
-    if (manualRunStatus) {
-      manualRunStatus.textContent = evaluated.meetsMinimums
-        ? `Added ${manualRun._label}.`
-        : `Added ${manualRun._label}. Note: this manual run does not satisfy current minimum requirements.`;
-      manualRunStatus.style.color = evaluated.meetsMinimums ? "#1f7a4d" : "#8a5a00";
-    }
-  }
-
-  function copyRunToManual(runIndex) {
-    const entry = runHistory[runIndex];
-    if (!entry?.build?.level0Stats) return;
-    const level0Stats = entry.build.level0Stats;
-    manualStartStatsBody.querySelectorAll("input[data-manual-start]").forEach((input) => {
-      const key = input.dataset.manualStart;
-      const value = logic.toInt(level0Stats[key], 0);
-      input.value = value > 0 ? String(value) : "";
-    });
-    if (manualRunLabelInput) {
-      manualRunLabelInput.value = `${entry.label} (copy)`;
-    }
-    updateManualValidation();
-    if (manualRunStatus) {
-      manualRunStatus.textContent = `Loaded ${entry.label} into manual run inputs for adjustment.`;
-      manualRunStatus.style.color = "#1f7a4d";
-    }
-
-    if (manualRunSection instanceof HTMLDetailsElement) {
-      manualRunSection.open = true;
-      manualRunSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    const firstManualInput = manualStartStatsBody?.querySelector("input[data-manual-start]");
-    firstManualInput?.focus();
-  }
-
   function deleteRun(runIndex) {
     if (runIndex < 0 || runIndex >= runHistory.length) return;
     const [removed] = runHistory.splice(runIndex, 1);
@@ -1616,27 +1359,22 @@
   clearMinFinalStatsBtn?.addEventListener("click", clearMinimumFinalStats);
   applyFinalAllMinStatBtn?.addEventListener("click", applyFinalAllMinStat);
   copySuggestedRangeBtn?.addEventListener("click", copySuggestedRangeToBounds);
-  manualStartClearBtn?.addEventListener("click", clearManualStartStats);
-  addManualRunBtn?.addEventListener("click", addManualRun);
   professionSelect?.addEventListener("change", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
     updateSajehnAvailability();
-    updateManualValidation();
     updateResumeAvailability();
   });
   raceSelect?.addEventListener("change", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
     updateSajehnAvailability();
-    updateManualValidation();
     updateResumeAvailability();
   });
   targetLevelInput?.addEventListener("input", () => {
     renderStartConstraintInputs();
     updateStartConstraintWarning();
     updateSajehnAvailability();
-    updateManualValidation();
     updateResumeAvailability();
   });
   tpBiasSlider?.addEventListener("input", () => {
@@ -1658,7 +1396,6 @@
   });
 
   initializeStaticInputs();
-  renderManualStartInputs();
   minFinalStatsBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
     renderStartConstraintInputs();
@@ -1687,7 +1424,6 @@
     updateSajehnAvailability();
     updateResumeAvailability();
   });
-  manualStartStatsBody.addEventListener("input", updateManualValidation);
   resultStatsHead.addEventListener("click", (event) => {
     const doneButton = event.target.closest(".optimizer-inline-done");
     if (doneButton) {
@@ -1716,7 +1452,6 @@
     const key = input.dataset.inlineEdit;
     applyInlineEditInput(key, input.value);
   });
-  updateManualValidation();
   updateFinalFromCurrentMaxRow();
   updateStartConstraintWarning();
   initializeProfileSelect();
