@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stat Optimizer</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="stat-optimizer" data-root="../">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">GS4 Stat Optimizer</p>
+          <h1>Stat Optimizer</h1>
+          <p>
+            Solve for starting stats under creation limits. Choose a fast best-found mode or an exact mode that
+            can prove optimality when it finishes.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="header-bridge" aria-hidden="true">
+            <select id="profileSelect">
+              <option value="">Select from Profile</option>
+            </select>
+            <button id="profileLoad" type="button">Reload from Profile</button>
+          </div>
+
+          <div class="input-block">
+            <h2>Scenario</h2>
+            <div class="input-group compact-field">
+              <label for="useCase">Use case</label>
+              <div class="input-row">
+                <select id="useCase"></select>
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="race">Race</label>
+              <div class="input-row">
+                <select id="race"></select>
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="profession">Profession</label>
+              <div class="input-row">
+                <select id="profession"></select>
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="targetLevel">Target level</label>
+              <div class="input-row">
+                <input id="targetLevel" type="number" min="0" max="100" step="1" value="100" />
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="tpBiasSlider">TP Objective Bias</label>
+              <div class="input-row">
+                <span id="tpBiasLeft">PTP</span>
+                <input id="tpBiasSlider" type="range" min="0" max="100" step="1" value="50" />
+                <span id="tpBiasRight">MTP</span>
+                <span id="tpBiasValue">50/50</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <details class="collapsible-section input-block">
+          <summary>Final Constraints</summary>
+          <div class="collapsible-body">
+            <div class="input-group tp-inline">
+              <label for="minPtp">Min total PTP</label>
+              <input id="minPtp" type="number" min="0" step="1" value="0" />
+              <label for="minMtp">Min total MTP</label>
+              <input id="minMtp" type="number" min="0" step="1" value="0" />
+            </div>
+            <div class="input-group compact-field">
+              <label for="finalAllMinStat">Set all stats to</label>
+              <div class="input-row">
+                <input id="finalAllMinStat" type="number" min="0" max="100" step="1" value="" />
+                <button class="btn ghost btn tiny" id="applyFinalAllMinStat" type="button">Set ALL</button>
+              </div>
+            </div>
+            <div class="helper">Minimum final stats required at target level:</div>
+            <div class="stat-constraint-row stat-constraint-row-head">
+              <div class="stat-constraint-row-label"></div>
+              <div class="optimizer-stat-min-grid stat-constraint-labels" id="finalConstraintLabels"></div>
+            </div>
+            <div class="stat-constraint-row">
+              <div class="stat-constraint-row-label">Min final</div>
+              <div class="optimizer-stat-min-grid" id="minFinalStatsBody"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="collapsible-section input-block">
+          <summary>Starting Constraints</summary>
+          <div class="collapsible-body">
+            <div class="input-group tp-inline">
+              <label for="minStartPtp">Min start PTP</label>
+              <input id="minStartPtp" type="number" min="0" step="1" value="0" />
+              <label for="minStartMtp">Min start MTP</label>
+              <input id="minStartMtp" type="number" min="0" step="1" value="0" />
+            </div>
+            <div class="helper">Start stat constraints (level-0):</div>
+            <div class="stat-constraint-row stat-constraint-row-head">
+              <div class="stat-constraint-row-label"></div>
+              <div class="optimizer-stat-min-grid stat-constraint-labels" id="startConstraintLabels"></div>
+            </div>
+            <div class="stat-constraint-row">
+              <div class="stat-constraint-row-label">Min</div>
+              <div class="optimizer-stat-min-grid" id="startConstraintMinBody"></div>
+            </div>
+            <div class="stat-constraint-row">
+              <div class="stat-constraint-row-label">Max</div>
+              <div class="optimizer-stat-min-grid" id="startConstraintMaxBody"></div>
+            </div>
+            <div class="stat-constraint-row stat-constraint-row-suggested">
+              <div class="stat-constraint-row-label">Suggested range</div>
+              <div class="optimizer-stat-min-grid stat-constraint-suggested" id="startConstraintSuggested"></div>
+            </div>
+            <div class="stat-constraint-row">
+              <div class="stat-constraint-row-label">Final @ Max</div>
+              <div class="optimizer-stat-min-grid stat-constraint-suggested" id="startConstraintFinalFromMax"></div>
+            </div>
+            <div class="inline-actions">
+              <button class="btn ghost btn tiny" id="clearMinFinalStats" type="button">Clear</button>
+              <button class="btn ghost btn tiny" id="copySuggestedRange" type="button">Copy Suggested Initial Range</button>
+            </div>
+            <div class="helper" id="startConstraintWarning"></div>
+            <ul class="helper stat-constraint-footnote">
+              <li>Min: required minimum level-0 start stat.</li>
+              <li>Max: cap on level-0 starting stat.</li>
+              <li>Suggested range: floor to max start needed to satisfy current Min final target at the selected level.</li>
+              <li>Use suggested range as a starting point, then tweak to satisfy total allocation.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible-section input-block">
+          <summary>Add Manual Run</summary>
+          <div class="collapsible-body">
+            <div class="input-group compact-field">
+              <label for="manualRunLabel">Run label</label>
+              <div class="input-row">
+                <input id="manualRunLabel" type="text" placeholder="e.g. My Current Build" />
+              </div>
+            </div>
+            <div class="helper" id="manualAllocationStatus">Level-0 points remaining: 660</div>
+            <div class="optimizer-stat-min-grid" id="manualStartStatsBody"></div>
+            <div class="inline-actions">
+              <button class="btn ghost btn tiny" id="manualStartClear" type="button">Clear</button>
+              <button class="btn" id="addManualRun" type="button">Add Manual Run</button>
+            </div>
+            <div class="helper" id="manualRunStatus">Enter level-0 stats (prime bonuses already included).</div>
+            <div class="helper" id="manualConstraintWarning"></div>
+            <div class="helper" id="manualRunPreview"></div>
+          </div>
+        </details>
+
+        <section class="input-block">
+          <h2>Solver</h2>
+          <div class="solver-inline-grid">
+            <div class="input-group compact-field">
+              <label for="solverMode">Solver mode</label>
+              <div class="input-row">
+                <select id="solverMode">
+                  <option value="fast">Fast Solver</option>
+                  <option value="exact">Optimum Guaranteed Solver</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-group compact-field" id="maxSecondsGroup">
+              <label for="maxSeconds">Max seconds (time budget)</label>
+              <div class="input-row">
+                <input id="maxSeconds" type="number" min="1" max="120" step="1" value="5" />
+              </div>
+            </div>
+          </div>
+          <div class="input-group inline-actions">
+            <button class="btn" id="runSolver" type="button">Run Optimizer</button>
+            <button class="btn ghost" id="resumeSolver" type="button" disabled>Resume</button>
+          </div>
+          <div class="helper" id="solverStatus">Ready.</div>
+          <div class="helper" id="resumeStatus">Resume is available only when solver inputs are unchanged.</div>
+          <div class="helper" id="solverProgress"></div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Recommended Build (Comparison)</h2>
+          <div class="helper" id="resultSummary">Run optimizer to see a recommended start stat layout.</div>
+          <div class="helper" id="resultCurrentLevelDelta"></div>
+          <div class="optimizer-result-wrap">
+            <table>
+              <thead id="resultStatsHead"></thead>
+              <tbody id="resultStatsBody"></tbody>
+            </table>
+          </div>
+          <div class="helper" id="resultTotals"></div>
+        </section>
+
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Character_creation" target="_blank" rel="noopener noreferrer">GSWiki: Character creation</a></li>
+                <li><a href="https://gswiki.play.net/Prime_requisite" target="_blank" rel="noopener noreferrer">GSWiki: Prime requisite</a></li>
+                <li><a href="https://gswiki.play.net/Training_point" target="_blank" rel="noopener noreferrer">GSWiki: Training point</a></li>
+                <li><a href="https://gswiki.play.net/Statistic_growth_rate" target="_blank" rel="noopener noreferrer">GSWiki: Statistic growth rate</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="../site.js" defer></script>
+    <script src="../data/gs4-data.js"></script>
+    <script src="../data/stat-optimizer-data.js"></script>
+    <script src="../profile/profile-logic.js"></script>
+    <script src="stat-optimizer-logic.js"></script>
+    <script src="stat-optimizer-ui.js"></script>
+  </body>
+</html>

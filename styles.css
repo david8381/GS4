@@ -804,6 +804,280 @@ textarea {
   white-space: pre-wrap;
 }
 
+body[data-page="stat-optimizer"] .calculator {
+  margin-top: 24px;
+  gap: 16px;
+}
+
+body[data-page="stat-optimizer"] .calc-intro h1 {
+  margin: 6px 0 6px;
+}
+
+body[data-page="stat-optimizer"] .calc-intro p {
+  margin: 0;
+}
+
+body[data-page="stat-optimizer"] .calc-panel {
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+body[data-page="stat-optimizer"] .input-block,
+body[data-page="stat-optimizer"] .table-panel {
+  padding: 12px;
+}
+
+body[data-page="stat-optimizer"] .input-block h2,
+body[data-page="stat-optimizer"] .table-panel h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+body[data-page="stat-optimizer"] .input-group {
+  margin-top: 8px;
+}
+
+body[data-page="stat-optimizer"] .input-group + .input-group {
+  margin-top: 10px;
+}
+
+body[data-page="stat-optimizer"] .input-row {
+  margin-top: 6px;
+}
+
+body[data-page="stat-optimizer"] .input-row input[type="number"],
+body[data-page="stat-optimizer"] .input-row select {
+  padding: 7px 9px;
+  font-size: 0.92rem;
+}
+
+body[data-page="stat-optimizer"] .input-row input[type="range"] {
+  width: 180px;
+  margin: 0 6px;
+}
+
+body[data-page="stat-optimizer"] #tpBiasLeft,
+body[data-page="stat-optimizer"] #tpBiasRight,
+body[data-page="stat-optimizer"] #tpBiasValue {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+body[data-page="stat-optimizer"] .compact-field {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+body[data-page="stat-optimizer"] .compact-field label {
+  margin: 0;
+}
+
+body[data-page="stat-optimizer"] .compact-field .input-row {
+  margin-top: 0;
+}
+
+body[data-page="stat-optimizer"] .solver-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 10px 12px;
+}
+
+body[data-page="stat-optimizer"] .tp-inline {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 110px) max-content minmax(0, 110px);
+  gap: 8px;
+  align-items: center;
+}
+
+body[data-page="stat-optimizer"] .tp-inline label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+body[data-page="stat-optimizer"] .tp-inline input[type="number"] {
+  width: 100%;
+}
+
+body[data-page="stat-optimizer"] #finalAllMinStat {
+  width: 120px;
+}
+
+body[data-page="stat-optimizer"] #applyFinalAllMinStat {
+  margin-left: 6px;
+}
+
+body[data-page="stat-optimizer"] .helper {
+  margin-top: 5px;
+  font-size: 0.8rem;
+}
+
+body[data-page="stat-optimizer"] .stat-constraint-footnote {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
+
+.optimizer-stat-min-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.optimizer-min-stat {
+  display: grid;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.optimizer-min-stat input[type="number"] {
+  width: 100%;
+  padding: 5px 6px;
+  border-radius: 8px;
+  border: 1px solid #cbbfae;
+  font-size: 0.84rem;
+  background: #fffdf8;
+  text-align: center;
+}
+
+.stat-constraint-labels {
+  margin-top: 6px;
+}
+
+.stat-constraint-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-constraint-row-head {
+  margin-top: 6px;
+}
+
+.stat-constraint-row-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.stat-constraint-cell {
+  padding: 4px 0;
+  text-align: center;
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.stat-constraint-label-cell {
+  color: var(--ink);
+}
+
+.stat-constraint-row-suggested {
+  margin-top: 4px;
+}
+
+.stat-constraint-row-suggested .stat-constraint-suggested {
+  margin: 0;
+}
+
+.optimizer-min-stat input[type="number"].manual-input-valid {
+  border-color: #4f4333;
+  color: #1d140b;
+}
+
+.optimizer-min-stat input[type="number"].manual-input-invalid {
+  border-color: #b42318;
+  color: #b42318;
+  background: #fff3f2;
+}
+
+.manual-target-stat {
+  display: block;
+  color: #4f4333;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+body[data-page="stat-optimizer"] .table-panel table {
+  font-size: 0.82rem;
+  width: max-content;
+  min-width: 420px;
+}
+
+body[data-page="stat-optimizer"] .table-panel th,
+body[data-page="stat-optimizer"] .table-panel td {
+  padding: 5px 6px;
+  text-align: center;
+}
+
+body[data-page="stat-optimizer"] .table-panel th:first-child,
+body[data-page="stat-optimizer"] .table-panel td:first-child {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.optimizer-result-wrap {
+  max-width: 100%;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #ddd2c1;
+  border-radius: 8px;
+}
+
+.optimizer-run-band {
+  border-left: 2px solid #d8c9b4;
+}
+
+.optimizer-run-band-0 {
+  background: #f8f3ea;
+}
+
+.optimizer-run-band-1 {
+  background: #eef5f2;
+}
+
+.optimizer-run-band-2 {
+  background: #f4f0f8;
+}
+
+.optimizer-run-band-3 {
+  background: #f6f5ee;
+}
+
+.optimizer-totals-row td {
+  font-weight: 700;
+  border-top: 2px solid #d5ccbe;
+}
+
+.optimizer-totals-cell {
+  white-space: nowrap;
+}
+
+.optimizer-totals-sub {
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.optimizer-run-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.optimizer-run-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
 @media (max-width: 720px) {
   .page {
     padding: 24px 18px 40px;
@@ -834,5 +1108,37 @@ textarea {
 
   .profile-results-grid {
     grid-template-columns: 1fr;
+  }
+
+  .optimizer-stat-min-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  body[data-page="stat-optimizer"] .compact-field {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  body[data-page="stat-optimizer"] .compact-field .input-row {
+    margin-top: 2px;
+  }
+
+  body[data-page="stat-optimizer"] .solver-inline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page="stat-optimizer"] .tp-inline {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .stat-constraint-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .stat-constraint-row-label {
+    text-align: left;
+    white-space: normal;
   }
 }
