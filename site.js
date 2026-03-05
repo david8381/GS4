@@ -66,6 +66,7 @@ function refreshHeaderProfileControls() {
   const headerSelect = document.getElementById("headerProfileSelect");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
+  const headerDirtyLabel = document.getElementById("headerDirtyLabel");
   if (!headerSelect || !headerLoad) return;
 
   const profiles = loadProfiles();
@@ -91,8 +92,19 @@ function refreshHeaderProfileControls() {
   headerLoad.disabled = !hasSelection || !loadButton;
   mirrorButtonState(headerLoad, loadButton);
   if (headerUpdate) {
+    if (updateButton) {
+      headerUpdate.textContent = updateButton.textContent || "Update Profile";
+    }
     headerUpdate.disabled = !hasSelection || !updateButton;
     mirrorButtonState(headerUpdate, updateButton);
+  }
+  if (headerDirtyLabel) {
+    const dataChanged = Boolean(
+      (loadButton && loadButton.classList.contains("attention")) ||
+      (updateButton && updateButton.classList.contains("success-attention"))
+    );
+    headerDirtyLabel.hidden = !dataChanged;
+    headerDirtyLabel.classList.toggle("is-visible", dataChanged);
   }
 }
 
@@ -103,18 +115,21 @@ function renderHeader() {
   const page = document.body.dataset.page || "";
   const root = document.body.dataset.root || "";
   const homeAttrs = page === "home" ? 'aria-current="page"' : "";
+  const isProfileArea = page === "profiles" || page === "profile-manager" || page === "profile-create";
   headerSlot.innerHTML = `
     <header class="site-header">
       <div class="brand">GS4 Tools</div>
       <div class="header-actions">
         <a class="home-link" href="${root}index.html" ${homeAttrs}>Home</a>
-        <a class="home-link" href="${root}profile/profile.html"${page === "profiles" ? ' aria-current="page"' : ""}>Manage Profiles</a>
+        <a class="home-link" href="${root}profile/manager.html"${isProfileArea ? ' aria-current="page"' : ""}>Manage Profiles</a>
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">New Profile</option>
         </select>
-        <span class="header-profile-note">Data Changed in Page:</span>
-        <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
-        <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
+        <div class="header-profile-actions">
+          <span class="header-profile-note" id="headerDirtyLabel" hidden>Data Changed in Page:</span>
+          <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
+          <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
+        </div>
         <span class="site-version" aria-label="Site version">v${SITE_VERSION}</span>
       </div>
     </header>

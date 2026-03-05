@@ -1,7 +1,6 @@
 const profileSelect = document.getElementById("profileSelect");
 const profileApply = document.getElementById("profileApply");
 const profileSave = document.getElementById("profileSave");
-const profileExportJson = document.getElementById("profileExportJson");
 const profileName = document.getElementById("profileName");
 const profileRace = document.getElementById("profileRace");
 const profileProfession = document.getElementById("profileProfession");
@@ -2271,6 +2270,10 @@ function updateProfileActionState() {
   const currentComparable = comparableProfile(current);
   const selectedComparable = selected ? comparableProfile(selected) : null;
   const hasName = currentComparable.name.length > 0;
+  const existingByName = hasName
+    ? profiles.find((entry) => String(entry.name || "").trim().toLowerCase() === currentComparable.name.toLowerCase())
+    : null;
+  const saveLabel = selected || existingByName ? "Update Profile" : "Create Profile";
 
   profileApply.disabled = !selected;
   profileApply.classList.remove("attention", "success-attention");
@@ -2281,6 +2284,7 @@ function updateProfileActionState() {
   saveProfileButtons.forEach((button) => {
     button.disabled = !hasName;
     button.classList.remove("success-attention");
+    button.textContent = saveLabel;
   });
 
   if (selected) {
@@ -2451,6 +2455,7 @@ function handleProfileSave() {
   const selectedId = profileSelect.value || "";
   const existingById = selectedId ? profiles.find((entry) => entry.id === selectedId) : null;
   const existingByName = profiles.find((entry) => entry.name.toLowerCase() === name.toLowerCase());
+  const isUpdate = Boolean(existingById || existingByName);
   const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
   record.id = id;
 
@@ -2458,73 +2463,14 @@ function handleProfileSave() {
   saveProfiles(profiles);
   refreshProfileSelect(profiles);
   profileSelect.value = id;
-  importStatus.textContent = `Saved profile: ${record.name}`;
+  importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
   applyProfile(record);
   applySectionDefaultVisibility();
-}
-
-function sanitizeFilenamePart(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "profile";
-}
-
-function buildExportProfileRecord() {
-  const parsedInfoStart = parseInfoStartBlock(infoImport.value);
-  const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
-  const baseName = profileName.value.trim() || parsedInfo?.name || "Profile";
-  const currentRecord = buildCurrentProfileRecord(baseName);
-
-  const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
-  const professionPayload = parsedInfoStart?.profession || profileProfession.value;
-  const levelPayload = clamp(Number(profileLevel.value), 0, 100);
-  const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
-
-  const selectedId = profileSelect.value || "";
-  const existingByName = profiles.find((entry) => entry.name.toLowerCase() === baseName.toLowerCase());
-  const idPayload = selectedId || existingByName?.id || "";
-
-  return {
-    id: idPayload,
-    ...currentRecord,
-    race: racePayload,
-    profession: professionPayload,
-    level: levelPayload,
-    experience: expPayload,
-    ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
-    ascensionMilestones: clamp(Math.trunc(Number(currentAscensionMilestones) || 0), 0, 10),
-    level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
-  };
-}
-
-function downloadProfileJson() {
-  const record = buildExportProfileRecord();
-  const json = JSON.stringify(record, null, 2);
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const namePart = sanitizeFilenamePart(record.name);
-  const stamp = new Date().toISOString().slice(0, 10);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${namePart}-${stamp}.json`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-
-  if (importStatus) {
-    importStatus.textContent = `Downloaded profile JSON: ${record.name}`;
-    importStatus.style.color = "#1f4e42";
-  }
 }
 
 saveProfileButtons.forEach((button) => {
   button.addEventListener("click", handleProfileSave);
 });
-
-profileExportJson?.addEventListener("click", downloadProfileJson);
 
 infoImport.addEventListener("input", () => {
   const parsedStart = parseInfoStartBlock(infoImport.value);
@@ -2540,7 +2486,7 @@ infoImport.addEventListener("input", () => {
     return;
   }
 
-  importStatus.textContent = `Parsed ${parsed.name} (${parsed.race}). Click Update Profile to store.`;
+  importStatus.textContent = `Parsed ${parsed.name} (${parsed.race}). Enter a profile name, then create or update the profile.`;
   importStatus.style.color = "";
   profileName.value = parsed.name;
   const raceOption = races.find((race) => race.name.toLowerCase() === parsed.race.toLowerCase());

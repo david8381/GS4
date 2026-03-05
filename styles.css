@@ -51,10 +51,22 @@ body {
   flex-wrap: wrap;
 }
 
+.header-profile-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
 .header-profile-note {
   font-size: 0.82rem;
   color: var(--muted);
   white-space: nowrap;
+}
+
+.header-profile-note.is-visible {
+  color: #1f7a4d;
+  font-weight: 600;
 }
 
 .header-profile-select {
@@ -1190,6 +1202,11 @@ body[data-page="stat-optimizer"] .optimizer-solver-warning:empty {
 
   .header-actions {
     width: 100%;
+  }
+
+  .header-profile-actions {
+    width: 100%;
+    overflow-x: auto;
   }
 
   .header-profile-select {

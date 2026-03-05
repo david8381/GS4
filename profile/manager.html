@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Manage Profiles</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="profile-manager" data-root="../">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">GS4 Character Profiles</p>
+          <h1>Manage Profiles</h1>
+          <p>View saved profiles, open one for editing, or delete profiles you no longer need.</p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="inline-actions">
+            <button class="btn" id="newProfileBtn" type="button">New Profile</button>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <div class="table-panel">
+            <h2>Saved Profiles</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Race</th>
+                  <th>Profession</th>
+                  <th>Level</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="profileManagerBody"></tbody>
+            </table>
+            <div class="helper" id="profileManagerStatus">No saved profiles yet.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="../site.js" defer></script>
+    <script src="./manager.js" defer></script>
+  </body>
+</html>
