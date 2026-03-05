@@ -89,19 +89,25 @@ function refreshHeaderProfileControls() {
 
   const { select, loadButton, updateButton } = getPageProfileElements();
   const hasHeaderSelection = Boolean(headerSelect.value);
-  const hasPageSelection = Boolean(select && select.value);
+  const hasPageSelection = Boolean(
+    select &&
+    select.value &&
+    profiles.some((profile) => String(profile.id) === String(select.value))
+  );
   const hasSelection = hasHeaderSelection && hasPageSelection;
   headerLoad.disabled = !hasSelection || !loadButton;
   mirrorButtonState(headerLoad, loadButton);
   if (headerUpdate) {
-    if (updateButton) {
+    if (hasSelection && updateButton) {
       headerUpdate.textContent = updateButton.textContent || "Update Profile";
+    } else {
+      headerUpdate.textContent = "Update Profile";
     }
     headerUpdate.disabled = !hasSelection || !updateButton;
     mirrorButtonState(headerUpdate, updateButton);
   }
   if (headerDirtyLabel) {
-    const dataChanged = Boolean(
+    const dataChanged = hasSelection && Boolean(
       (loadButton && loadButton.classList.contains("attention")) ||
       (updateButton && updateButton.classList.contains("success-attention"))
     );
