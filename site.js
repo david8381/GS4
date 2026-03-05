@@ -71,7 +71,7 @@ function refreshHeaderProfileControls() {
 
   const profiles = loadProfiles();
   const selected = localStorage.getItem(SITE_SELECTED_PROFILE_KEY) || "";
-  headerSelect.innerHTML = '<option value="">New Profile</option>';
+  headerSelect.innerHTML = '<option value="">Select Profile</option>';
   profiles.forEach((profile) => {
     const option = document.createElement("option");
     option.value = profile.id;
@@ -131,7 +131,7 @@ function renderHeader() {
         <a class="home-link" href="${root}index.html" ${homeAttrs}>Home</a>
         <a class="home-link" href="${root}profile/manager.html"${isProfileManagerPage ? ' aria-current="page"' : ""}>Manage Profiles</a>
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
-          <option value="">New Profile</option>
+          <option value="">Select Profile</option>
         </select>
         <div class="header-profile-actions">
           <span class="header-profile-note" id="headerDirtyLabel" hidden>Data Changed in Page:</span>
