@@ -47,7 +47,7 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
 }
@@ -55,15 +55,15 @@ body {
 .header-profile-actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
 }
 
 .header-profile-note {
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   color: var(--muted);
   white-space: nowrap;
-  min-width: 148px;
+  min-width: 98px;
 }
 
 .header-profile-note.is-visible {
@@ -104,10 +104,25 @@ body {
   text-decoration: none;
   color: var(--ink);
   font-weight: 700;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #cbbfae;
   border-radius: 8px;
   background: var(--panel);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.header-actions .btn {
+  padding: 6px 10px;
+  font-size: 0.84rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.header-actions .header-profile-select {
+  min-width: 150px;
+  padding: 6px 8px;
+  font-size: 0.84rem;
 }
 
 .home-link:hover {

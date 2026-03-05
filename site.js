@@ -62,11 +62,19 @@ function mirrorButtonState(headerButton, pageButton) {
   }
 }
 
+function isHeaderActionRelevant(pageButton, actionType) {
+  if (!pageButton || pageButton.disabled) return false;
+  if (actionType === "reload") return pageButton.classList.contains("attention");
+  if (actionType === "update") return pageButton.classList.contains("success-attention");
+  return false;
+}
+
 function refreshHeaderProfileControls() {
   const headerSelect = document.getElementById("headerProfileSelect");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
   const headerDirtyLabel = document.getElementById("headerDirtyLabel");
+  const page = document.body.dataset.page || "";
   if (!headerSelect || !headerLoad) return;
 
   const profiles = loadProfiles();
@@ -95,22 +103,21 @@ function refreshHeaderProfileControls() {
     profiles.some((profile) => String(profile.id) === String(select.value))
   );
   const hasSelection = hasHeaderSelection && hasPageSelection;
-  headerLoad.disabled = !hasSelection || !loadButton;
+  const canReload = hasSelection && isHeaderActionRelevant(loadButton, "reload");
+  const canUpdate = hasSelection && isHeaderActionRelevant(updateButton, "update");
+  headerLoad.disabled = !canReload;
   mirrorButtonState(headerLoad, loadButton);
   if (headerUpdate) {
-    if (hasSelection && updateButton) {
+    if (hasSelection && updateButton && (page === "profile-create" || page === "profiles")) {
       headerUpdate.textContent = updateButton.textContent || "Update Profile";
     } else {
       headerUpdate.textContent = "Update Profile";
     }
-    headerUpdate.disabled = !hasSelection || !updateButton;
+    headerUpdate.disabled = !canUpdate;
     mirrorButtonState(headerUpdate, updateButton);
   }
   if (headerDirtyLabel) {
-    const dataChanged = hasSelection && Boolean(
-      (loadButton && loadButton.classList.contains("attention")) ||
-      (updateButton && updateButton.classList.contains("success-attention"))
-    );
+    const dataChanged = canReload || canUpdate;
     headerDirtyLabel.classList.toggle("is-visible", dataChanged);
     headerDirtyLabel.classList.toggle("is-hidden", !dataChanged);
   }
@@ -135,7 +142,7 @@ function renderHeader() {
         </select>
         <button class="btn" id="headerProfileNew" type="button">New</button>
         <div class="header-profile-actions">
-          <span class="header-profile-note is-hidden" id="headerDirtyLabel">Data Changed in Page:</span>
+          <span class="header-profile-note is-hidden" id="headerDirtyLabel">Data Changed</span>
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
           <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
         </div>
