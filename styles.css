@@ -1201,8 +1201,25 @@ body[data-page="stat-optimizer"] .optimizer-run-editing {
 }
 
 body[data-page="stat-optimizer"] td input[data-inline-edit] {
-  width: 64px;
-  padding: 4px 6px;
+  width: 52px;
+  min-height: 22px;
+  padding: 2px 4px;
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+body[data-page="stat-optimizer"] td.optimizer-run-editing {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+body[data-page="stat-optimizer"] td input[data-inline-edit]::-webkit-outer-spin-button,
+body[data-page="stat-optimizer"] td input[data-inline-edit]::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+body[data-page="stat-optimizer"] td input[data-inline-edit][type="number"] {
+  -moz-appearance: textfield;
 }
 
 main.calculator.solver-running {
