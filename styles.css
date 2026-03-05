@@ -51,6 +51,12 @@ body {
   flex-wrap: wrap;
 }
 
+.header-profile-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .header-profile-select {
   min-width: 180px;
   padding: 8px 10px;

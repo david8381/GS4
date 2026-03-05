@@ -27,10 +27,7 @@ function getPageProfileElements() {
     document.getElementById("profileSave") ||
     document.getElementById("profileDefaultsSave") ||
     document.getElementById("badgeProfileSave");
-  const deleteButton =
-    document.getElementById("profileDeleteTop") ||
-    document.getElementById("profileDelete");
-  return { select, loadButton, updateButton, deleteButton };
+  return { select, loadButton, updateButton };
 }
 
 function syncPageSelect(profileId) {
@@ -69,7 +66,6 @@ function refreshHeaderProfileControls() {
   const headerSelect = document.getElementById("headerProfileSelect");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
-  const headerDelete = document.getElementById("headerProfileDelete");
   if (!headerSelect || !headerLoad) return;
 
   const profiles = loadProfiles();
@@ -90,17 +86,13 @@ function refreshHeaderProfileControls() {
     headerSelect.value = "";
   }
 
-  const { loadButton, updateButton, deleteButton } = getPageProfileElements();
+  const { loadButton, updateButton } = getPageProfileElements();
   const hasSelection = Boolean(headerSelect.value);
   headerLoad.disabled = !hasSelection || !loadButton;
   mirrorButtonState(headerLoad, loadButton);
   if (headerUpdate) {
     headerUpdate.disabled = !hasSelection || !updateButton;
     mirrorButtonState(headerUpdate, updateButton);
-  }
-  if (headerDelete) {
-    headerDelete.disabled = !hasSelection || !deleteButton;
-    mirrorButtonState(headerDelete, deleteButton);
   }
 }
 
@@ -120,9 +112,9 @@ function renderHeader() {
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">New Profile</option>
         </select>
+        <span class="header-profile-note">Data Changed in Page:</span>
         <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
-        ${page === "profiles" ? '<button class="btn" id="headerProfileUpdate" type="button">Update</button>' : ""}
-        ${page === "profiles" ? '<button class="btn ghost" id="headerProfileDelete" type="button">Delete Profile</button>' : ""}
+        <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
         <span class="site-version" aria-label="Site version">v${SITE_VERSION}</span>
       </div>
     </header>
@@ -131,7 +123,6 @@ function renderHeader() {
   const headerSelect = document.getElementById("headerProfileSelect");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
-  const headerDelete = document.getElementById("headerProfileDelete");
 
   refreshHeaderProfileControls();
 
@@ -161,14 +152,6 @@ function renderHeader() {
     headerUpdate.addEventListener("click", () => {
       const { updateButton } = getPageProfileElements();
       if (updateButton && !updateButton.disabled) updateButton.click();
-      refreshHeaderProfileControls();
-    });
-  }
-
-  if (headerDelete) {
-    headerDelete.addEventListener("click", () => {
-      const { deleteButton } = getPageProfileElements();
-      if (deleteButton && !deleteButton.disabled) deleteButton.click();
       refreshHeaderProfileControls();
     });
   }
