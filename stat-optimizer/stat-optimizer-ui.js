@@ -49,6 +49,7 @@
   const resultStatsBody = document.getElementById("resultStatsBody");
   const resultTotals = document.getElementById("resultTotals");
   const resultEditStatus = document.getElementById("resultEditStatus");
+  const addManualRunBtn = document.getElementById("addManualRun");
   const runHistory = [];
   const inlineEditState = {
     active: false,
@@ -510,12 +511,19 @@
 
   function applySelectedProfileFromPicker() {
     const selected = profileSelect?.value || "";
-    if (!selected) return;
+    if (!selected) {
+      upsertProfileBaselineRun(null);
+      return;
+    }
     const profiles = loadProfiles();
     const profile = profiles.find((entry) => entry.id === selected);
-    if (!profile) return;
+    if (!profile) {
+      upsertProfileBaselineRun(null);
+      return;
+    }
 
     applyProfile(profile);
+    upsertProfileBaselineRun(profile);
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
@@ -536,6 +544,76 @@
     if (!selected) return null;
     const profiles = loadProfiles();
     return profiles.find((entry) => entry.id === selected) || null;
+  }
+
+  function normalizeLevel0StatsForRun(level0Stats) {
+    const normalized = {};
+    (data.stats || []).forEach((stat) => {
+      const floor = getLevel0FloorByKey(stat.key);
+      normalized[stat.key] = logic.clamp(logic.toInt(level0Stats?.[stat.key], floor), 1, 100);
+    });
+    return normalized;
+  }
+
+  function removeProfileBaselineRun() {
+    const index = runHistory.findIndex((entry) => entry.sourceKind === "profile_baseline");
+    if (index < 0) return false;
+    runHistory.splice(index, 1);
+    if (inlineEditState.active) {
+      if (inlineEditState.runIndex === index) {
+        inlineEditState.active = false;
+        inlineEditState.runIndex = -1;
+        inlineEditState.draftLevel0Stats = null;
+        setInlineEditStatus("");
+      } else if (inlineEditState.runIndex > index) {
+        inlineEditState.runIndex -= 1;
+      }
+    }
+    return true;
+  }
+
+  function upsertProfileBaselineRun(profile) {
+    if (!profile || !profile.level0Stats || typeof profile.level0Stats !== "object") {
+      const removed = removeProfileBaselineRun();
+      if (removed) {
+        renderResultTable();
+        updateCurrentLevelTpDelta();
+      }
+      return;
+    }
+
+    const normalizedStart = normalizeLevel0StatsForRun(profile.level0Stats);
+    const preview = buildPreviewFromDraft(normalizedStart);
+    if (!preview) {
+      const removed = removeProfileBaselineRun();
+      if (removed) {
+        renderResultTable();
+        updateCurrentLevelTpDelta();
+      }
+      return;
+    }
+
+    const baselineEntry = {
+      label: `${profile.name || "Profile"} (INFO START)`,
+      build: preview,
+      status: "profile",
+      sourceKind: "profile_baseline",
+    };
+    const existingIndex = runHistory.findIndex((entry) => entry.sourceKind === "profile_baseline");
+    if (existingIndex >= 0) {
+      runHistory[existingIndex] = baselineEntry;
+    } else {
+      runHistory.unshift(baselineEntry);
+      if (inlineEditState.active && inlineEditState.runIndex >= 0) {
+        inlineEditState.runIndex += 1;
+      }
+    }
+    renderResultTable();
+    if (runHistory.length === 1) {
+      resultSummary.textContent = "Selected profile baseline added from INFO START level-0 stats.";
+      resultTotals.textContent = "";
+    }
+    updateCurrentLevelTpDelta();
   }
 
   function updateCurrentLevelTpDelta() {
@@ -783,6 +861,31 @@
     inlineEditState.runIndex = runHistory.length - 1;
     inlineEditState.draftLevel0Stats = { ...source.build.level0Stats };
     setInlineEditStatus("Editing copied run inline. Changes apply when values are valid.", "");
+    renderResultTable();
+    const firstInput = resultStatsBody?.querySelector("input[data-inline-edit]");
+    firstInput?.focus();
+  }
+
+  function startInlineEditNewRun() {
+    const selectedProfile = getSelectedProfile();
+    const seed = selectedProfile?.level0Stats
+      ? normalizeLevel0StatsForRun(selectedProfile.level0Stats)
+      : normalizeLevel0StatsForRun({});
+    const preview = buildPreviewFromDraft(seed);
+    if (!preview) {
+      setStatus("Select race/profession before adding a manual run.", "error");
+      return;
+    }
+    runHistory.push({
+      label: `Run ${runHistory.length + 1} (manual)`,
+      build: preview,
+      status: "manual",
+      sourceKind: "manual",
+    });
+    inlineEditState.active = true;
+    inlineEditState.runIndex = runHistory.length - 1;
+    inlineEditState.draftLevel0Stats = { ...seed };
+    setInlineEditStatus("Editing manual run inline. Changes apply when values are valid.", "");
     renderResultTable();
     const firstInput = resultStatsBody?.querySelector("input[data-inline-edit]");
     firstInput?.focus();
@@ -1452,6 +1555,7 @@
     const key = input.dataset.inlineEdit;
     applyInlineEditInput(key, input.value);
   });
+  addManualRunBtn?.addEventListener("click", startInlineEditNewRun);
   updateFinalFromCurrentMaxRow();
   updateStartConstraintWarning();
   initializeProfileSelect();
