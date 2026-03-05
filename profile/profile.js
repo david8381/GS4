@@ -267,6 +267,14 @@ function stripMarkupTags(value) {
   return String(value || "").replace(/<[^>]+>/g, "").trim();
 }
 
+function normalizeProfileNameForMatch(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 function parseInfoBlock(text) {
   const nameMatch = text.match(/Name:\s*([^\n]+?)\s+Race:\s*([A-Za-z -]+?)(?:\s+Profession:|$)/i);
   if (!nameMatch) return null;
@@ -2431,6 +2439,7 @@ profileSelect.addEventListener("change", () => {
 
 function handleProfileSave(options = {}) {
   const { preserveUnsyncedFromExisting = false } = options;
+  profiles = loadProfiles();
   const parsedInfoStart = parseInfoStartBlock(infoImport.value);
   const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
   const name = profileName.value.trim() || (parsedInfo ? parsedInfo.name : "");
@@ -2457,19 +2466,26 @@ function handleProfileSave(options = {}) {
   };
 
   const selectedId = profileSelect.value || "";
+  const normalizedName = normalizeProfileNameForMatch(name);
   const existingById = selectedId ? profiles.find((entry) => entry.id === selectedId) : null;
-  const existingByName = profiles.find((entry) => entry.name.toLowerCase() === name.toLowerCase());
+  const existingByName = profiles.find((entry) => normalizeProfileNameForMatch(entry.name) === normalizedName);
   const isUpdate = Boolean(existingById || existingByName);
   const existing = existingById || existingByName || null;
   const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
   record.id = id;
 
   if (preserveUnsyncedFromExisting && existing) {
+    const existingDefaults = existing.defaults && typeof existing.defaults === "object" ? existing.defaults : {};
+    const recordDefaults = record.defaults && typeof record.defaults === "object" ? record.defaults : {};
     record = {
       ...record,
       ascension: existing.ascension || record.ascension,
       enhancive: existing.enhancive || record.enhancive,
-      defaults: existing.defaults || record.defaults,
+      defaults: {
+        ...recordDefaults,
+        ...existingDefaults,
+        badge: normalizeBadgeDefaults(existingDefaults.badge ?? recordDefaults.badge),
+      },
     };
   }
 
