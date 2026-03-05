@@ -48,7 +48,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .header-profile-actions {
@@ -62,11 +63,16 @@ body {
   font-size: 0.82rem;
   color: var(--muted);
   white-space: nowrap;
+  min-width: 148px;
 }
 
 .header-profile-note.is-visible {
   color: #1f7a4d;
   font-weight: 600;
+}
+
+.header-profile-note.is-hidden {
+  visibility: hidden;
 }
 
 .header-profile-select {

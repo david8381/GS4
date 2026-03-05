@@ -111,8 +111,8 @@ function refreshHeaderProfileControls() {
       (loadButton && loadButton.classList.contains("attention")) ||
       (updateButton && updateButton.classList.contains("success-attention"))
     );
-    headerDirtyLabel.hidden = !dataChanged;
     headerDirtyLabel.classList.toggle("is-visible", dataChanged);
+    headerDirtyLabel.classList.toggle("is-hidden", !dataChanged);
   }
 }
 
@@ -135,7 +135,7 @@ function renderHeader() {
         </select>
         <button class="btn" id="headerProfileNew" type="button">New</button>
         <div class="header-profile-actions">
-          <span class="header-profile-note" id="headerDirtyLabel" hidden>Data Changed in Page:</span>
+          <span class="header-profile-note is-hidden" id="headerDirtyLabel">Data Changed in Page:</span>
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
           <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
         </div>
