@@ -153,7 +153,8 @@ function normalizeRaceName(raw) {
   return raw;
 }
 
-function applyProfile(profile) {
+function applyProfile(profile, options = {}) {
+  const { syncFuture = true } = options;
   const raceName = normalizeRaceName(profile.race);
   const raceOption = races.find((race) => race.name.toLowerCase() === raceName.toLowerCase());
   if (raceOption) {
@@ -184,6 +185,7 @@ function applyProfile(profile) {
   const pfSkill = profile.skills?.find((skill) => skill.name.toLowerCase() === "physical fitness");
   const pfValue = pfSkill?.bonus ?? profile.defaults?.pfBonus;
   pfBonusInput.value = String(pfValue ?? pfBonusInput.value);
+  if (syncFuture) matchFutureToCurrent();
   loadedProfileSnapshot = currentProfileSnapshot();
   updateProfileLoadButtonState();
   updateProfileDefaultsSaveState(profile);
@@ -653,7 +655,7 @@ profileSelect.addEventListener("change", () => {
     return;
   }
   const profile = findProfile(profiles, selected);
-  if (profile) applyProfile(profile);
+  if (profile) applyProfile(profile, { syncFuture: true });
 });
 
 if (profileLoad) {
@@ -662,7 +664,7 @@ if (profileLoad) {
     if (!selected) return;
     const profile = findProfile(profiles, selected);
     if (profile) {
-      applyProfile(profile);
+      applyProfile(profile, { syncFuture: true });
     }
   });
 }
@@ -749,7 +751,7 @@ useEnhanced.addEventListener("change", () => {
   const selected = profileSelect.value;
   if (selected) {
     const profile = findProfile(profiles, selected);
-    if (profile) applyProfile(profile);
+    if (profile) applyProfile(profile, { syncFuture: false });
   } else {
     updateResults();
   }

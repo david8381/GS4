@@ -35,21 +35,21 @@
             <input id="useEnhanced" type="checkbox" checked />
           </div>
 
-          <div class="input-block">
+          <div class="input-block compare-split-block">
+            <div class="compare-columns-header">
+              <span>Profile</span>
+              <span>What If?</span>
+            </div>
             <label for="race">Race</label>
             <div class="input-row compare-row">
-              <span class="unit">Profile 1</span>
               <select id="race"></select>
-              <span class="unit">Profile 2</span>
               <select id="raceFuture"></select>
             </div>
 
             <div class="input-group">
               <label for="strStat">Strength (stat)</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="strStat" type="number" min="1" max="200" step="1" value="70" />
-                <span class="unit">Profile 2</span>
                 <input id="strDelta" type="number" min="1" max="200" step="1" value="70" />
               </div>
             </div>
@@ -57,9 +57,7 @@
             <div class="input-group">
               <label for="conStat">Constitution (stat)</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="conStat" type="number" min="1" max="200" step="1" value="60" />
-                <span class="unit">Profile 2</span>
                 <input id="conDelta" type="number" min="1" max="200" step="1" value="60" />
               </div>
             </div>
@@ -67,35 +65,33 @@
             <div class="input-group">
               <label for="pfBonus">Physical Fitness bonus</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="pfBonus" type="number" min="0" step="1" value="0" />
-                <span class="unit">Profile 2</span>
                 <input id="pfDelta" type="number" min="0" step="1" value="0" />
               </div>
             </div>
 
             <div class="input-group inline-actions">
-              <button class="btn" id="profileStatsReload" type="button" disabled>Reload Profile 1</button>
+              <button class="btn" id="profileStatsReload" type="button" disabled>Reload Profile</button>
               <button class="btn ghost" id="matchProfile1" type="button">Sync / Copy Prof 1 to 2</button>
             </div>
 
           </div>
 
-          <div class="input-block">
+          <div class="input-block compare-split-block">
+            <div class="compare-columns-header">
+              <span>Profile</span>
+              <span>What If?</span>
+            </div>
             <label for="gearWeight">Carried gear weight (no armor)</label>
             <div class="input-row compare-row">
-              <span class="unit">Profile 1</span>
               <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
-              <span class="unit">Profile 2</span>
               <input id="gearDelta" type="number" min="0" max="9999" step="0.1" value="0" />
             </div>
 
             <div class="input-group">
               <label for="silvers">Silvers carried</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="silvers" type="number" min="0" step="1" value="0" />
-                <span class="unit">Profile 2</span>
                 <input id="silversDelta" type="number" min="0" max="999999999" step="1" value="0" />
               </div>
             </div>
@@ -103,9 +99,7 @@
             <div class="input-group">
               <label for="armorAsg">Armor type (ASG)</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <select id="armorAsg"></select>
-                <span class="unit">Profile 2</span>
                 <select id="armorAsgFuture"></select>
               </div>
             </div>
@@ -117,9 +111,7 @@
                 Use item-specific base weight instead of ASG standard
               </label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="armorBaseWeight" type="number" min="0" step="0.1" value="0" disabled />
-                <span class="unit">Profile 2</span>
                 <input id="armorBaseWeightDelta" type="number" min="0" max="999" step="0.1" value="0" disabled />
               </div>
               <div class="helper">Optional: for unusual materials (e.g. very heavy native base weights).</div>
@@ -128,9 +120,7 @@
             <div class="input-group">
               <label for="armorWeight">Armor actual weight</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">Profile 2</span>
                 <input id="armorWeightDelta" type="number" min="0" max="999" step="0.1" value="0" />
               </div>
             </div>
@@ -138,9 +128,7 @@
             <div class="input-group">
               <label for="accessoryWeight">Armor accessories weight</label>
               <div class="input-row compare-row">
-                <span class="unit">Profile 1</span>
                 <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
-                <span class="unit">Profile 2</span>
                 <input id="accessoryWeightDelta" type="number" min="0" max="999" step="0.1" value="0" />
               </div>
             </div>
@@ -154,14 +142,14 @@
           </div>
         </section>
 
-        <section class="table-panel">
+        <section class="table-panel compare-results-panel">
           <h2>Results</h2>
-          <table>
+          <table class="compare-results-table">
             <thead>
               <tr>
                 <th>Metric</th>
-                <th>Current</th>
-                <th>With Changes</th>
+                <th>Profile</th>
+                <th>What If?</th>
               </tr>
             </thead>
             <tbody id="results"></tbody>
