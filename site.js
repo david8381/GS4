@@ -87,8 +87,10 @@ function refreshHeaderProfileControls() {
     headerSelect.value = "";
   }
 
-  const { loadButton, updateButton } = getPageProfileElements();
-  const hasSelection = Boolean(headerSelect.value);
+  const { select, loadButton, updateButton } = getPageProfileElements();
+  const hasHeaderSelection = Boolean(headerSelect.value);
+  const hasPageSelection = Boolean(select && select.value);
+  const hasSelection = hasHeaderSelection && hasPageSelection;
   headerLoad.disabled = !hasSelection || !loadButton;
   mirrorButtonState(headerLoad, loadButton);
   if (headerUpdate) {
@@ -115,13 +117,13 @@ function renderHeader() {
   const page = document.body.dataset.page || "";
   const root = document.body.dataset.root || "";
   const homeAttrs = page === "home" ? 'aria-current="page"' : "";
-  const isProfileArea = page === "profiles" || page === "profile-manager" || page === "profile-create";
+  const isProfileManagerPage = page === "profile-manager";
   headerSlot.innerHTML = `
     <header class="site-header">
       <div class="brand">GS4 Tools</div>
       <div class="header-actions">
         <a class="home-link" href="${root}index.html" ${homeAttrs}>Home</a>
-        <a class="home-link" href="${root}profile/manager.html"${isProfileArea ? ' aria-current="page"' : ""}>Manage Profiles</a>
+        <a class="home-link" href="${root}profile/manager.html"${isProfileManagerPage ? ' aria-current="page"' : ""}>Manage Profiles</a>
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">New Profile</option>
         </select>
