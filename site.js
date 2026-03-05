@@ -133,6 +133,7 @@ function renderHeader() {
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">Select Profile</option>
         </select>
+        <button class="btn" id="headerProfileNew" type="button">New</button>
         <div class="header-profile-actions">
           <span class="header-profile-note" id="headerDirtyLabel" hidden>Data Changed in Page:</span>
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
@@ -144,6 +145,7 @@ function renderHeader() {
   `;
 
   const headerSelect = document.getElementById("headerProfileSelect");
+  const headerNew = document.getElementById("headerProfileNew");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
 
@@ -168,6 +170,13 @@ function renderHeader() {
         syncPageSelect(localStorage.getItem(SITE_SELECTED_PROFILE_KEY) || "");
       }
       refreshHeaderProfileControls();
+    });
+  }
+
+  if (headerNew) {
+    headerNew.addEventListener("click", () => {
+      localStorage.removeItem(SITE_SELECTED_PROFILE_KEY);
+      window.location.assign(`${root}profile/profile.html`);
     });
   }
 
