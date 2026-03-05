@@ -2429,7 +2429,8 @@ profileSelect.addEventListener("change", () => {
   }
 });
 
-function handleProfileSave() {
+function handleProfileSave(options = {}) {
+  const { preserveUnsyncedFromExisting = false } = options;
   const parsedInfoStart = parseInfoStartBlock(infoImport.value);
   const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
   const name = profileName.value.trim() || (parsedInfo ? parsedInfo.name : "");
@@ -2445,7 +2446,7 @@ function handleProfileSave() {
   const levelPayload = clamp(Number(profileLevel.value), 0, 100);
   const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
-  const record = {
+  let record = {
     id: "",
     ...currentRecord,
     race: racePayload,
@@ -2459,8 +2460,18 @@ function handleProfileSave() {
   const existingById = selectedId ? profiles.find((entry) => entry.id === selectedId) : null;
   const existingByName = profiles.find((entry) => entry.name.toLowerCase() === name.toLowerCase());
   const isUpdate = Boolean(existingById || existingByName);
+  const existing = existingById || existingByName || null;
   const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
   record.id = id;
+
+  if (preserveUnsyncedFromExisting && existing) {
+    record = {
+      ...record,
+      ascension: existing.ascension || record.ascension,
+      enhancive: existing.enhancive || record.enhancive,
+      defaults: existing.defaults || record.defaults,
+    };
+  }
 
   profiles = profiles.filter((entry) => entry.id !== id).concat(record);
   saveProfiles(profiles);
@@ -2747,7 +2758,7 @@ function importGstoolsPayloadFromHash() {
     }
 
     // Auto-create/update + select profile after hash import.
-    handleProfileSave();
+    handleProfileSave({ preserveUnsyncedFromExisting: true });
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
     importStatus.style.color = "";
     const nextPageByKey = {
