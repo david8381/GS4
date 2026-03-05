@@ -57,6 +57,7 @@ const gearWeightInput = document.getElementById("gearWeight");
 const silversInput = document.getElementById("silvers");
 
 const PROFILE_KEY = "gs4.characterProfiles";
+const SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
 
 const dataSource = globalThis.GS4_DATA;
 const logic = globalThis.ProfileLogic;
@@ -387,7 +388,7 @@ function parseAscListBlock(text) {
   const results = [];
 
   lines.forEach((line) => {
-    const trimmed = line.trim();
+    const trimmed = stripMarkupTags(line).replace(/\s+/g, " ").trim();
     if (!trimmed) return;
     if (/^Skill\s+Mnemonic/i.test(trimmed)) return;
     if (/^[-]{5,}/.test(trimmed)) return;
@@ -2413,6 +2414,8 @@ reloadProfileButtons.forEach((button) => {
 
 profileSelect.addEventListener("change", () => {
   const selected = profileSelect.value;
+  if (selected) localStorage.setItem(SELECTED_PROFILE_KEY, selected);
+  else localStorage.removeItem(SELECTED_PROFILE_KEY);
   if (!selected) {
     resetEditorForNewProfile();
     applySectionDefaultVisibility();
@@ -2463,6 +2466,7 @@ function handleProfileSave() {
   saveProfiles(profiles);
   refreshProfileSelect(profiles);
   profileSelect.value = id;
+  localStorage.setItem(SELECTED_PROFILE_KEY, id);
   importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
   applyProfile(record);
   applySectionDefaultVisibility();
