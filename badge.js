@@ -780,7 +780,7 @@ lifetimeBpInput.addEventListener("input", () => {
   render();
 });
 
-runBadgeTestsBtn.addEventListener("click", runSelfTests);
+runBadgeTestsBtn?.addEventListener("click", runSelfTests);
 
 if (validateStateJsonBtn && stateJsonInput) {
   validateStateJsonBtn.addEventListener("click", () => {

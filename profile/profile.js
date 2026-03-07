@@ -2784,6 +2784,7 @@ function importGstoolsPayloadFromHash() {
       calculator: "../calculator.html",
       spells: "../spells.html",
       badge: "../badge.html",
+      resources: "../profession-services/resources.html",
       "stat-optimizer": "../stat-optimizer/stat-optimizer.html",
       lumnis: "../lumnis.html",
       "violet-orb": "../violet-orb.html",

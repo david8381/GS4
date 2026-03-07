@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profession Services + Resources</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="resources" data-root="../">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Profession Services</p>
+          <h1>Resources</h1>
+          <p>
+            Load a character profile to see profession-service skill, relevant factors, what-if overrides, and
+            next-step resource projections.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <h2>Scope</h2>
+
+            <div class="input-group">
+              <label for="profileSelect">Character Profile</label>
+              <div class="input-row">
+                <select id="profileSelect">
+                  <option value="">No profile selected</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="resourceProfession">Profession</label>
+              <div class="input-row">
+                <select id="resourceProfession"></select>
+              </div>
+            </div>
+
+            <div class="helper" id="resourceProfileStatus">
+              No profile loaded. You can still browse services and enter what-if values manually.
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <div class="resources-factor-header">
+            <div class="resources-factor-title">
+              <h2>Factor Breakdown</h2>
+              <div class="helper" id="resourceFactorName">Select a service chip above.</div>
+              <div class="helper" id="resourceFactorHeadline">Detailed factor math will appear here.</div>
+            </div>
+            <div class="resources-factor-tools">
+              <div class="service-chip-list" id="resourceFactorServiceTabs"></div>
+              <button class="btn ghost tiny" id="resetResourceOverrides" type="button">Reset What-If</button>
+            </div>
+          </div>
+          <table class="resource-factor-table">
+            <colgroup>
+              <col class="resource-factor-col-label" />
+              <col class="resource-factor-col-current" />
+              <col class="resource-factor-col-override" />
+              <col class="resource-factor-col-current-contrib" />
+              <col class="resource-factor-col-whatif-contrib" />
+              <col class="resource-factor-col-rule" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Factor</th>
+                <th>Profile<br />Value</th>
+                <th>What-If</th>
+                <th>Current<br />Contribution</th>
+                <th>What-If<br />Contribution</th>
+                <th>Rule</th>
+              </tr>
+            </thead>
+            <tbody id="resourceFactorTable"></tbody>
+          </table>
+          <div class="helper" id="resourceFactorStatus">What-if values affect this page only. They do not update the saved profile.</div>
+        </section>
+
+        <section class="table-panel" id="resourceOverviewPanel">
+          <div class="inline-actions resources-service-header">
+            <h2>Service Planner</h2>
+            <button class="btn ghost tiny" id="resetAllResourcesState" type="button">Reset Planner</button>
+          </div>
+          <table class="resource-overview-table">
+            <colgroup>
+              <col class="resource-overview-col-service" />
+              <col class="resource-overview-col-planner" />
+              <col class="resource-overview-col-score" />
+              <col class="resource-overview-col-score" />
+              <col class="resource-overview-col-next" />
+              <col class="resource-overview-col-next" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Planner</th>
+                <th>Current</th>
+                <th>What-If</th>
+                <th>Next Diff</th>
+                <th>Next Cost</th>
+              </tr>
+            </thead>
+            <tbody id="resourceOverviewTable"></tbody>
+          </table>
+          <div class="helper" id="resourceOverviewStatus">Use this table to plan service tiers, ranks, item difficulty, and recharge cost.</div>
+        </section>
+
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Profession_service" target="_blank" rel="noopener noreferrer">GSWiki: Profession service</a></li>
+                <li><a href="https://gswiki.play.net/Ensorcell_%28735%29" target="_blank" rel="noopener noreferrer">GSWiki: Ensorcell (735)</a></li>
+                <li><a href="https://gswiki.play.net/Enchant_%28925%29" target="_blank" rel="noopener noreferrer">GSWiki: Enchant (925)</a></li>
+                <li><a href="https://gswiki.play.net/Song_of_Luck_%281006%29" target="_blank" rel="noopener noreferrer">GSWiki: Song of Luck (1006)</a></li>
+                <li><a href="https://gswiki.play.net/Sanctify_%28330%29" target="_blank" rel="noopener noreferrer">GSWiki: Sanctify (330)</a></li>
+                <li><a href="https://gswiki.play.net/Bloodsmith_%281135%29" target="_blank" rel="noopener noreferrer">GSWiki: Bloodsmith (1135)</a></li>
+                <li><a href="https://gswiki.play.net/Mystic_tattoo" target="_blank" rel="noopener noreferrer">GSWiki: Mystic Tattoo</a></li>
+                <li><a href="https://gswiki.play.net/Battle_Standard_%281620%29" target="_blank" rel="noopener noreferrer">GSWiki: Battle Standard (1620)</a></li>
+                <li><a href="https://gswiki.play.net/Resist_Nature_%28620%29" target="_blank" rel="noopener noreferrer">GSWiki: Resist Nature (620)</a></li>
+                <li><a href="https://gswiki.play.net/Covert_Arts" target="_blank" rel="noopener noreferrer">GSWiki: Covert Arts</a></li>
+                <li><a href="https://gswiki.play.net/Weighting,_Padding_and_Sighting" target="_blank" rel="noopener noreferrer">GSWiki: Weighting, Padding, and Sighting</a></li>
+              </ul>
+            </section>
+          </div>
+        </details>
+
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="../site.js" defer></script>
+    <script src="../data/profession-services/services.js"></script>
+    <script src="./profession-services-logic.js"></script>
+    <script src="./resources-ui.js"></script>
+  </body>
+</html>

@@ -3,6 +3,6 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test profile/tests/*.test.js stat-optimizer/tests/*.test.js"
+    "test": "node --test profile/tests/*.test.js stat-optimizer/tests/*.test.js profession-services/tests/*.test.js"
   }
 }
