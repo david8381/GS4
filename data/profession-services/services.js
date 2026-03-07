@@ -32,6 +32,22 @@
     "Brawling",
   ];
 
+  const raceStatBonusModifiers = {
+    Aelotoi: { str: -5, con: 0, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 5, wis: 0, inf: -5 },
+    "Burghal Gnome": { str: -15, con: 10, dex: 10, agi: 10, dis: -5, aur: 5, log: 10, int: 5, wis: 0, inf: -5 },
+    "Dark Elf": { str: 0, con: -5, dex: 10, agi: 5, dis: -10, aur: 10, log: 0, int: 5, wis: 5, inf: -5 },
+    Dwarf: { str: 10, con: 15, dex: 0, agi: -5, dis: 10, aur: -10, log: 5, int: 0, wis: 0, inf: -10 },
+    Elf: { str: 0, con: 0, dex: 5, agi: 15, dis: -15, aur: 5, log: 0, int: 0, wis: 0, inf: 10 },
+    Erithian: { str: -5, con: 10, dex: 0, agi: 0, dis: 5, aur: 0, log: 5, int: 0, wis: 0, inf: 10 },
+    "Forest Gnome": { str: -10, con: 10, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 0, wis: 5, inf: -5 },
+    Giantman: { str: 15, con: 10, dex: -5, agi: -5, dis: 0, aur: -5, log: -5, int: 0, wis: 0, inf: 5 },
+    "Half-Elf": { str: 0, con: 0, dex: 5, agi: 10, dis: -5, aur: 0, log: 0, int: 0, wis: 0, inf: 5 },
+    "Half-Krolvin": { str: 10, con: 10, dex: 0, agi: 5, dis: 0, aur: 0, log: -10, int: 0, wis: -5, inf: -5 },
+    Halfling: { str: -15, con: 10, dex: 15, agi: 10, dis: -5, aur: -5, log: 5, int: 10, wis: 0, inf: -5 },
+    Human: { str: 5, con: 0, dex: 0, agi: 0, dis: 0, aur: 0, log: 5, int: 5, wis: 0, inf: 0 },
+    Sylvankind: { str: 0, con: 0, dex: 10, agi: 5, dis: -5, aur: 5, log: 0, int: 0, wis: 0, inf: 0 },
+  };
+
   const factorDefinitions = {
     level: {
       label: "Level",
@@ -294,13 +310,13 @@
       label: "Wizard Workshop Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 20,
+      defaultValue: 50,
     },
     familiar_bonus: {
       label: "Familiar Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 0,
+      defaultValue: 25,
     },
     bard_location_bonus: {
       label: "Bard Location Bonus",
@@ -342,6 +358,9 @@
         name: "Ensorcell",
         resourceName: "Necrotic Energy",
         scoreLabel: "Character Skill",
+        contextNotes: [
+          "Default assumes a public magical workshop (+20).",
+        ],
         prerequisites: ["Level 35", "Knowledge of 735"],
         factors: [
           "level",
@@ -417,6 +436,10 @@
         resourceName: "Essence",
         scoreLabel: "Known Positive Bonus",
         formulaStatus: "partial_known_factors_only",
+        contextNotes: [
+          "Default assumes a Wizard Guild workshop (+50) and familiar present (+25).",
+          "Other workshop values: public +25, private +75.",
+        ],
         prerequisites: ["Level 25", "Knowledge of 925"],
         factors: [
           "level",
@@ -1346,5 +1369,6 @@
   return {
     factorDefinitions,
     professionServices,
+    raceStatBonusModifiers,
   };
 });

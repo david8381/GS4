@@ -45,6 +45,19 @@
     return Math.floor((asNumber(statValue, 0) - 50) / 2);
   }
 
+  function getRaceStatBonusModifier(servicesData, raceName, statKey) {
+    const modifiersByRace = servicesData?.raceStatBonusModifiers || {};
+    const target = normalizeText(raceName);
+    if (!target) return 0;
+
+    const matchedRaceKey = Object.keys(modifiersByRace).find(
+      (candidate) => normalizeText(candidate) === target
+    );
+    if (!matchedRaceKey) return 0;
+
+    return asInteger(modifiersByRace[matchedRaceKey]?.[statKey], 0);
+  }
+
   function findSkill(profile, skillName) {
     const target = normalizeText(skillName);
     const skills = Array.isArray(profile?.skills) ? profile.skills : [];
@@ -68,7 +81,7 @@
       .sort((left, right) => right - left);
   }
 
-  function resolveProfileSourceValue(profile, profileSource) {
+  function resolveProfileSourceValue(profile, profileSource, servicesData) {
     if (!profileSource) return undefined;
 
     if (profileSource.type === "field") {
@@ -100,13 +113,16 @@
         statRecord?.enhanced ??
         statRecord?.base;
       if (!Number.isFinite(Number(statValue))) return undefined;
-      return statToBonus(statValue);
+      const racialBonus = getRaceStatBonusModifier(servicesData, profile?.race, profileSource.statKey);
+      const ascensionBonus = asInteger(profile?.ascension?.stats?.[profileSource.statKey]?.bonus, 0);
+      const enhanciveBonus = asInteger(profile?.enhancive?.stats?.[profileSource.statKey]?.bonus, 0);
+      return statToBonus(statValue) + racialBonus + ascensionBonus + enhanciveBonus;
     }
 
     return undefined;
   }
 
-  function resolveFactorValue(factorKey, factorDefinitions, profile, overrides) {
+  function resolveFactorValue(factorKey, factorDefinitions, profile, overrides, servicesData) {
     if (overrides && Object.prototype.hasOwnProperty.call(overrides, factorKey)) {
       return overrides[factorKey];
     }
@@ -114,25 +130,32 @@
     const factorDefinition = factorDefinitions?.[factorKey];
     if (!factorDefinition) return undefined;
 
-    const resolved = resolveProfileSourceValue(profile, factorDefinition.profileSource);
+    const resolved = resolveProfileSourceValue(profile, factorDefinition.profileSource, servicesData);
     if (resolved !== undefined) return resolved;
     return factorDefinition.defaultValue;
   }
 
-  function resolveServiceFactorValues(serviceDefinition, factorDefinitions, profile, overrides) {
+  function resolveServiceFactorValues(serviceDefinition, factorDefinitions, profile, overrides, servicesData) {
     const factorValues = {};
     (serviceDefinition?.factors || []).forEach((factorKey) => {
-      factorValues[factorKey] = resolveFactorValue(factorKey, factorDefinitions, profile, overrides);
+      factorValues[factorKey] = resolveFactorValue(
+        factorKey,
+        factorDefinitions,
+        profile,
+        overrides,
+        servicesData
+      );
     });
     return factorValues;
   }
 
   function applyRounding(value, roundingMode) {
+    if (roundingMode == null || roundingMode === "") return Math.floor(value);
     if (roundingMode === "floor") return Math.floor(value);
     if (roundingMode === "floor_each") return Math.floor(value);
     if (roundingMode === "ceil") return Math.ceil(value);
     if (roundingMode === "round") return Math.round(value);
-    return value;
+    return Math.floor(value);
   }
 
   function clamp(value, min, max) {
@@ -252,12 +275,13 @@
     return listAllServices(servicesData).find((service) => service.id === serviceId) || null;
   }
 
-  function calculateServiceScore(serviceDefinition, factorDefinitions, profile, overrides) {
+  function calculateServiceScore(serviceDefinition, factorDefinitions, profile, overrides, servicesData) {
     const factorValues = resolveServiceFactorValues(
       serviceDefinition,
       factorDefinitions,
       profile,
-      overrides
+      overrides,
+      servicesData
     );
     const contributions = (serviceDefinition?.contributions || []).flatMap((contribution) => {
       const evaluated = evaluateContribution(contribution, factorValues);
@@ -286,7 +310,8 @@
       serviceDefinition,
       servicesData?.factorDefinitions || {},
       profile,
-      overrides
+      overrides,
+      servicesData
     );
   }
 

@@ -483,11 +483,11 @@
     const overrideSourceService = getRogueFactorOverrideSourceService();
     const overrideSource = overrideSourceService ? getNormalizedOverrides(overrideSourceService) : {};
     const sharedCurrentValues = {
-      level: serviceLogic.resolveFactorValue("level", factorDefinitions, state.activeProfile, {}),
-      influence_bonus: serviceLogic.resolveFactorValue("influence_bonus", factorDefinitions, state.activeProfile, {}),
-      rogue_guild_ranks: serviceLogic.resolveFactorValue("rogue_guild_ranks", factorDefinitions, state.activeProfile, {}),
-      ambush_ranks: serviceLogic.resolveFactorValue("ambush_ranks", factorDefinitions, state.activeProfile, {}),
-      pickpocketing_ranks: serviceLogic.resolveFactorValue("pickpocketing_ranks", factorDefinitions, state.activeProfile, {}),
+      level: serviceLogic.resolveFactorValue("level", factorDefinitions, state.activeProfile, {}, servicesData),
+      influence_bonus: serviceLogic.resolveFactorValue("influence_bonus", factorDefinitions, state.activeProfile, {}, servicesData),
+      rogue_guild_ranks: serviceLogic.resolveFactorValue("rogue_guild_ranks", factorDefinitions, state.activeProfile, {}, servicesData),
+      ambush_ranks: serviceLogic.resolveFactorValue("ambush_ranks", factorDefinitions, state.activeProfile, {}, servicesData),
+      pickpocketing_ranks: serviceLogic.resolveFactorValue("pickpocketing_ranks", factorDefinitions, state.activeProfile, {}, servicesData),
     };
     const sharedWhatIfValues = Object.fromEntries(
       Object.entries(sharedCurrentValues).map(([factorKey, currentValue]) => [
@@ -1261,6 +1261,7 @@
     factorHeadline.textContent = `${service.scoreLabel}: ${formatValue(currentResult.total)} | What-If: ${formatValue(whatIfResult.total)} | Delta ${formatSignedValue(delta)}`;
     setHelperLines(factorStatus, [
       prerequisites ? `Prerequisites: ${prerequisites}.` : "",
+      ...(service.contextNotes || []),
       describeChargeBehavior(service),
       service.formulaStatus === "partial_known_factors_only" ? "This is a partial known-positive model." : "",
       "What-if values affect this page only.",

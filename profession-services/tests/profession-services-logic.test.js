@@ -86,6 +86,36 @@ test("group skill factors use finalRanks and highest weapon ranks", () => {
   assert.equal(logic.resolveFactorValue("secondary_weapon_skill_two_ranks", servicesData.factorDefinitions, profile, {}), 18);
 });
 
+test("stat bonus factors include racial and explicit stat-bonus adjustments", () => {
+  const profile = {
+    race: "Halfling",
+    stats: {
+      log: { enhanced: 78 },
+      int: { enhanced: 78 },
+    },
+    ascension: {
+      stats: {
+        log: { bonus: 0 },
+        int: { bonus: 0 },
+      },
+    },
+    enhancive: {
+      stats: {
+        log: { bonus: 0 },
+        int: { bonus: 0 },
+      },
+    },
+  };
+
+  assert.equal(logic.resolveFactorValue("logic_bonus", servicesData.factorDefinitions, profile, {}, servicesData), 19);
+  assert.equal(logic.resolveFactorValue("intuition_bonus", servicesData.factorDefinitions, profile, {}, servicesData), 24);
+
+  profile.ascension.stats.log.bonus = 2;
+  profile.enhancive.stats.int.bonus = 3;
+  assert.equal(logic.resolveFactorValue("logic_bonus", servicesData.factorDefinitions, profile, {}, servicesData), 21);
+  assert.equal(logic.resolveFactorValue("intuition_bonus", servicesData.factorDefinitions, profile, {}, servicesData), 27);
+});
+
 test("Ensorcell projections use sequential current tiers", () => {
   const service = logic.findServiceDefinition(servicesData, "ensorcell");
   const rows = logic.calculateProjectionRows(service, {
