@@ -173,6 +173,16 @@ test("service charge models distinguish resource recharge from imbedded charges"
   assert.equal(logic.findServiceDefinition(servicesData, "covert_arts_swift_recovery").progression.maxExistingCount, 20);
 });
 
+test("documented situational defaults are set for common accessible service contexts", () => {
+  assert.equal(servicesData.factorDefinitions.magical_workshop_bonus.defaultValue, 20);
+  assert.equal(servicesData.factorDefinitions.wizard_workshop_bonus.defaultValue, 50);
+  assert.equal(servicesData.factorDefinitions.familiar_bonus.defaultValue, 25);
+  assert.equal(servicesData.factorDefinitions.bard_location_bonus.defaultValue, 20);
+  assert.equal(servicesData.factorDefinitions.cleric_shrine_bonus.defaultValue, 20);
+  assert.equal(servicesData.factorDefinitions.paladin_shrine_bonus.defaultValue, 20);
+  assert.equal(servicesData.factorDefinitions.ranger_outside_bonus.defaultValue, 20);
+});
+
 test("Ranger progression can model a new resist line with existing full lines", () => {
   const service = logic.findServiceDefinition(servicesData, "resist_nature");
   const rows = logic.calculateProjectionRows(service, {

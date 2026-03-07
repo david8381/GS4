@@ -322,25 +322,25 @@
       label: "Bard Location Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 0,
+      defaultValue: 20,
     },
     cleric_shrine_bonus: {
       label: "Cleric Shrine Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 0,
+      defaultValue: 20,
     },
     paladin_shrine_bonus: {
       label: "Paladin Shrine Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 0,
+      defaultValue: 20,
     },
     ranger_outside_bonus: {
       label: "Ranger Outside Bonus",
       inputType: "integer",
       profileSource: null,
-      defaultValue: 0,
+      defaultValue: 20,
     },
     warrior_guild_workshop_bonus: {
       label: "Warrior Guild Workshop Bonus",
@@ -495,6 +495,9 @@
         resourceName: "Luck Inspiration",
         scoreLabel: "Character Skill",
         chargeModel: "resource_recharge",
+        contextNotes: [
+          "Default assumes a tavern or a shrine of Cholen, Jastev, or Tilamaire (+20).",
+        ],
         chargeInfo: {
           maxCharges: 200,
           rechargeCostPerCharge: 1000,
@@ -568,6 +571,10 @@
         resourceName: "Devotion",
         scoreLabel: "Character Skill",
         chargeModel: "none",
+        contextNotes: [
+          "Default assumes an exact-match shrine or an omnishrine (+20).",
+          "Same-pantheon shrines give +10 instead.",
+        ],
         prerequisites: ["Level 30", "Knowledge of 330"],
         factors: [
           "level",
@@ -846,6 +853,10 @@
         resourceName: "Devotion",
         scoreLabel: "Character Skill",
         chargeModel: "resource_recharge",
+        contextNotes: [
+          "Default assumes an exact-match shrine or an omnishrine (+20).",
+          "Same-pantheon shrines give +10 instead.",
+        ],
         chargeInfo: {
           maxCharges: 200,
           rechargeCostPerCharge: 1000,
@@ -915,6 +926,9 @@
         resourceName: "Nature's Grace",
         scoreLabel: "Character Skill",
         chargeModel: "imbedded_item",
+        contextNotes: [
+          "Default assumes the ranger is outdoors (+20).",
+        ],
         chargeInfo: {
           usesProfessionResourceForRecharge: false,
           note: "Trinket upkeep uses the item's imbedded charges rather than Nature's Grace resource refills.",
