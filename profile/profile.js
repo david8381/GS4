@@ -3221,74 +3221,24 @@ function decodeBase64UrlUtf8(input) {
   return new TextDecoder("utf-8").decode(bytes);
 }
 
-async function postGs4toolsNormalizedProfile(record, callbackPort, callbackToken) {
-  const numericPort = Number(callbackPort);
-  const token = String(callbackToken || "").trim();
-  if (!record || !Number.isInteger(numericPort) || numericPort <= 0 || !token) return false;
-
-  const payload = JSON.stringify({
-    token,
-    profile: record,
-  });
-
-  try {
-    const controller = typeof AbortController === "function" ? new AbortController() : null;
-    const timeoutId = controller ? setTimeout(() => controller.abort(), 2500) : null;
-    const response = await fetch(`http://127.0.0.1:${numericPort}/gs4tools-profile`, {
-      method: "POST",
-      mode: "cors",
-      keepalive: true,
-      headers: {
-        "Content-Type": "text/plain;charset=UTF-8",
-      },
-      body: payload,
-      signal: controller?.signal,
-    });
-    if (timeoutId) clearTimeout(timeoutId);
-    return response.ok;
-  } catch (_error) {
-    return false;
-  }
-}
-
 async function importGstoolsPayloadFromHash() {
   const rawHash = String(window.location.hash || "").replace(/^#/, "");
   if (!rawHash) return;
 
   let encoded = "";
   let nextTarget = "";
-  let payloadPort = "";
-  let payloadToken = "";
-  let callbackPort = "";
-  let callbackToken = "";
   if (rawHash.includes("=")) {
     const hashParams = new URLSearchParams(rawHash);
     encoded = hashParams.get("gstools") || "";
-    payloadPort = String(hashParams.get("payloadPort") || "").trim();
-    payloadToken = String(hashParams.get("payloadToken") || "").trim();
     nextTarget = String(hashParams.get("next") || "").trim().toLowerCase();
-    callbackPort = String(hashParams.get("callbackPort") || "").trim();
-    callbackToken = String(hashParams.get("callbackToken") || "").trim();
   } else {
     return;
   }
+  if (!encoded) return;
 
   try {
-    let payload = null;
-    if (payloadPort && payloadToken) {
-      const response = await fetch(`http://127.0.0.1:${payloadPort}/gs4tools-payload?token=${encodeURIComponent(payloadToken)}`, {
-        method: "GET",
-        mode: "cors",
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error("payload_fetch_failed");
-      payload = await response.json();
-    } else if (encoded) {
-      const jsonText = decodeBase64UrlUtf8(encoded);
-      payload = JSON.parse(jsonText);
-    } else {
-      return;
-    }
+    const jsonText = decodeBase64UrlUtf8(encoded);
+    const payload = JSON.parse(jsonText);
     const blocks = payload?.blocks || {};
     const payloadCharacterName = stripMarkupTags(payload?.character || "");
 
@@ -3330,12 +3280,9 @@ async function importGstoolsPayloadFromHash() {
     }
 
     // Auto-create/update + select profile after hash import.
-    const savedRecord = handleProfileSave({ preserveUnsyncedFromExisting: true });
+    handleProfileSave({ preserveUnsyncedFromExisting: true });
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
     importStatus.style.color = "";
-    if (savedRecord) {
-      await postGs4toolsNormalizedProfile(savedRecord, callbackPort, callbackToken);
-    }
     const nextPageByKey = {
       profile: "",
       home: "../index.html",

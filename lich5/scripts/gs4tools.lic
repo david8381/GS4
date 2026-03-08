@@ -5,13 +5,11 @@ require 'base64'
 require 'fileutils'
 require 'json'
 require 'rbconfig'
-require 'securerandom'
-require 'socket'
 require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.1.14'
+SCRIPT_VERSION = '0.1.15'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -40,9 +38,9 @@ def usage
   say '  ;gs4tools sync            # collect blocks, save local, open profile import'
   say '  ;gs4tools open <page>     # open page (no sync, profile optional)'
   say '  ;gs4tools open <page> --sync  # sync first, then land on target page'
-  say '  ;gs4tools load            # show canonical local profile summary'
-  say '  ;gs4tools load --raw      # print canonical local profile JSON'
-  say '  ;gs4tools show            # print local file paths'
+  say '  ;gs4tools load            # show local raw capture summary'
+  say '  ;gs4tools load --raw      # print local raw capture JSON'
+  say '  ;gs4tools show            # print local raw capture path'
   say '  ;gs4tools allow           # grant consent for automated collection/open'
   say '  ;gs4tools revoke          # revoke consent'
   say ''
@@ -91,6 +89,52 @@ def normalized_profile_path
   File.join(DATA_DIR, "#{character_key}.profile.json")
 end
 
+def decode_html_entities(text)
+  text.to_s
+      .gsub('&gt;', '>')
+      .gsub('&lt;', '<')
+      .gsub('&amp;', '&')
+      .gsub('&quot;', '"')
+      .gsub('&#39;', "'")
+end
+
+def sanitize_block_for_hash(text)
+  source = text.to_s
+  return nil if source.strip.empty?
+
+  cleaned = source
+            .gsub(/<prompt\b[^>]*>.*?<\/prompt>/im, '')
+            .gsub(/<dialogData\b[^>]*>.*?<\/dialogData>/im, '')
+            .gsub(/<output\b[^>]*\/>/im, '')
+            .gsub(/<pushBold\/>|<popBold\/>/im, '')
+            .gsub(/<[^>]+>/, '')
+  cleaned = decode_html_entities(cleaned)
+  lines = cleaned.split(/\r?\n/).map { |line| line.gsub(/\s+$/, '') }
+  lines.reject! { |line| line.strip.empty? }
+  lines.reject! { |line| line.strip.match?(/^[a-z]{0,3}>$/i) }
+  result = lines.join("\n").strip
+  result.empty? ? nil : result
+end
+
+def compact_payload_for_url(payload)
+  blocks = payload[:blocks] || {}
+  {
+    version: payload[:version],
+    character: payload[:character],
+    collectedAt: payload[:collectedAt],
+    blocks: {
+      infoStart: sanitize_block_for_hash(blocks[:infoStart]),
+      skills: sanitize_block_for_hash(blocks[:skills]),
+      exp: sanitize_block_for_hash(blocks[:exp]),
+      ascList: sanitize_block_for_hash(blocks[:ascList]),
+      ascMilestones: sanitize_block_for_hash(blocks[:ascMilestones]),
+      enhanciveList: sanitize_block_for_hash(blocks[:enhanciveList]),
+      enhanciveTotals: sanitize_block_for_hash(blocks[:enhanciveTotals]),
+      enhanciveTotalsDetails: sanitize_block_for_hash(blocks[:enhanciveTotalsDetails])
+    }
+  }
+end
+
 def load_consent
   return {} unless File.exist?(CONSENT_FILE)
   JSON.parse(File.read(CONSENT_FILE))
@@ -127,7 +171,6 @@ def print_consent_prompt
   say '1) send INFO START / SKILLS / EXP / ASC LIST / ASC MILESTONES / INV ENH ...'
   say '2) save raw capture data locally under lich5/data/gstools'
   say '3) open your browser to gs4tools.com with encoded data in URL hash'
-  say '4) receive the normalized website profile back to local disk after import/update'
   say 'privacy: gs4tools.com is a static site and does not store submitted data'
   say 'privacy: your script data stays local unless you choose to save profiles in your browser'
   say "if you agree, run: ;gs4tools allow"
@@ -344,7 +387,7 @@ def say_json_object(object)
 end
 
 def summarize_normalized_profile(profile)
-  say 'canonical profile:'
+  say 'legacy normalized profile:'
   say "  path: #{normalized_profile_path}"
   say "  last synced: #{file_timestamp(normalized_profile_path)}"
   say "  name: #{profile[:name] || 'unknown'}"
@@ -377,9 +420,7 @@ def status
     say "saved data: none (#{data_path})"
   end
   if File.exist?(normalized_profile_path)
-    say "normalized profile: #{normalized_profile_path}"
-  else
-    say "normalized profile: none (#{normalized_profile_path})"
+    say "legacy normalized profile: #{normalized_profile_path}"
   end
 end
 
@@ -387,18 +428,10 @@ def base64url_encode(raw)
   Base64.strict_encode64(raw).tr('+/', '-_').delete('=')
 end
 
-def build_open_url(base_url, payload_port: nil, payload_token: nil, payload: nil, next_page_key: nil, callback_port: nil, callback_token: nil)
-  params = []
-  if payload_port && payload_token
-    params << "payloadPort=#{payload_port}"
-    params << "payloadToken=#{payload_token}"
-  elsif payload
-    encoded = base64url_encode(payload.to_json)
-    params << "gstools=#{encoded}"
-  end
+def build_open_url(base_url, payload:, next_page_key: nil)
+  encoded = base64url_encode(payload.to_json)
+  params = ["gstools=#{encoded}"]
   params << "next=#{next_page_key}" if next_page_key && !next_page_key.empty?
-  params << "callbackPort=#{callback_port}" if callback_port
-  params << "callbackToken=#{callback_token}" if callback_token
   "#{base_url}##{params.join('&')}"
 end
 
@@ -464,113 +497,6 @@ def open_browser(url)
   end
 end
 
-def build_http_response(status_code, status_text, body = '', content_type = 'text/plain')
-  body_text = body.to_s
-  headers = [
-    "HTTP/1.1 #{status_code} #{status_text}",
-    "Access-Control-Allow-Origin: *",
-    "Access-Control-Allow-Methods: GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers: Content-Type",
-    "Access-Control-Allow-Private-Network: true",
-    "Content-Type: #{content_type}",
-    "Content-Length: #{body_text.bytesize}",
-    "Connection: close"
-  ]
-  headers.join("\r\n") + "\r\n\r\n" + body_text
-end
-
-def start_payload_bridge_server(payload)
-  server = TCPServer.new('127.0.0.1', 0)
-  {
-    server: server,
-    port: server.addr[1],
-    token: SecureRandom.hex(16),
-    payload: payload
-  }
-end
-
-def wait_for_bridge_server(callback_state, timeout_seconds: 120)
-  server = callback_state[:server]
-  deadline = Time.now + timeout_seconds
-  saved_profile = nil
-
-  begin
-    loop do
-      remaining = deadline - Time.now
-      break if remaining <= 0
-
-      ready = IO.select([server], nil, nil, remaining)
-      break unless ready
-
-      client = server.accept
-      begin
-        request_line = client.gets&.strip
-        next unless request_line
-
-        method, _path, = request_line.split(/\s+/, 3)
-        headers = {}
-        while (line = client.gets)
-          line = line.strip
-          break if line.empty?
-          key, value = line.split(/:\s*/, 2)
-          headers[key.to_s.downcase] = value.to_s
-        end
-
-        if method == 'OPTIONS'
-          client.write(build_http_response(204, 'No Content'))
-          next
-        end
-
-        path = _path.to_s
-
-        if method == 'GET' && path.start_with?('/gs4tools-payload')
-          query = path.split('?', 2)[1].to_s
-          params = query.split('&').map { |part| part.split('=', 2) }.to_h
-          unless params['token'].to_s == callback_state[:token].to_s
-            client.write(build_http_response(403, 'Forbidden', 'Invalid token'))
-            next
-          end
-          client.write(build_http_response(200, 'OK', JSON.generate(callback_state[:payload]), 'application/json'))
-          next
-        end
-
-        unless method == 'POST' && path.start_with?('/gs4tools-profile')
-          client.write(build_http_response(405, 'Method Not Allowed', 'Unsupported request'))
-          next
-        end
-
-        content_length = headers['content-length'].to_i
-        raw_body = content_length.positive? ? client.read(content_length) : ''
-        parsed = JSON.parse(raw_body)
-        unless parsed['token'].to_s == callback_state[:token].to_s
-          client.write(build_http_response(403, 'Forbidden', 'Invalid token'))
-          next
-        end
-
-        profile = parsed['profile']
-        unless profile.is_a?(Hash)
-          client.write(build_http_response(400, 'Bad Request', 'Missing profile'))
-          next
-        end
-
-        File.write(normalized_profile_path, JSON.pretty_generate(profile))
-        client.write(build_http_response(200, 'OK', 'Saved'))
-        say "saved normalized profile #{normalized_profile_path}"
-        saved_profile = profile
-        return saved_profile
-      rescue JSON::ParserError
-        client.write(build_http_response(400, 'Bad Request', 'Invalid JSON')) rescue nil
-      ensure
-        client.close rescue nil
-      end
-    end
-  ensure
-    server.close rescue nil
-  end
-
-  saved_profile
-end
-
 args = script_args
 action = (args[0] || 'help').downcase
 say "version #{SCRIPT_VERSION}"
@@ -591,54 +517,38 @@ when 'open'
   page_key = resolve_page_key(args[1])
   if wants_sync
     payload = collect_blocks
-    callback_state = start_payload_bridge_server(payload)
+    compact_payload = compact_payload_for_url(payload)
     open_browser(
       build_open_url(
         DEFAULT_PROFILE_URL,
-        payload_port: callback_state[:port],
-        payload_token: callback_state[:token],
-        next_page_key: (page_key == 'profile' ? nil : page_key),
-        callback_port: callback_state[:port],
-        callback_token: callback_state[:token]
+        payload: compact_payload,
+        next_page_key: (page_key == 'profile' ? nil : page_key)
       )
     )
-    say 'waiting for normalized profile callback...'
-    unless wait_for_bridge_server(callback_state)
-      say 'normalized profile callback not received before timeout'
-    end
   else
     open_page(page_key)
     say "opened #{page_key} without sync"
   end
 when 'sync'
   payload = collect_blocks
-  callback_state = start_payload_bridge_server(payload)
+  compact_payload = compact_payload_for_url(payload)
   open_browser(
     build_open_url(
       DEFAULT_PROFILE_URL,
-      payload_port: callback_state[:port],
-      payload_token: callback_state[:token],
-      callback_port: callback_state[:port],
-      callback_token: callback_state[:token]
+      payload: compact_payload
     )
   )
-  say 'waiting for normalized profile callback...'
-  unless wait_for_bridge_server(callback_state)
-    say 'normalized profile callback not received before timeout'
-  end
 when 'load'
-  normalized = load_normalized_profile
   if args.any? { |arg| arg.to_s.downcase == '--raw' }
-    if normalized
-      say_json_object(normalized)
+    payload = load_payload
+    if payload
+      say_json_object(payload)
     else
-      say 'no normalized profile found; run ;gs4tools sync first'
+      say 'no saved raw capture found; run ;gs4tools sync first'
     end
-  elsif normalized
-    summarize_normalized_profile(normalized)
-  else
-    say 'no normalized profile found; run ;gs4tools sync first'
   end
+  normalized = load_normalized_profile
+  summarize_normalized_profile(normalized) if normalized
   payload = load_payload
   if payload
     say 'raw capture:'
@@ -648,7 +558,7 @@ when 'load'
   end
 when 'show'
   say "raw capture: #{data_path}"
-  say "normalized profile: #{normalized_profile_path}"
+  say "legacy normalized profile: #{normalized_profile_path}" if File.exist?(normalized_profile_path)
 when 'status'
   status
 when 'revoke'
