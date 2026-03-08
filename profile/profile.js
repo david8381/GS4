@@ -1502,15 +1502,20 @@ function renderEnhanciveTables() {
   if (!enhStatTable || !enhSkillTable) return;
   enhStatTable.innerHTML = "";
   const rows = getDerivedStatRows();
+  const equipmentTotals = getEquipmentEnhanciveTotals();
   stats.forEach((stat) => {
     const statRow = rows[stat.key];
     const manualEnhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.stat) || 0));
     const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.bonus) || 0));
+    const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
     const row = document.createElement("tr");
     row.style.color = statRow.enhValid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${stat.abbr}</td>
-      <td><input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${manualEnhStat}" /></td>
+      <td>
+        <input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${manualEnhStat}" />
+        <div class="helper compact-note" data-enh-imported-stat="${stat.key}">${importedEnhStat ? `Imported +${importedEnhStat}` : ""}</div>
+      </td>
       <td><input type="number" min="0" max="20" step="1" data-enh-stat="${stat.key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
       <td>${statRow.enhEffective}/20</td>
     `;
@@ -1526,6 +1531,8 @@ function renderEnhanciveTables() {
     const enhBonus = effectiveEnh.bonus;
     const manualEnhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
     const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
+    const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
     const rankBonusGain = skillBonusFromRanks(baseRanks + enhRank) - skillBonusFromRanks(baseRanks);
     const effective = rankBonusGain + enhBonus;
     const valid = enhRank <= 50 && enhBonus <= 50 && effective <= 50;
@@ -1533,8 +1540,14 @@ function renderEnhanciveTables() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${skill.name}</td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${manualEnhRank}" /></td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
+      <td>
+        <input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${manualEnhRank}" />
+        <div class="helper compact-note" data-enh-imported-rank="${key}">${importedEnhRank ? `Imported +${importedEnhRank}` : ""}</div>
+      </td>
+      <td>
+        <input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${manualEnhBonus}" />
+        <div class="helper compact-note" data-enh-imported-bonus="${key}">${importedEnhBonus ? `Imported +${importedEnhBonus}` : ""}</div>
+      </td>
       <td>${effective}/50</td>
     `;
     enhSkillTable.appendChild(row);
@@ -1774,6 +1787,7 @@ function updateStatDerivedDisplay() {
 function updateEnhanciveDisplay() {
   if (!enhStatTable || !enhSkillTable) return;
   const statRows = getDerivedStatRows();
+  const equipmentTotals = getEquipmentEnhanciveTotals();
   enhStatTable.querySelectorAll("tr").forEach((row) => {
     const statCell = row.firstElementChild;
     if (!statCell) return;
@@ -1784,6 +1798,11 @@ function updateEnhanciveDisplay() {
     row.style.color = values.enhValid ? "#1f4e42" : "#b42318";
     const effCell = row.lastElementChild;
     if (effCell) effCell.textContent = `${values.enhEffective}/20`;
+    const importedCell = row.querySelector(`[data-enh-imported-stat="${stat.key}"]`);
+    if (importedCell) {
+      const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
+      importedCell.textContent = importedEnhStat ? `Imported +${importedEnhStat}` : "";
+    }
   });
 
   enhSkillTable.querySelectorAll("tr").forEach((row) => {
@@ -1802,6 +1821,16 @@ function updateEnhanciveDisplay() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     const effCell = row.lastElementChild;
     if (effCell) effCell.textContent = `${effective}/50`;
+    const importedRankCell = row.querySelector(`[data-enh-imported-rank="${key}"]`);
+    if (importedRankCell) {
+      const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
+      importedRankCell.textContent = importedEnhRank ? `Imported +${importedEnhRank}` : "";
+    }
+    const importedBonusCell = row.querySelector(`[data-enh-imported-bonus="${key}"]`);
+    if (importedBonusCell) {
+      const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
+      importedBonusCell.textContent = importedEnhBonus ? `Imported +${importedEnhBonus}` : "";
+    }
   });
 }
 
