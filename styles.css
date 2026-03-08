@@ -220,9 +220,9 @@ body {
 }
 
 .calculator {
-  margin-top: 40px;
+  margin-top: 28px;
   display: grid;
-  gap: 28px;
+  gap: 18px;
 }
 
 .calc-intro h1 {
@@ -234,12 +234,12 @@ body {
 .calc-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  gap: 16px;
 }
 
 .input-block {
   background: var(--panel);
-  padding: 18px;
+  padding: 14px;
   border-radius: 12px;
   border: 2px solid #d5ccbe;
   box-shadow: 3px 3px 0 rgba(27, 27, 27, 0.12);
@@ -261,7 +261,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .compare-row {
@@ -318,47 +318,47 @@ body {
 }
 
 .input-group {
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .input-group + .input-group {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .input-row input[type="number"] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #cbbfae;
-  font-size: 1rem;
+  font-size: 0.94rem;
   background: #fffdf8;
 }
 
 .input-row input[type="text"] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #cbbfae;
-  font-size: 1rem;
+  font-size: 0.94rem;
   background: #fffdf8;
 }
 
 .input-row select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #cbbfae;
-  font-size: 1rem;
+  font-size: 0.94rem;
   background: #fffdf8;
   font-family: inherit;
 }
 
 textarea {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #cbbfae;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   background: #fffdf8;
@@ -369,10 +369,11 @@ textarea {
   border: 1px solid #cbbfae;
   background: var(--panel);
   color: var(--ink);
-  padding: 8px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+  font-size: 0.88rem;
 }
 
 .btn:disabled {
@@ -467,8 +468,8 @@ textarea {
 }
 
 .helper {
-  margin-top: 8px;
-  font-size: 0.85rem;
+  margin-top: 6px;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
@@ -496,8 +497,8 @@ textarea {
 .collapsible-section > summary {
   list-style: none;
   cursor: pointer;
-  padding: 14px 16px;
-  padding-left: 34px;
+  padding: 12px 14px;
+  padding-left: 32px;
   font-weight: 700;
   color: var(--ink);
   border-radius: 10px;
@@ -535,7 +536,7 @@ textarea {
 }
 
 .collapsible-body {
-  padding: 0 14px 14px;
+  padding: 0 12px 12px;
 }
 
 .import-strip {
@@ -544,7 +545,7 @@ textarea {
 }
 
 .import-card {
-  padding: 14px;
+  padding: 12px;
 }
 
 .import-card h2 {
@@ -554,7 +555,7 @@ textarea {
 }
 
 .import-card textarea {
-  min-height: 132px;
+  min-height: 116px;
 }
 
 .stat-grid {
@@ -741,8 +742,8 @@ textarea {
 }
 
 .table-panel h3 {
-  margin: 14px 0 8px;
-  font-size: 0.95rem;
+  margin: 10px 0 6px;
+  font-size: 0.9rem;
   color: var(--muted);
 }
 
@@ -772,7 +773,7 @@ textarea {
 
 .summary-card {
   background: var(--panel-soft);
-  padding: 16px;
+  padding: 14px;
   border-radius: 10px;
   border: 2px dashed #d5ccbe;
 }
@@ -795,7 +796,7 @@ textarea {
 
 .chart-panel {
   background: var(--panel);
-  padding: 22px;
+  padding: 16px;
   border-radius: 18px;
   box-shadow: var(--chart-shadow);
   border: 1px solid #e4dbcc;
@@ -846,7 +847,7 @@ textarea {
 
 .table-panel {
   background: var(--panel);
-  padding: 20px;
+  padding: 14px;
   border-radius: 12px;
   border: 2px solid #d5ccbe;
   box-shadow: 4px 4px 0 rgba(27, 27, 27, 0.08);
@@ -983,7 +984,7 @@ body[data-page="profile-create"] .table-panel td {
 .table-panel th,
 .table-panel td {
   text-align: left;
-  padding: 10px 8px;
+  padding: 7px 6px;
   border-bottom: 1px solid #eee3d6;
 }
 
@@ -1380,19 +1381,20 @@ body[data-page="stat-optimizer"] .optimizer-solver-warning:empty {
 body[data-page="resources"] .calc-panel {
   align-items: start;
   grid-template-columns: minmax(320px, 1fr);
+  gap: 14px;
 }
 
 body[data-page="resources"] .resources-service-header {
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 body[data-page="resources"] .resources-factor-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
@@ -1420,18 +1422,19 @@ body[data-page="resources"] .resources-service-header h2 {
 body[data-page="resources"] .service-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 body[data-page="resources"] .service-chip {
   border: 1px solid #cbbfae;
   background: #f7f3ea;
   color: var(--ink);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
   cursor: pointer;
   font-weight: 600;
   font-family: inherit;
+  font-size: 0.84rem;
 }
 
 body[data-page="resources"] .service-chip.is-active {
@@ -1447,10 +1450,10 @@ body[data-page="resources"] .resource-overview-table {
 }
 
 body[data-page="resources"] .resource-overview-label {
-  padding: 7px 10px;
+  padding: 6px 9px;
   border-radius: 8px;
   color: #1f4e42;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 700;
   background: rgba(31, 78, 66, 0.05);
   border: 1px solid #d5ccbe;
@@ -1472,7 +1475,7 @@ body[data-page="resources"] .resource-overview-subline {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
@@ -1510,7 +1513,7 @@ body[data-page="resources"] .resource-overview-subrow-label {
 
 body[data-page="resources"] .resource-overview-detail-shell {
   margin-top: -1px;
-  padding: 10px 12px 12px;
+  padding: 8px 10px 10px;
   border: 1px solid #d5ccbe;
   border-top: 1px dashed #cbbfae;
   border-radius: 0 0 10px 10px;
@@ -1562,7 +1565,7 @@ body[data-page="resources"] .resource-overview-path-table td:nth-child(5) {
 body[data-page="resources"] .resource-overview-input {
   width: 54px;
   min-width: 0;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border-radius: 6px;
   border: 1px solid #cbbfae;
   background: #fffdf8;
@@ -1572,7 +1575,7 @@ body[data-page="resources"] .resource-overview-input {
 
 body[data-page="resources"] .resource-overview-select-input {
   min-width: 92px;
-  padding: 4px 6px;
+  padding: 3px 5px;
   border-radius: 6px;
   border: 1px solid #cbbfae;
   background: #fffdf8;
@@ -1662,6 +1665,38 @@ body[data-page="resources"] #resourceFactorStatus {
 body[data-page="resources"] .resource-factor-table th,
 body[data-page="resources"] .resource-factor-table td {
   overflow-wrap: anywhere;
+}
+
+body[data-page="resources"] .table-panel {
+  padding: 12px;
+}
+
+body[data-page="resources"] .table-panel h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+body[data-page="resources"] .helper {
+  font-size: 0.8rem;
+}
+
+body[data-page="encumbrance"] .calculator,
+body[data-page="calculator"] .calculator,
+body[data-page="badge"] .calculator,
+body[data-page="spells"] .calculator,
+body[data-page="lumnis"] .calculator,
+body[data-page="violet-orb"] .calculator {
+  margin-top: 24px;
+  gap: 16px;
+}
+
+body[data-page="encumbrance"] .calc-panel,
+body[data-page="calculator"] .calc-panel,
+body[data-page="badge"] .calc-panel,
+body[data-page="spells"] .calc-panel,
+body[data-page="lumnis"] .calc-panel,
+body[data-page="violet-orb"] .calc-panel {
+  gap: 14px;
 }
 
 body[data-page="resources"] .resource-factor-table th,
