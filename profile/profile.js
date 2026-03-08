@@ -43,6 +43,7 @@ const tpShortfallMtp = document.getElementById("tpShortfallMtp");
 const ascAbilityGroups = document.getElementById("ascAbilityGroups");
 const ascStatus = document.getElementById("ascStatus");
 const enhStatTable = document.getElementById("enhStatTable");
+const enhResourceTable = document.getElementById("enhResourceTable");
 const enhSkillTable = document.getElementById("enhSkillTable");
 const enhStatus = document.getElementById("enhStatus");
 const enhImportedSummary = document.getElementById("enhImportedSummary");
@@ -281,6 +282,17 @@ const ENHANCIVE_TYPE_OPTIONS = [
   { value: "resource", label: "Resource" },
 ];
 
+const ENHANCIVE_RESOURCE_OPTIONS = [
+  { value: "max_health", label: "Max Health" },
+  { value: "max_mana", label: "Max Mana" },
+  { value: "max_spirit", label: "Max Spirit" },
+  { value: "max_stamina", label: "Max Stamina" },
+  { value: "health_recovery", label: "Health Recovery" },
+  { value: "mana_recovery", label: "Mana Recovery" },
+  { value: "spirit_recovery", label: "Spirit Recovery" },
+  { value: "stamina_recovery", label: "Stamina Recovery" },
+];
+
 function normalizeEnhanciveTargetLabel(label) {
   return String(label || "")
     .replace(/\([^)]*\)/g, "")
@@ -295,14 +307,7 @@ function buildEnhanciveTargetOptions(effectType) {
   if (effectType === "skill_rank" || effectType === "skill_bonus") {
     return skillCatalog.map((name) => ({ value: skillKey(name), label: name }));
   }
-  return [
-    { value: "max_mana", label: "Max Mana" },
-    { value: "max_stamina", label: "Max Stamina" },
-    { value: "spirit", label: "Spirit" },
-    { value: "health_recovery", label: "Health Recovery" },
-    { value: "mana_recovery", label: "Mana Recovery" },
-    { value: "stamina_recovery", label: "Stamina Recovery" },
-  ];
+  return ENHANCIVE_RESOURCE_OPTIONS;
 }
 
 function guessEnhanciveEffectType(category, label) {
@@ -330,12 +335,19 @@ function guessEnhanciveTarget(effectType, label) {
   }
   if (effectType === "resource") {
     const labelKey = normalizedLabel.toLowerCase();
+    if (labelKey === "max health" || labelKey === "maximum health") return "max_health";
     if (labelKey === "max mana") return "max_mana";
+    if (labelKey === "maximum mana") return "max_mana";
+    if (labelKey === "max spirit" || labelKey === "maximum spirit" || labelKey === "spirit") return "max_spirit";
     if (labelKey === "max stamina") return "max_stamina";
-    if (labelKey === "spirit") return "spirit";
+    if (labelKey === "maximum stamina") return "max_stamina";
     if (labelKey === "health recovery") return "health_recovery";
+    if (labelKey === "health regen" || labelKey === "health regeneration") return "health_recovery";
     if (labelKey === "mana recovery") return "mana_recovery";
+    if (labelKey === "mana regen" || labelKey === "mana regeneration") return "mana_recovery";
+    if (labelKey === "spirit recovery" || labelKey === "spirit regen" || labelKey === "spirit regeneration") return "spirit_recovery";
     if (labelKey === "stamina recovery") return "stamina_recovery";
+    if (labelKey === "stamina regen" || labelKey === "stamina regeneration") return "stamina_recovery";
   }
   return "";
 }
@@ -358,6 +370,9 @@ function effectDisplayTarget(effect) {
   }
   if (type === "skill_rank" || type === "skill_bonus") {
     return skillCatalog.find((name) => skillKey(name) === target) || effect?.label || target;
+  }
+  if (type === "resource") {
+    return ENHANCIVE_RESOURCE_OPTIONS.find((entry) => entry.value === target)?.label || effect?.label || target;
   }
   return effect?.label || target || "Unknown";
 }
@@ -1464,7 +1479,7 @@ function updateAscensionStatus() {
 }
 
 function renderEnhanciveTables() {
-  if (!enhStatTable || !enhSkillTable) return;
+  if (!enhStatTable || !enhSkillTable || !enhResourceTable) return;
   enhStatTable.innerHTML = "";
   const rows = getDerivedStatRows();
   const equipmentTotals = getEquipmentEnhanciveTotals();
@@ -1483,6 +1498,17 @@ function renderEnhanciveTables() {
       <td data-enh-effective="${stat.key}">${statRow.enhEffective}/20</td>
     `;
     enhStatTable.appendChild(row);
+  });
+
+  enhResourceTable.innerHTML = "";
+  ENHANCIVE_RESOURCE_OPTIONS.forEach((resource) => {
+    const value = Math.max(0, Math.trunc(Number(equipmentTotals.resources?.[resource.value]) || 0));
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${resource.label}</td>
+      <td data-enh-resource-total="${resource.value}">${value}</td>
+    `;
+    enhResourceTable.appendChild(row);
   });
 
   enhSkillTable.innerHTML = "";
@@ -1732,7 +1758,7 @@ function updateStatDerivedDisplay() {
 }
 
 function updateEnhanciveDisplay() {
-  if (!enhStatTable || !enhSkillTable) return;
+  if (!enhStatTable || !enhSkillTable || !enhResourceTable) return;
   const statRows = getDerivedStatRows();
   const equipmentTotals = getEquipmentEnhanciveTotals();
   enhStatTable.querySelectorAll("tr").forEach((row) => {
@@ -1755,6 +1781,13 @@ function updateEnhanciveDisplay() {
     }
     const effCell = row.querySelector(`[data-enh-effective="${stat.key}"]`);
     if (effCell) effCell.textContent = `${values.enhEffective}/20`;
+  });
+
+  enhResourceTable.querySelectorAll("tr").forEach((row) => {
+    const cell = row.querySelector("[data-enh-resource-total]");
+    if (!cell) return;
+    const key = cell.dataset.enhResourceTotal;
+    cell.textContent = String(Math.max(0, Math.trunc(Number(equipmentTotals.resources?.[key]) || 0)));
   });
 
   enhSkillTable.querySelectorAll("tr").forEach((row) => {

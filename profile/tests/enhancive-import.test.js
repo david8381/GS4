@@ -47,6 +47,25 @@ Statistics:
   assert.equal(parsed.summary.totalAmount, 7);
 });
 
+test('parseEnhanciveDetailsBlock keeps resource contributions for later normalization', () => {
+  const parsed = enhanciveImport.parseEnhanciveDetailsBlock(`
+Resources:
+  Max Health: 6/600
+    +6: a brass talisman
+  Max Spirit: 1/20
+    +1: an unknown source (needs loresong)
+  Spirit Recovery: 2/50
+    +2: a brass talisman
+  `);
+
+  assert.equal(parsed.items.length, 1);
+  assert.equal(parsed.items[0].name, 'a brass talisman');
+  assert.equal(parsed.items[0].effects[0].target, 'Max Health');
+  assert.equal(parsed.items[0].effects[1].target, 'Spirit Recovery');
+  assert.equal(parsed.unresolved.length, 1);
+  assert.equal(parsed.unresolved[0].target, 'Max Spirit');
+});
+
 test('mergeImportedEnhanciveSnapshot combines list items with known detail effects', () => {
   const merged = enhanciveImport.mergeImportedEnhanciveSnapshot(
     `
