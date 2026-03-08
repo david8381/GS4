@@ -499,7 +499,7 @@ function rebuildImportedEnhanciveState(options = {}) {
   currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState({
     ...merged,
     manualResolutions: preserveManual ? prior.manualResolutions : merged.manualResolutions,
-    enhancivesEnabled: prior.enhancivesEnabled,
+    enhancivesEnabled: merged.enhancivesEnabled,
   });
   updateEnhanciveImportStatusMessages();
 }
@@ -1623,10 +1623,11 @@ function renderImportedEnhanciveTables() {
         }).join(", ")
         : "No itemized effects yet";
       const row = document.createElement("tr");
+      const isImportedActive = currentEnhanciveEquipment.enhancivesEnabled && item.active !== false;
       row.innerHTML = `
         <td>${item.name}</td>
         <td>${item.source}</td>
-        <td><input type="checkbox" data-imported-enh-active="${item.id}" ${item.active !== false ? "checked" : ""} /></td>
+        <td><input type="checkbox" data-imported-enh-active="${item.id}" ${isImportedActive ? "checked" : ""} ${currentEnhanciveEquipment.enhancivesEnabled ? "" : "disabled"} /></td>
         <td>${effects}</td>
       `;
       enhImportedItemsTable.appendChild(row);
@@ -1641,13 +1642,21 @@ function renderImportedEnhanciveTables() {
   } else {
     unresolvedEntries.forEach((entry) => {
       const normalizedEffect = normalizeEnhanciveEffectForUse(entry);
+      const resolveOptions = importedItems.length
+        ? importedItems.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")
+        : '<option value="">Manual Enhancive</option>';
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${entry.category || "Unknown"}</td>
         <td>${effectDisplayTarget(normalizedEffect)}</td>
         <td>${entry.value}/${entry.limit || "—"}</td>
         <td>${entry.note || "Unknown source"}</td>
-        <td><button class="btn ghost" type="button" data-resolve-enh-imported="${entry.id}">Resolve</button></td>
+        <td>
+          <select data-resolve-enh-target="${entry.id}">
+            ${resolveOptions}
+          </select>
+          <button class="btn ghost" type="button" data-resolve-enh-imported="${entry.id}">Resolve</button>
+        </td>
       `;
       enhImportedUnresolvedTable.appendChild(row);
     });
@@ -1696,8 +1705,10 @@ function renderImportedEnhanciveTables() {
     button.addEventListener("click", () => {
       const entry = currentEnhanciveEquipment.importedSnapshot.unresolved.find((item) => item.id === button.dataset.resolveEnhImported);
       if (!entry) return;
+      const targetSelect = enhImportedUnresolvedTable.querySelector(`[data-resolve-enh-target="${entry.id}"]`);
+      const selectedItem = currentEnhanciveEquipment.importedSnapshot.items.find((item) => item.id === targetSelect?.value);
       currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
-        name: "Resolved Enhancive",
+        name: selectedItem?.name || "Resolved Enhancive",
         category: entry.category,
         type: guessEnhanciveEffectType(entry.category, entry.label),
         label: entry.label,
