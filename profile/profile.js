@@ -1927,12 +1927,14 @@ function handleInfoStartParse() {
   importStatus.textContent = `Parsed ${who}. Stats recalculated from level 0.`;
   importStatus.style.color = "";
   if (parsedStart.name) profileName.value = parsedStart.name;
-  const raceOption = parsedStart.race
-    ? races.find((race) => race.name.toLowerCase() === parsedStart.race.toLowerCase())
+  const parsedStartRace = String(parsedStart.race || "").trim();
+  const raceOption = parsedStartRace
+    ? races.find((race) => String(race.name || "").toLowerCase() === parsedStartRace.toLowerCase())
     : null;
   if (raceOption) profileRace.value = raceOption.key;
-  const professionOption = parsedStart.profession
-    ? professions.find((prof) => prof.toLowerCase() === parsedStart.profession.toLowerCase())
+  const parsedStartProfession = String(parsedStart.profession || "").trim();
+  const professionOption = parsedStartProfession
+    ? professions.find((prof) => String(prof || "").toLowerCase() === parsedStartProfession.toLowerCase())
     : null;
   if (professionOption) profileProfession.value = professionOption;
   currentLevel0Stats = parsedStart.level0Stats;
@@ -1944,7 +1946,10 @@ function handleInfoStartParse() {
 function applyProfile(profile) {
   applyingProfile = true;
   profileName.value = profile.name;
-  const raceOption = races.find((race) => race.name.toLowerCase() === profile.race.toLowerCase());
+  const profileRaceName = String(profile?.race || "").trim();
+  const raceOption = profileRaceName
+    ? races.find((race) => String(race.name || "").toLowerCase() === profileRaceName.toLowerCase())
+    : null;
   if (raceOption) profileRace.value = raceOption.key;
   if (profile.profession) profileProfession.value = profile.profession;
   const normalizedExperience = Math.max(0, Math.trunc(Number(profile.experience) || experienceForLevel(profile.level ?? 0)));
@@ -3009,7 +3014,10 @@ infoImport.addEventListener("input", () => {
   importStatus.textContent = `Parsed ${parsed.name} (${parsed.race}). Enter a profile name, then create or update the profile.`;
   importStatus.style.color = "";
   profileName.value = parsed.name;
-  const raceOption = races.find((race) => race.name.toLowerCase() === parsed.race.toLowerCase());
+  const parsedRaceName = String(parsed.race || "").trim();
+  const raceOption = parsedRaceName
+    ? races.find((race) => String(race.name || "").toLowerCase() === parsedRaceName.toLowerCase())
+    : null;
   if (raceOption) profileRace.value = raceOption.key;
   currentLevel0Stats = null;
   currentBaseStats = {};
