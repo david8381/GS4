@@ -1853,12 +1853,14 @@ function recalcFromLevel0() {
     const parsedStart = parseInfoStartBlock(infoImport.value);
     if (parsedStart && !parsedStart.error) {
       currentLevel0Stats = parsedStart.level0Stats;
-      const raceOption = parsedStart.race
-        ? races.find((race) => race.name.toLowerCase() === parsedStart.race.toLowerCase())
+      const parsedStartRace = String(parsedStart.race || "").trim();
+      const raceOption = parsedStartRace
+        ? races.find((race) => String(race.name || "").toLowerCase() === parsedStartRace.toLowerCase())
         : null;
       if (raceOption) profileRace.value = raceOption.key;
-      const professionOption = parsedStart.profession
-        ? professions.find((prof) => prof.toLowerCase() === parsedStart.profession.toLowerCase())
+      const parsedStartProfession = String(parsedStart.profession || "").trim();
+      const professionOption = parsedStartProfession
+        ? professions.find((prof) => String(prof || "").toLowerCase() === parsedStartProfession.toLowerCase())
         : null;
       if (professionOption) profileProfession.value = professionOption;
       if (!profileName.value.trim() && parsedStart.name) profileName.value = parsedStart.name;
