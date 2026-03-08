@@ -399,6 +399,13 @@ function getActiveEnhanciveEquipmentItems() {
   return importedItems.concat(manualItems);
 }
 
+function getActiveImportedUnresolvedEnhanciveEntries() {
+  const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
+  if (!state.enhancivesEnabled) return [];
+  const resolvedIds = new Set(state.manualResolutions.resolvedFromImported);
+  return state.importedSnapshot.unresolved.filter((entry) => !resolvedIds.has(entry.id));
+}
+
 function getEquipmentEnhanciveTotals() {
   const totals = {
     stats: defaultStatMap(0),
@@ -427,6 +434,20 @@ function getEquipmentEnhanciveTotals() {
         totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
       }
     });
+  });
+
+  getActiveImportedUnresolvedEnhanciveEntries().forEach((rawEffect) => {
+    const effect = normalizeEnhanciveEffectForUse(rawEffect);
+    if (!effect.type || !effect.target || effect.value <= 0) return;
+    if (effect.type === "stat") {
+      if (totals.stats[effect.target] != null) totals.stats[effect.target] += effect.value;
+    } else if (effect.type === "skill_rank") {
+      if (totals.skillRanks[effect.target] != null) totals.skillRanks[effect.target] += effect.value;
+    } else if (effect.type === "skill_bonus") {
+      if (totals.skillBonuses[effect.target] != null) totals.skillBonuses[effect.target] += effect.value;
+    } else if (effect.type === "resource") {
+      totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
+    }
   });
 
   return totals;
@@ -3280,7 +3301,20 @@ async function importGstoolsPayloadFromHash() {
     }
 
     // Auto-create/update + select profile after hash import.
-    handleProfileSave({ preserveUnsyncedFromExisting: true });
+    let saveError = null;
+    try {
+      handleProfileSave({ preserveUnsyncedFromExisting: true });
+    } catch (error) {
+      saveError = error;
+      console.error("gstools hash import auto-save failed", error);
+    }
+
+    if (saveError) {
+      importStatus.textContent = `Imported quick-start blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}.`;
+      importStatus.style.color = "#b42318";
+      return;
+    }
+
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
     importStatus.style.color = "";
     const nextPageByKey = {
@@ -3302,8 +3336,9 @@ async function importGstoolsPayloadFromHash() {
     }
     const cleanUrl = `${window.location.pathname}${window.location.search}`;
     window.history.replaceState(null, "", cleanUrl);
-  } catch (_error) {
-    importStatus.textContent = "Could not import gstools payload from URL hash.";
+  } catch (error) {
+    console.error("gstools hash import failed", error);
+    importStatus.textContent = `Could not import gstools payload from URL hash: ${error?.message || "unknown error"}.`;
     importStatus.style.color = "#b42318";
   }
 }

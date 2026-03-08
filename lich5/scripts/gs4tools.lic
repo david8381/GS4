@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.1.15'
+SCRIPT_VERSION = '0.1.17'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -182,10 +182,22 @@ def prompt_line?(line)
 end
 
 def strip_ansi(line)
-  line.to_s.gsub(/\e\[[\d;?]*[ -\/]*[@-~]/, '')
+  text = line.to_s.gsub(/\e\[[\d;?]*[ -\/]*[@-~]/, '')
+  text = text
+         .gsub(/<prompt\b[^>]*>.*?<\/prompt>/im, '>')
+         .gsub(/<dialogData\b[^>]*>.*?<\/dialogData>/im, '')
+         .gsub(/<output\b[^>]*\/>/im, '')
+         .gsub(/<pushBold\/>|<popBold\/>/im, '')
+         .gsub(/<[^>]+>/, '')
+         .gsub('&gt;', '>')
+         .gsub('&lt;', '<')
+         .gsub('&amp;', '&')
+         .gsub('&quot;', '"')
+         .gsub('&#39;', "'")
+  text
 end
 
-def capture_block(command:, start_pattern:, timeout_seconds: 20)
+def capture_block(command:, start_pattern:, timeout_seconds: 20, idle_timeout_seconds: 0.35, require_prompt: false)
   hook_name = "gs4tools-capture-#{Time.now.to_i}-#{rand(100_000)}"
   output = []
   started = false
@@ -226,7 +238,7 @@ def capture_block(command:, start_pattern:, timeout_seconds: 20)
       break if Time.now > deadline
       sleep 0.05
       break if started && saw_prompt_after_start
-      if started && last_activity_at && (Time.now - last_activity_at) >= 0.35
+      if started && !require_prompt && last_activity_at && (Time.now - last_activity_at) >= idle_timeout_seconds
         break
       end
     end
@@ -286,21 +298,24 @@ def collect_blocks
   enhancive_list = capture_block(
     command: 'inv enh list',
     start_pattern: /You are (?:not holding any|holding the following|wearing the following) enhancive items|^\(Items:\s*\d+\)$/i,
-    timeout_seconds: 6
+    timeout_seconds: 8,
+    require_prompt: true
   )
 
   say 'collecting INV ENH TOTALS...'
   enhancive_totals = capture_block(
     command: 'inv enh totals',
     start_pattern: /^(Stats|Skills|Resources|Statistics):|enhancive (?:items|properties|amount)|no enhancive/i,
-    timeout_seconds: 6
+    timeout_seconds: 8,
+    require_prompt: true
   )
 
   say 'collecting INV ENH TOTALS DETAILS...'
   enhancive_totals_details = capture_block(
     command: 'inv enh totals details',
     start_pattern: /^(Stats|Skills|Resources|Statistics):|enhancive (?:items|properties|amount)|no enhancive/i,
-    timeout_seconds: 6
+    timeout_seconds: 8,
+    require_prompt: true
   )
 
   payload = {
