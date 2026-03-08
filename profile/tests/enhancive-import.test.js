@@ -68,6 +68,30 @@ Skills:
   assert.equal(merged.importedSnapshot.summary.itemCount, 1);
 });
 
+test('mergeImportedEnhanciveSnapshot marks enhancives disabled when totals say benefits are off', () => {
+  const merged = enhanciveImport.mergeImportedEnhanciveSnapshot(
+    `
+You are wearing the following enhancive items:
+  a gilded locus
+
+(Items: 1)
+    `,
+    `
+Stats:
+  Agility (AGI): 4/40
+You are not currently accepting the benefit of any enhancive items in your inventory.
+    `,
+    `
+Stats:
+  Agility (AGI): 4/40
+    +4: an unknown source (needs loresong)
+You are not currently accepting the benefit of any enhancive items in your inventory.
+    `
+  );
+
+  assert.equal(merged.enhancivesEnabled, false);
+});
+
 test('normalizeEnhanciveEquipmentState defaults missing sections safely', () => {
   const normalized = enhanciveImport.normalizeEnhanciveEquipmentState({});
   assert.equal(normalized.enhancivesEnabled, true);

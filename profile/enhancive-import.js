@@ -51,6 +51,14 @@
     };
   }
 
+  function parseEnhancivesEnabled(...texts) {
+    const combined = texts.map((value) => String(value || "")).join("\n");
+    if (/You are not currently accepting the benefit of any enhancive items in your inventory\./i.test(combined)) {
+      return false;
+    }
+    return true;
+  }
+
   function normalizeEffect(effect) {
     if (!effect || typeof effect !== "object") return null;
     const value = asInteger(effect.value, 0);
@@ -290,6 +298,7 @@
   function mergeImportedEnhanciveSnapshot(listText, totalsText, detailsText, importedAt = "") {
     const listParsed = parseEnhanciveListBlock(listText);
     const detailsParsed = parseEnhanciveDetailsBlock(detailsText);
+    const enhancivesEnabled = parseEnhancivesEnabled(listText, totalsText, detailsText);
     const itemByName = new Map();
 
     (listParsed.items || []).forEach((item) => {
@@ -307,7 +316,7 @@
     });
 
     return {
-      enhancivesEnabled: true,
+      enhancivesEnabled,
       lastImportedAt: String(importedAt || "").trim(),
       raw: {
         list: String(listText || ""),
@@ -333,6 +342,7 @@
   return {
     defaultEnhanciveEquipmentState,
     normalizeEnhanciveEquipmentState,
+    parseEnhancivesEnabled,
     parseEnhanciveListBlock,
     parseEnhanciveDetailsBlock,
     mergeImportedEnhanciveSnapshot,
