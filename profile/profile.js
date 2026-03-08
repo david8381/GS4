@@ -290,7 +290,7 @@ function normalizeEnhanciveTargetLabel(label) {
 
 function buildEnhanciveTargetOptions(effectType) {
   if (effectType === "stat" || effectType === "stat_bonus") {
-    return stats.map((stat) => ({ value: stat.key, label: stat.name }));
+    return stats.map((stat) => ({ value: stat.key, label: stat.label }));
   }
   if (effectType === "skill_rank" || effectType === "skill_bonus") {
     return skillCatalog.map((name) => ({ value: skillKey(name), label: name }));
@@ -308,7 +308,7 @@ function buildEnhanciveTargetOptions(effectType) {
 function guessEnhanciveEffectType(category, label) {
   const normalizedCategory = String(category || "").trim().toLowerCase();
   const normalizedLabel = normalizeEnhanciveTargetLabel(label);
-  const stat = stats.find((entry) => entry.name.toLowerCase() === normalizedLabel.toLowerCase());
+  const stat = stats.find((entry) => entry.label.toLowerCase() === normalizedLabel.toLowerCase());
   if (normalizedCategory === "stats" || stat) return "stat";
   if (normalizedCategory === "skills") return "skill_bonus";
   if (normalizedCategory === "resources") return "resource";
@@ -319,7 +319,7 @@ function guessEnhanciveTarget(effectType, label) {
   const normalizedLabel = normalizeEnhanciveTargetLabel(label);
   if (effectType === "stat" || effectType === "stat_bonus") {
     const stat = stats.find((entry) => (
-      entry.name.toLowerCase() === normalizedLabel.toLowerCase()
+      entry.label.toLowerCase() === normalizedLabel.toLowerCase()
       || entry.abbr.toLowerCase() === normalizedLabel.toLowerCase()
     ));
     return stat?.key || "";
@@ -354,7 +354,7 @@ function effectDisplayTarget(effect) {
   const type = String(effect?.type || "");
   const target = String(effect?.target || "");
   if (type === "stat" || type === "stat_bonus") {
-    return stats.find((entry) => entry.key === target)?.name || effect?.label || target;
+    return stats.find((entry) => entry.key === target)?.label || effect?.label || target;
   }
   if (type === "skill_rank" || type === "skill_bonus") {
     return skillCatalog.find((name) => skillKey(name) === target) || effect?.label || target;
