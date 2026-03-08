@@ -1623,11 +1623,10 @@ function renderImportedEnhanciveTables() {
         }).join(", ")
         : "No itemized effects yet";
       const row = document.createElement("tr");
-      const isImportedActive = currentEnhanciveEquipment.enhancivesEnabled && item.active !== false;
       row.innerHTML = `
         <td>${item.name}</td>
         <td>${item.source}</td>
-        <td><input type="checkbox" data-imported-enh-active="${item.id}" ${isImportedActive ? "checked" : ""} ${currentEnhanciveEquipment.enhancivesEnabled ? "" : "disabled"} /></td>
+        <td><input type="checkbox" data-imported-enh-active="${item.id}" ${item.active !== false ? "checked" : ""} /></td>
         <td>${effects}</td>
       `;
       enhImportedItemsTable.appendChild(row);
