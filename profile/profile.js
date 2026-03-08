@@ -378,22 +378,10 @@ function normalizeEnhanciveEffectForUse(effect) {
   };
 }
 
-function hasConfiguredBadgeData() {
-  const badge = normalizeBadgeDefaults(currentBadgeDefaults);
-  return (badge.lifetimeBp || 0) > 0
-    || badge.components.some((value) => Number(value) > 0)
-    || badge.boosts.some((boost) => Number(boost?.value) > 0);
-}
-
-function shouldSkipImportedItemForDedupe(item) {
-  if (!hasConfiguredBadgeData()) return false;
-  return /badge/i.test(String(item?.name || ""));
-}
-
 function getActiveEnhanciveEquipmentItems() {
   const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
   const importedItems = state.enhancivesEnabled
-    ? state.importedSnapshot.items.filter((item) => item.active !== false && !shouldSkipImportedItemForDedupe(item))
+    ? state.importedSnapshot.items.filter((item) => item.active !== false)
     : [];
   const manualItems = state.manualResolutions.items.filter((item) => item.active !== false);
   return importedItems.concat(manualItems);

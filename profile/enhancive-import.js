@@ -315,6 +315,12 @@
       }
     });
 
+    if (!enhancivesEnabled) {
+      itemByName.forEach((item) => {
+        item.active = false;
+      });
+    }
+
     return {
       enhancivesEnabled,
       lastImportedAt: String(importedAt || "").trim(),
