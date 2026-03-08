@@ -878,6 +878,102 @@ textarea {
   padding: 0 10px 10px;
 }
 
+body[data-page="profile-create"] .calculator {
+  margin-top: 24px;
+  gap: 16px;
+}
+
+body[data-page="profile-create"] .calc-intro h1 {
+  margin: 6px 0 6px;
+}
+
+body[data-page="profile-create"] .calc-intro p {
+  margin: 0;
+}
+
+body[data-page="profile-create"] .calc-panel {
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+body[data-page="profile-create"] .input-block,
+body[data-page="profile-create"] .table-panel {
+  padding: 12px;
+}
+
+body[data-page="profile-create"] .profile-compact {
+  padding: 12px;
+}
+
+body[data-page="profile-create"] .input-block h2,
+body[data-page="profile-create"] .table-panel h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+body[data-page="profile-create"] .table-panel h3 {
+  margin: 10px 0 6px;
+  font-size: 0.9rem;
+}
+
+body[data-page="profile-create"] .input-group {
+  margin-top: 8px;
+}
+
+body[data-page="profile-create"] .input-group + .input-group {
+  margin-top: 10px;
+}
+
+body[data-page="profile-create"] .input-row {
+  margin-top: 6px;
+}
+
+body[data-page="profile-create"] .input-row input[type="number"],
+body[data-page="profile-create"] .input-row input[type="text"],
+body[data-page="profile-create"] .input-row select,
+body[data-page="profile-create"] textarea {
+  padding: 7px 9px;
+  font-size: 0.92rem;
+}
+
+body[data-page="profile-create"] .inline-actions {
+  gap: 8px;
+}
+
+body[data-page="profile-create"] .helper {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+body[data-page="profile-create"] .collapsible-section > summary {
+  padding: 11px 14px;
+  padding-left: 32px;
+}
+
+body[data-page="profile-create"] .collapsible-body {
+  padding: 0 12px 12px;
+}
+
+body[data-page="profile-create"] .import-card {
+  padding: 12px;
+}
+
+body[data-page="profile-create"] .import-card textarea {
+  min-height: 112px;
+}
+
+body[data-page="profile-create"] .stat-grid {
+  gap: 6px;
+  margin-top: 6px;
+}
+
+body[data-page="profile-create"] .profile-skills-panel table th,
+body[data-page="profile-create"] .profile-skills-panel table td,
+body[data-page="profile-create"] .table-panel th,
+body[data-page="profile-create"] .table-panel td {
+  padding: 7px 6px;
+}
+
 .table-panel table {
   width: 100%;
   border-collapse: collapse;
