@@ -37,7 +37,7 @@
 
           <div class="input-block profile-compact">
             <h2>Profile</h2>
-            <div class="input-group">
+            <div class="input-group compact-field">
               <label for="profileName">Profile name</label>
               <div class="input-row">
                 <input id="profileName" type="text" placeholder="Character Name" />
@@ -141,28 +141,28 @@
             <section class="calc-panel">
               <div class="input-block">
                 <h2>General Character Information</h2>
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileRace">Race</label>
                   <div class="input-row">
                     <select id="profileRace"></select>
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileProfession">Profession</label>
                   <div class="input-row">
                     <select id="profileProfession"></select>
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileLevel">Current level</label>
                   <div class="input-row">
                     <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileExperience">Experience</label>
                   <div class="input-row">
                     <input id="profileExperience" type="number" min="0" step="2500" value="0" />
@@ -170,7 +170,7 @@
                   <div class="helper">Enter experience to derive level, or set level to auto-fill a baseline experience.</div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileAscensionExperience">Ascension Experience</label>
                   <div class="input-row">
                     <input id="profileAscensionExperience" type="number" min="0" step="50000" value="0" />
@@ -178,7 +178,7 @@
                   <div class="helper">Enter ascension exp directly if not importing EXP output.</div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="profileAscensionMilestones">Ascension Milestones Reached</label>
                   <div class="input-row">
                     <input id="profileAscensionMilestones" type="number" min="0" max="10" step="1" value="0" />
@@ -419,15 +419,15 @@
           <div class="collapsible-body">
             <section class="calc-panel">
               <div class="input-block">
-                <label>Character Equipment</label>
-                <div class="input-group">
+                <h2>Character Equipment</h2>
+                <div class="input-group compact-field">
                   <label for="armorAsg">Armor type (ASG)</label>
                   <div class="input-row">
                     <select id="armorAsg"></select>
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="armorWeight">Armor actual weight</label>
                   <div class="input-row">
                     <input id="armorWeight" type="number" min="0" step="0.1" value="0" />
@@ -448,7 +448,7 @@
                   <div class="helper">Optional for unusual materials. Most users can leave this off.</div>
                 </details>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="accessoryWeight">Armor accessories weight</label>
                   <div class="input-row">
                     <input id="accessoryWeight" type="number" min="0" step="0.1" value="0" />
@@ -456,7 +456,7 @@
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="gearWeight">Carried gear weight (no armor)</label>
                   <div class="input-row">
                     <input id="gearWeight" type="number" min="0" step="0.1" value="0" />
@@ -464,7 +464,7 @@
                   </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group compact-field">
                   <label for="silvers">Silvers carried</label>
                   <div class="input-row">
                     <input id="silvers" type="number" min="0" step="1" value="0" />
@@ -502,10 +502,10 @@
       <div data-footer></div>
     </div>
 
-    <script src="../site.js?v=0.1.34" defer></script>
-    <script src="../data/gs4-data.js?v=0.1.34"></script>
-    <script src="profile-logic.js?v=0.1.34"></script>
-    <script src="enhancive-import.js?v=0.1.34"></script>
-    <script src="profile.js?v=0.1.34"></script>
+    <script src="../site.js?v=0.1.35" defer></script>
+    <script src="../data/gs4-data.js?v=0.1.35"></script>
+    <script src="profile-logic.js?v=0.1.35"></script>
+    <script src="enhancive-import.js?v=0.1.35"></script>
+    <script src="profile.js?v=0.1.35"></script>
   </body>
 </html>

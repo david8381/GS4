@@ -1,7 +1,7 @@
 (() => {
 const SITE_PROFILE_KEY = "gs4.characterProfiles";
 const SITE_SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
-const SITE_VERSION = "0.1.34";
+const SITE_VERSION = "0.1.35";
 
 function loadProfiles() {
   try {

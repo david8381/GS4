@@ -445,6 +445,26 @@ textarea {
   align-items: center;
 }
 
+.compact-field {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.compact-field label {
+  margin: 0;
+}
+
+.compact-field .input-row {
+  margin-top: 0;
+}
+
+.compact-field .helper {
+  grid-column: 2;
+  margin-top: 0;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -1754,6 +1774,16 @@ body[data-page="resources"] .resource-override-select {
 
   .profile-results-grid {
     grid-template-columns: 1fr;
+  }
+
+  .compact-field {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .compact-field .input-row,
+  .compact-field .helper {
+    grid-column: auto;
   }
 
   .optimizer-stat-min-grid {
