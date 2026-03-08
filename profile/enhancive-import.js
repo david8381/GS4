@@ -85,6 +85,7 @@
       worn: item.worn !== false,
       active: item.active !== false,
       source: String(item.source || fallbackSource).trim() || fallbackSource,
+      linkedImportedName: String(item.linkedImportedName || "").trim(),
       effects,
     };
   }

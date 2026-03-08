@@ -121,3 +121,20 @@ test('normalizeEnhanciveEquipmentState defaults missing sections safely', () => 
   });
   assert.deepEqual(normalized.manualResolutions.items, []);
 });
+
+test('normalizeEnhanciveEquipmentState preserves linked imported item names on manual resolutions', () => {
+  const normalized = enhanciveImport.normalizeEnhanciveEquipmentState({
+    manualResolutions: {
+      items: [{
+        id: 'manual-1',
+        name: 'a tin-bound ceramic badge',
+        linkedImportedName: 'a tin-bound ceramic badge',
+        effects: [{ type: 'stat', target: 'agi', label: 'Agility', value: 4 }],
+      }],
+      resolvedFromImported: ['import-unresolved-1'],
+    },
+  });
+
+  assert.equal(normalized.manualResolutions.items.length, 1);
+  assert.equal(normalized.manualResolutions.items[0].linkedImportedName, 'a tin-bound ceramic badge');
+});

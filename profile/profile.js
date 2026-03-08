@@ -396,7 +396,14 @@ function normalizeEnhanciveEffectForUse(effect) {
 function getActiveEnhanciveEquipmentItems() {
   const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
   const importedItems = state.importedSnapshot.items.filter((item) => item.active !== false);
-  const manualItems = state.manualResolutions.items.filter((item) => item.active !== false);
+  const manualItems = state.manualResolutions.items.filter((item) => {
+    if (item.active === false) return false;
+    if (!item.linkedImportedName) return true;
+    const linkedImportedItem = state.importedSnapshot.items.find(
+      (entry) => normalizeEnhanciveItemLinkName(entry.name) === normalizeEnhanciveItemLinkName(item.linkedImportedName),
+    );
+    return Boolean(linkedImportedItem?.active !== false);
+  });
   return importedItems.concat(manualItems);
 }
 
@@ -495,6 +502,7 @@ function createManualEnhanciveItem(partial = {}) {
     worn: true,
     active: partial.active !== false,
     source: "manual",
+    linkedImportedName: String(partial.linkedImportedName || "").trim(),
     effects: [{
       category: String(partial.category || "").trim(),
       type: guessedType,
@@ -505,6 +513,22 @@ function createManualEnhanciveItem(partial = {}) {
       knownSource: true,
     }],
   };
+}
+
+function normalizeEnhanciveItemLinkName(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getManualEffectsLinkedToImportedItem(itemName) {
+  const target = normalizeEnhanciveItemLinkName(itemName);
+  if (!target) return [];
+  return currentEnhanciveEquipment.manualResolutions.items.filter(
+    (item) => normalizeEnhanciveItemLinkName(item.linkedImportedName) === target,
+  );
 }
 
 function getSelectedRaceName() {
@@ -1564,8 +1588,10 @@ function renderImportedEnhanciveTables() {
     enhImportedItemsTable.appendChild(row);
   } else {
     importedItems.forEach((item) => {
-      const effects = item.effects.length
-        ? item.effects.map((effect) => {
+      const linkedManualItems = getManualEffectsLinkedToImportedItem(item.name);
+      const displayedEffects = item.effects.concat(linkedManualItems.flatMap((manualItem) => manualItem.effects || []));
+      const effects = displayedEffects.length
+        ? displayedEffects.map((effect) => {
           const normalizedEffect = normalizeEnhanciveEffectForUse(effect);
           return `${effectDisplayType(normalizedEffect)} ${effectDisplayTarget(normalizedEffect)} +${normalizedEffect.value}`;
         }).join(", ")
@@ -1618,9 +1644,12 @@ function renderImportedEnhanciveTables() {
     manualItems.forEach((item) => {
       const effect = normalizeEnhanciveEffectForUse(item.effects[0] || {});
       const targetOptions = buildEnhanciveTargetOptions(effect.type);
+      const linkNote = item.linkedImportedName
+        ? `<div class="helper helper-inline">linked to ${item.linkedImportedName}</div>`
+        : "";
       const row = document.createElement("tr");
       row.innerHTML = `
-        <td><input type="text" data-manual-enh-name="${item.id}" value="${item.name.replace(/"/g, "&quot;")}" /></td>
+        <td><input type="text" data-manual-enh-name="${item.id}" value="${item.name.replace(/"/g, "&quot;")}" />${linkNote}</td>
         <td><input type="checkbox" data-manual-enh-active="${item.id}" ${item.active !== false ? "checked" : ""} /></td>
         <td>
           <select data-manual-enh-type="${item.id}">
@@ -1664,8 +1693,17 @@ function renderImportedEnhanciveTables() {
         knownSource: true,
       });
       if (selectedItem) {
-        selectedItem.effects = Array.isArray(selectedItem.effects) ? selectedItem.effects : [];
-        selectedItem.effects.push(resolvedEffect);
+        currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
+          name: selectedItem.name,
+          linkedImportedName: selectedItem.name,
+          category: entry.category,
+          type: resolvedEffect.type,
+          label: resolvedEffect.label,
+          target: resolvedEffect.target,
+          value: resolvedEffect.value,
+          limit: resolvedEffect.limit,
+          active: true,
+        }));
       } else {
         currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
           name: "Resolved Enhancive",
