@@ -380,18 +380,9 @@ function normalizeEnhanciveEffectForUse(effect) {
 
 function getActiveEnhanciveEquipmentItems() {
   const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
-  const importedItems = state.enhancivesEnabled
-    ? state.importedSnapshot.items.filter((item) => item.active !== false)
-    : [];
+  const importedItems = state.importedSnapshot.items.filter((item) => item.active !== false);
   const manualItems = state.manualResolutions.items.filter((item) => item.active !== false);
   return importedItems.concat(manualItems);
-}
-
-function getActiveImportedUnresolvedEnhanciveEntries() {
-  const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
-  if (!state.enhancivesEnabled) return [];
-  const resolvedIds = new Set(state.manualResolutions.resolvedFromImported);
-  return state.importedSnapshot.unresolved.filter((entry) => !resolvedIds.has(entry.id));
 }
 
 function getEquipmentEnhanciveTotals() {
@@ -422,20 +413,6 @@ function getEquipmentEnhanciveTotals() {
         totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
       }
     });
-  });
-
-  getActiveImportedUnresolvedEnhanciveEntries().forEach((rawEffect) => {
-    const effect = normalizeEnhanciveEffectForUse(rawEffect);
-    if (!effect.type || !effect.target || effect.value <= 0) return;
-    if (effect.type === "stat") {
-      if (totals.stats[effect.target] != null) totals.stats[effect.target] += effect.value;
-    } else if (effect.type === "skill_rank") {
-      if (totals.skillRanks[effect.target] != null) totals.skillRanks[effect.target] += effect.value;
-    } else if (effect.type === "skill_bonus") {
-      if (totals.skillBonuses[effect.target] != null) totals.skillBonuses[effect.target] += effect.value;
-    } else if (effect.type === "resource") {
-      totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
-    }
   });
 
   return totals;
@@ -1594,8 +1571,7 @@ function renderImportedEnhanciveTables() {
   enhImportedSummary.textContent = `Imported snapshot: ${currentEnhanciveEquipment.importedSnapshot.summary.itemCount || importedItems.length} item(s), `
     + `${currentEnhanciveEquipment.importedSnapshot.summary.propertyCount || 0} properties, `
     + `${currentEnhanciveEquipment.importedSnapshot.summary.totalAmount || 0} total amount`
-    + ` | Itemized active sources: ${activeCount}`
-    + ` | Imported enhancives ${currentEnhanciveEquipment.enhancivesEnabled ? "on" : "off"}`;
+    + ` | Itemized active sources: ${activeCount}`;
 
   enhImportedItemsTable.innerHTML = "";
   if (!importedItems.length) {
