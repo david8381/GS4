@@ -21,6 +21,12 @@ const ascImport = document.getElementById("ascImport");
 const ascImportStatus = document.getElementById("ascImportStatus");
 const ascMilestonesImport = document.getElementById("ascMilestonesImport");
 const ascMilestonesImportStatus = document.getElementById("ascMilestonesImportStatus");
+const enhanciveListImport = document.getElementById("enhanciveListImport");
+const enhanciveTotalsImport = document.getElementById("enhanciveTotalsImport");
+const enhanciveDetailsImport = document.getElementById("enhanciveDetailsImport");
+const enhanciveListImportStatus = document.getElementById("enhanciveListImportStatus");
+const enhanciveTotalsImportStatus = document.getElementById("enhanciveTotalsImportStatus");
+const enhanciveDetailsImportStatus = document.getElementById("enhanciveDetailsImportStatus");
 const ascShowTrainedOnly = document.getElementById("ascShowTrainedOnly");
 const skillsTable = document.getElementById("skillsTable");
 const tpExpPtp = document.getElementById("tpExpPtp");
@@ -39,6 +45,11 @@ const ascStatus = document.getElementById("ascStatus");
 const enhStatTable = document.getElementById("enhStatTable");
 const enhSkillTable = document.getElementById("enhSkillTable");
 const enhStatus = document.getElementById("enhStatus");
+const enhImportedSummary = document.getElementById("enhImportedSummary");
+const enhImportedItemsTable = document.getElementById("enhImportedItemsTable");
+const enhImportedUnresolvedTable = document.getElementById("enhImportedUnresolvedTable");
+const enhManualResolutionTable = document.getElementById("enhManualResolutionTable");
+const addManualEnhItem = document.getElementById("addManualEnhItem");
 const quickStartSection = document.getElementById("quickStartSection");
 const ascensionSection = document.getElementById("ascensionSection");
 const enhanciveSection = document.getElementById("enhanciveSection");
@@ -61,9 +72,11 @@ const SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
 
 const dataSource = globalThis.GS4_DATA;
 const logic = globalThis.ProfileLogic;
+const enhanciveImport = globalThis.EnhanciveImport;
 
 if (!dataSource) throw new Error("GS4_DATA is not loaded. Ensure data/gs4-data.js is loaded before profile.js.");
 if (!logic) throw new Error("ProfileLogic is not loaded. Ensure profile-logic.js is loaded before profile.js.");
+if (!enhanciveImport) throw new Error("EnhanciveImport is not loaded. Ensure enhancive-import.js is loaded before profile.js.");
 
 const {
   races,
@@ -211,6 +224,7 @@ let currentBadgeDefaults = {
 };
 let ascensionState = { stats: {}, skills: {} };
 let enhanciveState = { stats: {}, skills: {} };
+let currentEnhanciveEquipment = enhanciveImport.defaultEnhanciveEquipmentState();
 let applyingProfile = false;
 let skillsImportUnmatchedKeys = new Set();
 let skillsImportOffProfessionKeys = new Set();
@@ -257,6 +271,239 @@ function findProfile(profiles, id) {
 function formatBonus(bonus) {
   if (!Number.isFinite(bonus)) return "0";
   return bonus > 0 ? `+${bonus}` : String(bonus);
+}
+
+const ENHANCIVE_TYPE_OPTIONS = [
+  { value: "stat", label: "Stat +" },
+  { value: "stat_bonus", label: "Stat Bonus +" },
+  { value: "skill_rank", label: "Skill Rank +" },
+  { value: "skill_bonus", label: "Skill Bonus +" },
+  { value: "resource", label: "Resource" },
+];
+
+function normalizeEnhanciveTargetLabel(label) {
+  return String(label || "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildEnhanciveTargetOptions(effectType) {
+  if (effectType === "stat" || effectType === "stat_bonus") {
+    return stats.map((stat) => ({ value: stat.key, label: stat.name }));
+  }
+  if (effectType === "skill_rank" || effectType === "skill_bonus") {
+    return skillCatalog.map((name) => ({ value: skillKey(name), label: name }));
+  }
+  return [
+    { value: "max_mana", label: "Max Mana" },
+    { value: "max_stamina", label: "Max Stamina" },
+    { value: "spirit", label: "Spirit" },
+    { value: "health_recovery", label: "Health Recovery" },
+    { value: "mana_recovery", label: "Mana Recovery" },
+    { value: "stamina_recovery", label: "Stamina Recovery" },
+  ];
+}
+
+function guessEnhanciveEffectType(category, label) {
+  const normalizedCategory = String(category || "").trim().toLowerCase();
+  const normalizedLabel = normalizeEnhanciveTargetLabel(label);
+  const stat = stats.find((entry) => entry.name.toLowerCase() === normalizedLabel.toLowerCase());
+  if (normalizedCategory === "stats" || stat) return "stat";
+  if (normalizedCategory === "skills") return "skill_bonus";
+  if (normalizedCategory === "resources") return "resource";
+  return "unknown";
+}
+
+function guessEnhanciveTarget(effectType, label) {
+  const normalizedLabel = normalizeEnhanciveTargetLabel(label);
+  if (effectType === "stat" || effectType === "stat_bonus") {
+    const stat = stats.find((entry) => (
+      entry.name.toLowerCase() === normalizedLabel.toLowerCase()
+      || entry.abbr.toLowerCase() === normalizedLabel.toLowerCase()
+    ));
+    return stat?.key || "";
+  }
+  if (effectType === "skill_rank" || effectType === "skill_bonus") {
+    const canonical = canonicalSkillName(normalizedLabel);
+    return canonical ? skillKey(canonical) : "";
+  }
+  if (effectType === "resource") {
+    const labelKey = normalizedLabel.toLowerCase();
+    if (labelKey === "max mana") return "max_mana";
+    if (labelKey === "max stamina") return "max_stamina";
+    if (labelKey === "spirit") return "spirit";
+    if (labelKey === "health recovery") return "health_recovery";
+    if (labelKey === "mana recovery") return "mana_recovery";
+    if (labelKey === "stamina recovery") return "stamina_recovery";
+  }
+  return "";
+}
+
+function effectDisplayType(effect) {
+  const type = String(effect?.type || "");
+  if (type === "stat") return "Stat +";
+  if (type === "stat_bonus") return "Stat Bonus +";
+  if (type === "skill_rank") return "Skill Rank +";
+  if (type === "skill_bonus") return "Skill Bonus +";
+  if (type === "resource") return "Resource";
+  return "Unknown";
+}
+
+function effectDisplayTarget(effect) {
+  const type = String(effect?.type || "");
+  const target = String(effect?.target || "");
+  if (type === "stat" || type === "stat_bonus") {
+    return stats.find((entry) => entry.key === target)?.name || effect?.label || target;
+  }
+  if (type === "skill_rank" || type === "skill_bonus") {
+    return skillCatalog.find((name) => skillKey(name) === target) || effect?.label || target;
+  }
+  return effect?.label || target || "Unknown";
+}
+
+function normalizeEnhanciveEffectForUse(effect) {
+  const guessedType = guessEnhanciveEffectType(effect?.category, effect?.label || effect?.target);
+  const type = effect?.type && effect.type !== "unknown" ? effect.type : guessedType;
+  const target = effect?.target && effect.target !== effect?.label
+    ? effect.target
+    : guessEnhanciveTarget(type, effect?.label || effect?.target);
+  return {
+    ...effect,
+    type,
+    target,
+    label: effect?.label || effect?.target || "",
+    value: Math.max(0, Math.trunc(Number(effect?.value) || 0)),
+    limit: Math.max(0, Math.trunc(Number(effect?.limit) || 0)),
+  };
+}
+
+function hasConfiguredBadgeData() {
+  const badge = normalizeBadgeDefaults(currentBadgeDefaults);
+  return (badge.lifetimeBp || 0) > 0
+    || badge.components.some((value) => Number(value) > 0)
+    || badge.boosts.some((boost) => Number(boost?.value) > 0);
+}
+
+function shouldSkipImportedItemForDedupe(item) {
+  if (!hasConfiguredBadgeData()) return false;
+  return /badge/i.test(String(item?.name || ""));
+}
+
+function getActiveEnhanciveEquipmentItems() {
+  const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
+  const importedItems = state.enhancivesEnabled
+    ? state.importedSnapshot.items.filter((item) => item.active !== false && !shouldSkipImportedItemForDedupe(item))
+    : [];
+  const manualItems = state.manualResolutions.items.filter((item) => item.active !== false);
+  return importedItems.concat(manualItems);
+}
+
+function getEquipmentEnhanciveTotals() {
+  const totals = {
+    stats: defaultStatMap(0),
+    skillRanks: {},
+    skillBonuses: {},
+    resources: {},
+  };
+
+  skillCatalog.forEach((name) => {
+    const key = skillKey(name);
+    totals.skillRanks[key] = 0;
+    totals.skillBonuses[key] = 0;
+  });
+
+  getActiveEnhanciveEquipmentItems().forEach((item) => {
+    item.effects.forEach((rawEffect) => {
+      const effect = normalizeEnhanciveEffectForUse(rawEffect);
+      if (!effect.type || !effect.target || effect.value <= 0) return;
+      if (effect.type === "stat") {
+        if (totals.stats[effect.target] != null) totals.stats[effect.target] += effect.value;
+      } else if (effect.type === "skill_rank") {
+        if (totals.skillRanks[effect.target] != null) totals.skillRanks[effect.target] += effect.value;
+      } else if (effect.type === "skill_bonus") {
+        if (totals.skillBonuses[effect.target] != null) totals.skillBonuses[effect.target] += effect.value;
+      } else if (effect.type === "resource") {
+        totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
+      }
+    });
+  });
+
+  return totals;
+}
+
+function getEffectiveSkillEnhancive(skillKeyName) {
+  const equipmentTotals = getEquipmentEnhanciveTotals();
+  return {
+    rank: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[skillKeyName]?.rank) || 0))
+      + Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[skillKeyName]) || 0)),
+    bonus: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[skillKeyName]?.bonus) || 0))
+      + Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[skillKeyName]) || 0)),
+  };
+}
+
+function updateEnhanciveImportStatusMessages() {
+  if (enhanciveListImportStatus) {
+    const count = currentEnhanciveEquipment.importedSnapshot?.summary?.itemCount || 0;
+    enhanciveListImportStatus.textContent = enhanciveListImport.value.trim()
+      ? `Loaded enhancive item list: ${count} item(s).`
+      : "Paste INV ENHANCIVE LIST to load worn enhancive item names.";
+    enhanciveListImportStatus.style.color = "";
+  }
+  if (enhanciveTotalsImportStatus) {
+    enhanciveTotalsImportStatus.textContent = enhanciveTotalsImport.value.trim()
+      ? "Stored INV ENHANCIVE TOTALS as raw fallback text."
+      : "Optional fallback aggregate block.";
+    enhanciveTotalsImportStatus.style.color = "";
+  }
+  if (enhanciveDetailsImportStatus) {
+    const knownItems = currentEnhanciveEquipment.importedSnapshot?.items?.filter((item) => item.effects?.length).length || 0;
+    const unresolved = currentEnhanciveEquipment.importedSnapshot?.unresolved?.length || 0;
+    enhanciveDetailsImportStatus.textContent = enhanciveDetailsImport.value.trim()
+      ? `Loaded enhancive details: ${knownItems} known item source(s), ${unresolved} unresolved effect(s).`
+      : "Paste INV ENHANCIVE TOTALS DETAILS to load active enhancive contributions.";
+    enhanciveDetailsImportStatus.style.color = "";
+  }
+}
+
+function rebuildImportedEnhanciveState(options = {}) {
+  const { preserveManual = true, importedAt = currentEnhanciveEquipment.lastImportedAt || new Date().toISOString() } = options;
+  const merged = enhanciveImport.mergeImportedEnhanciveSnapshot(
+    enhanciveListImport?.value || "",
+    enhanciveTotalsImport?.value || "",
+    enhanciveDetailsImport?.value || "",
+    importedAt,
+  );
+  const prior = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
+  currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState({
+    ...merged,
+    manualResolutions: preserveManual ? prior.manualResolutions : merged.manualResolutions,
+    enhancivesEnabled: prior.enhancivesEnabled,
+  });
+  updateEnhanciveImportStatusMessages();
+}
+
+function createManualEnhanciveItem(partial = {}) {
+  const guessedType = partial.type && partial.type !== "unknown"
+    ? partial.type
+    : guessEnhanciveEffectType(partial.category, partial.label || partial.target);
+  const guessedTarget = partial.target || guessEnhanciveTarget(guessedType, partial.label || partial.target);
+  return {
+    id: `manual-enh-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    name: String(partial.name || "Manual Enhancive").trim(),
+    worn: true,
+    active: partial.active !== false,
+    source: "manual",
+    effects: [{
+      category: String(partial.category || "").trim(),
+      type: guessedType,
+      target: guessedTarget,
+      label: String(partial.label || partial.target || guessedTarget || "Unknown").trim(),
+      value: Math.max(0, Math.trunc(Number(partial.value) || 0)),
+      limit: Math.max(0, Math.trunc(Number(partial.limit) || 0)),
+      knownSource: true,
+    }],
+  };
 }
 
 function getSelectedRaceName() {
@@ -969,10 +1216,11 @@ function syncSkillAdjustmentState() {
 }
 
 function getStatAdjustment(statKey) {
+  const equipmentTotals = getEquipmentEnhanciveTotals();
   return {
     ascStat: Math.max(0, Math.trunc(Number(ascensionState.stats?.[statKey]?.stat) || 0)),
     ascBonus: Math.max(0, Math.trunc(Number(ascensionState.stats?.[statKey]?.bonus) || 0)),
-    enhStat: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[statKey]?.stat) || 0)),
+    enhStat: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[statKey]?.stat) || 0)) + Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[statKey]) || 0)),
     enhBonus: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[statKey]?.bonus) || 0)),
   };
 }
@@ -1235,12 +1483,14 @@ function renderEnhanciveTables() {
   const rows = getDerivedStatRows();
   stats.forEach((stat) => {
     const statRow = rows[stat.key];
+    const manualEnhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.stat) || 0));
+    const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.bonus) || 0));
     const row = document.createElement("tr");
     row.style.color = statRow.enhValid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${stat.abbr}</td>
-      <td><input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${statRow.enhStat}" /></td>
-      <td><input type="number" min="0" max="20" step="1" data-enh-stat="${stat.key}" data-kind="bonus" value="${statRow.enhBonus}" /></td>
+      <td><input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${manualEnhStat}" /></td>
+      <td><input type="number" min="0" max="20" step="1" data-enh-stat="${stat.key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
       <td>${statRow.enhEffective}/20</td>
     `;
     enhStatTable.appendChild(row);
@@ -1250,8 +1500,11 @@ function renderEnhanciveTables() {
   currentSkills.forEach((skill) => {
     const key = skillKey(skill.name);
     const baseRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
+    const manualEnhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
+    const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
     const rankBonusGain = skillBonusFromRanks(baseRanks + enhRank) - skillBonusFromRanks(baseRanks);
     const effective = rankBonusGain + enhBonus;
     const valid = enhRank <= 50 && enhBonus <= 50 && effective <= 50;
@@ -1259,8 +1512,8 @@ function renderEnhanciveTables() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${skill.name}</td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${enhRank}" /></td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${enhBonus}" /></td>
+      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${manualEnhRank}" /></td>
+      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
       <td>${effective}/50</td>
     `;
     enhSkillTable.appendChild(row);
@@ -1299,6 +1552,180 @@ function renderEnhanciveTables() {
       if (siblingRank && document.activeElement !== siblingRank) siblingRank.value = String(rowState.rank);
       if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
       updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
+    });
+  });
+
+  renderImportedEnhanciveTables();
+}
+
+function renderImportedEnhanciveTables() {
+  if (!enhImportedSummary || !enhImportedItemsTable || !enhImportedUnresolvedTable || !enhManualResolutionTable) return;
+
+  currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
+  const importedItems = currentEnhanciveEquipment.importedSnapshot.items;
+  const unresolvedEntries = currentEnhanciveEquipment.importedSnapshot.unresolved.filter(
+    (entry) => !currentEnhanciveEquipment.manualResolutions.resolvedFromImported.includes(entry.id),
+  );
+  const manualItems = currentEnhanciveEquipment.manualResolutions.items;
+  const activeCount = getActiveEnhanciveEquipmentItems().length;
+
+  enhImportedSummary.textContent = `Imported snapshot: ${currentEnhanciveEquipment.importedSnapshot.summary.itemCount || importedItems.length} item(s), `
+    + `${currentEnhanciveEquipment.importedSnapshot.summary.propertyCount || 0} properties, `
+    + `${currentEnhanciveEquipment.importedSnapshot.summary.totalAmount || 0} total amount`
+    + ` | Itemized active sources: ${activeCount}`
+    + ` | Imported enhancives ${currentEnhanciveEquipment.enhancivesEnabled ? "on" : "off"}`;
+
+  enhImportedItemsTable.innerHTML = "";
+  if (!importedItems.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = "<td colspan=\"4\">No imported enhancive items loaded.</td>";
+    enhImportedItemsTable.appendChild(row);
+  } else {
+    importedItems.forEach((item) => {
+      const effects = item.effects.length
+        ? item.effects.map((effect) => {
+          const normalizedEffect = normalizeEnhanciveEffectForUse(effect);
+          return `${effectDisplayType(normalizedEffect)} ${effectDisplayTarget(normalizedEffect)} +${normalizedEffect.value}`;
+        }).join(", ")
+        : "No itemized effects yet";
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.source}</td>
+        <td><input type="checkbox" data-imported-enh-active="${item.id}" ${item.active !== false ? "checked" : ""} /></td>
+        <td>${effects}</td>
+      `;
+      enhImportedItemsTable.appendChild(row);
+    });
+  }
+
+  enhImportedUnresolvedTable.innerHTML = "";
+  if (!unresolvedEntries.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = "<td colspan=\"5\">No unresolved imported effects.</td>";
+    enhImportedUnresolvedTable.appendChild(row);
+  } else {
+    unresolvedEntries.forEach((entry) => {
+      const normalizedEffect = normalizeEnhanciveEffectForUse(entry);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${entry.category || "Unknown"}</td>
+        <td>${effectDisplayTarget(normalizedEffect)}</td>
+        <td>${entry.value}/${entry.limit || "—"}</td>
+        <td>${entry.note || "Unknown source"}</td>
+        <td><button class="btn ghost" type="button" data-resolve-enh-imported="${entry.id}">Resolve</button></td>
+      `;
+      enhImportedUnresolvedTable.appendChild(row);
+    });
+  }
+
+  enhManualResolutionTable.innerHTML = "";
+  if (!manualItems.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = "<td colspan=\"6\">No manual enhancive resolutions yet.</td>";
+    enhManualResolutionTable.appendChild(row);
+  } else {
+    manualItems.forEach((item) => {
+      const effect = normalizeEnhanciveEffectForUse(item.effects[0] || {});
+      const targetOptions = buildEnhanciveTargetOptions(effect.type);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text" data-manual-enh-name="${item.id}" value="${item.name.replace(/"/g, "&quot;")}" /></td>
+        <td><input type="checkbox" data-manual-enh-active="${item.id}" ${item.active !== false ? "checked" : ""} /></td>
+        <td>
+          <select data-manual-enh-type="${item.id}">
+            ${ENHANCIVE_TYPE_OPTIONS.map((option) => `<option value="${option.value}" ${option.value === effect.type ? "selected" : ""}>${option.label}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <select data-manual-enh-target="${item.id}">
+            ${targetOptions.map((option) => `<option value="${option.value}" ${option.value === effect.target ? "selected" : ""}>${option.label}</option>`).join("")}
+          </select>
+        </td>
+        <td><input type="number" min="0" step="1" data-manual-enh-value="${item.id}" value="${effect.value}" /></td>
+        <td><button class="btn ghost" type="button" data-delete-manual-enh="${item.id}">Delete</button></td>
+      `;
+      enhManualResolutionTable.appendChild(row);
+    });
+  }
+
+  enhImportedItemsTable.querySelectorAll("[data-imported-enh-active]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const item = currentEnhanciveEquipment.importedSnapshot.items.find((entry) => entry.id === input.dataset.importedEnhActive);
+      if (!item) return;
+      item.active = input.checked;
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhImportedUnresolvedTable.querySelectorAll("[data-resolve-enh-imported]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const entry = currentEnhanciveEquipment.importedSnapshot.unresolved.find((item) => item.id === button.dataset.resolveEnhImported);
+      if (!entry) return;
+      currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
+        name: "Resolved Enhancive",
+        category: entry.category,
+        type: guessEnhanciveEffectType(entry.category, entry.label),
+        label: entry.label,
+        value: entry.value,
+        limit: entry.limit,
+      }));
+      currentEnhanciveEquipment.manualResolutions.resolvedFromImported.push(entry.id);
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-manual-enh-name]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === input.dataset.manualEnhName);
+      if (!item) return;
+      item.name = input.value.trim() || "Manual Enhancive";
+      if (!applyingProfile) updateProfileActionState();
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-manual-enh-active]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === input.dataset.manualEnhActive);
+      if (!item) return;
+      item.active = input.checked;
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-manual-enh-type]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === select.dataset.manualEnhType);
+      if (!item || !item.effects[0]) return;
+      item.effects[0].type = select.value;
+      item.effects[0].target = buildEnhanciveTargetOptions(select.value)[0]?.value || "";
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-manual-enh-target]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === select.dataset.manualEnhTarget);
+      if (!item || !item.effects[0]) return;
+      item.effects[0].target = select.value;
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-manual-enh-value]").forEach((input) => {
+    input.addEventListener("input", () => {
+      const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === input.dataset.manualEnhValue);
+      if (!item || !item.effects[0]) return;
+      item.effects[0].value = Math.max(0, Math.trunc(Number(input.value) || 0));
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+    });
+  });
+
+  enhManualResolutionTable.querySelectorAll("[data-delete-manual-enh]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetId = button.dataset.deleteManualEnh;
+      currentEnhanciveEquipment.manualResolutions.items = currentEnhanciveEquipment.manualResolutions.items.filter((item) => item.id !== targetId);
+      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
     });
   });
 }
@@ -1345,8 +1772,9 @@ function updateEnhanciveDisplay() {
     const skill = currentSkills.find((entry) => skillKey(entry.name) === key);
     if (!skill) return;
     const baseRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
     const rankBonusGain = skillBonusFromRanks(baseRanks + enhRank) - skillBonusFromRanks(baseRanks);
     const effective = rankBonusGain + enhBonus;
     const valid = enhRank <= 50 && enhBonus <= 50 && effective <= 50;
@@ -1384,8 +1812,9 @@ function updateEnhStatus() {
   const skillInvalid = currentSkills.some((skill) => {
     const key = skillKey(skill.name);
     const baseRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
     const rankBonusGain = skillBonusFromRanks(baseRanks + enhRank) - skillBonusFromRanks(baseRanks);
     return enhRank > 50 || enhBonus > 50 || rankBonusGain + enhBonus > 50;
   });
@@ -1505,6 +1934,11 @@ function applyProfile(profile) {
   currentAscensionMilestones = clamp(Math.trunc(Number(profile.ascensionMilestones) || 0), 0, 10);
   if (profileAscensionMilestones) profileAscensionMilestones.value = String(currentAscensionMilestones);
   currentAscensionAbilities = normalizeAscensionAbilities(Array.isArray(profile.ascensionAbilities) ? profile.ascensionAbilities : []);
+  currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState(profile?.equipment?.enhancives);
+  if (enhanciveListImport) enhanciveListImport.value = currentEnhanciveEquipment.raw.list || "";
+  if (enhanciveTotalsImport) enhanciveTotalsImport.value = currentEnhanciveEquipment.raw.totals || "";
+  if (enhanciveDetailsImport) enhanciveDetailsImport.value = currentEnhanciveEquipment.raw.totalsDetails || "";
+  updateEnhanciveImportStatusMessages();
 
   currentLevel0Stats = profile.level0Stats || null;
   if (currentLevel0Stats) {
@@ -1757,8 +2191,9 @@ function renderSkillsTable(skills) {
     const isCircle = spellCircles.has(skill.name);
     const baseRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
     const ascBonus = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
     const baseBonus = skillBonusFromRanks(baseRanks);
     const finalRanks = Math.max(0, baseRanks + enhRank);
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
@@ -1823,8 +2258,9 @@ function getVisibleSkills(skills) {
     const key = skillKey(skill.name);
     const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
     const hasAsc = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0)) > 0;
-    const hasEnhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0)) > 0;
-    const hasEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0)) > 0;
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const hasEnhRank = effectiveEnh.rank > 0;
+    const hasEnhBonus = effectiveEnh.bonus > 0;
     const active = ranks > 0 || hasAsc || hasEnhRank || hasEnhBonus;
     const isCircle = spellCircles.has(skill.name);
     const circleAllowed = allowedCircles.has(skill.name);
@@ -1946,8 +2382,9 @@ function updateSkillsDerivedDisplay() {
     if (!skill) return;
     const baseRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
     const ascBonus = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
     const baseBonus = skillBonusFromRanks(baseRanks);
     const finalRanks = Math.max(0, baseRanks + enhRank);
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
@@ -2009,8 +2446,9 @@ function collectSkills() {
   return currentSkills.map((skill) => {
     const key = skillKey(skill.name);
     const ascBonus = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0));
-    const enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
+    const effectiveEnh = getEffectiveSkillEnhancive(key);
+    const enhRank = effectiveEnh.rank;
+    const enhBonus = effectiveEnh.bonus;
     const finalRanks = Math.max(0, skill.ranks + enhRank);
     const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
     return {
@@ -2113,6 +2551,9 @@ function comparableProfile(record) {
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
     enhancive: { stats: enhStats, skills: enhSkills },
+    equipment: {
+      enhancives: enhanciveImport.normalizeEnhanciveEquipmentState(record?.equipment?.enhancives),
+    },
     skills: mergedSkills.map((skill) => normalizeSkillForCompare(skill)),
     defaults,
   };
@@ -2259,6 +2700,9 @@ function buildCurrentProfileRecord(nameOverride = null) {
     stats: statsPayload,
     ascension: { stats: ascStats, skills: ascSkills },
     enhancive: { stats: enhStats, skills: enhSkills },
+    equipment: {
+      enhancives: enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment),
+    },
     skills: collectSkills(),
     defaults: {
       armorAsg: armorAsgSelect.value,
@@ -2357,6 +2801,9 @@ function resetEditorForNewProfile() {
   skillsImport.value = "";
   ascImport.value = "";
   if (ascMilestonesImport) ascMilestonesImport.value = "";
+  if (enhanciveListImport) enhanciveListImport.value = "";
+  if (enhanciveTotalsImport) enhanciveTotalsImport.value = "";
+  if (enhanciveDetailsImport) enhanciveDetailsImport.value = "";
   importStatus.textContent = "Run INFO START. Paste full output.";
   importStatus.style.color = "";
   expImportStatus.textContent = "Paste EXP to load level and experience.";
@@ -2370,6 +2817,8 @@ function resetEditorForNewProfile() {
     ascMilestonesImportStatus.textContent = "Paste ASC MILESTONES to load milestones reached.";
     ascMilestonesImportStatus.style.color = "";
   }
+  currentEnhanciveEquipment = enhanciveImport.defaultEnhanciveEquipmentState();
+  updateEnhanciveImportStatusMessages();
 
   armorAsgSelect.value = "none";
   updateArmorWeight();
@@ -2446,7 +2895,7 @@ function handleProfileSave(options = {}) {
 
   if (!name) {
     importStatus.textContent = "Paste INFO output or enter a profile name.";
-    return;
+    return null;
   }
 
   const currentRecord = buildCurrentProfileRecord(name);
@@ -2477,10 +2926,28 @@ function handleProfileSave(options = {}) {
   if (preserveUnsyncedFromExisting && existing) {
     const existingDefaults = existing.defaults && typeof existing.defaults === "object" ? existing.defaults : {};
     const recordDefaults = record.defaults && typeof record.defaults === "object" ? record.defaults : {};
+    const existingEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState(existing?.equipment?.enhancives);
+    const currentEnhanciveEquipmentState = enhanciveImport.normalizeEnhanciveEquipmentState(record?.equipment?.enhancives);
+    const hasImportedEnhanciveInput = Boolean(
+      currentEnhanciveEquipmentState.raw.list
+      || currentEnhanciveEquipmentState.raw.totals
+      || currentEnhanciveEquipmentState.raw.totalsDetails
+      || currentEnhanciveEquipmentState.importedSnapshot.items.length
+      || currentEnhanciveEquipmentState.importedSnapshot.unresolved.length
+    );
     record = {
       ...record,
       ascension: existing.ascension || record.ascension,
       enhancive: existing.enhancive || record.enhancive,
+      equipment: {
+        enhancives: hasImportedEnhanciveInput
+          ? enhanciveImport.normalizeEnhanciveEquipmentState({
+            ...currentEnhanciveEquipmentState,
+            manualResolutions: existingEnhanciveEquipment.manualResolutions,
+            enhancivesEnabled: currentEnhanciveEquipmentState.enhancivesEnabled,
+          })
+          : existingEnhanciveEquipment,
+      },
       defaults: {
         ...recordDefaults,
         ...existingDefaults,
@@ -2497,6 +2964,7 @@ function handleProfileSave(options = {}) {
   importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
   applyProfile(record);
   applySectionDefaultVisibility();
+  return record;
 }
 
 saveProfileButtons.forEach((button) => {
@@ -2698,6 +3166,32 @@ ascMilestonesImport?.addEventListener("input", () => {
   }
 });
 
+enhanciveListImport?.addEventListener("input", () => {
+  rebuildImportedEnhanciveState();
+  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+});
+
+enhanciveTotalsImport?.addEventListener("input", () => {
+  rebuildImportedEnhanciveState();
+  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+});
+
+enhanciveDetailsImport?.addEventListener("input", () => {
+  rebuildImportedEnhanciveState();
+  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+});
+
+addManualEnhItem?.addEventListener("click", () => {
+  currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
+    name: "Manual Enhancive",
+    type: "stat",
+    target: "str",
+    label: "Strength",
+    value: 0,
+  }));
+  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+});
+
 document.querySelector("main.calculator").addEventListener("input", () => {
   if (!applyingProfile) updateProfileActionState();
 });
@@ -2727,16 +3221,50 @@ function decodeBase64UrlUtf8(input) {
   return new TextDecoder("utf-8").decode(bytes);
 }
 
-function importGstoolsPayloadFromHash() {
+async function postGs4toolsNormalizedProfile(record, callbackPort, callbackToken) {
+  const numericPort = Number(callbackPort);
+  const token = String(callbackToken || "").trim();
+  if (!record || !Number.isInteger(numericPort) || numericPort <= 0 || !token) return false;
+
+  const payload = JSON.stringify({
+    token,
+    profile: record,
+  });
+
+  try {
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 2500) : null;
+    const response = await fetch(`http://127.0.0.1:${numericPort}/gs4tools-profile`, {
+      method: "POST",
+      mode: "cors",
+      keepalive: true,
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8",
+      },
+      body: payload,
+      signal: controller?.signal,
+    });
+    if (timeoutId) clearTimeout(timeoutId);
+    return response.ok;
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function importGstoolsPayloadFromHash() {
   const rawHash = String(window.location.hash || "").replace(/^#/, "");
   if (!rawHash) return;
 
   let encoded = "";
   let nextTarget = "";
+  let callbackPort = "";
+  let callbackToken = "";
   if (rawHash.includes("=")) {
     const hashParams = new URLSearchParams(rawHash);
     encoded = hashParams.get("gstools") || "";
     nextTarget = String(hashParams.get("next") || "").trim().toLowerCase();
+    callbackPort = String(hashParams.get("callbackPort") || "").trim();
+    callbackToken = String(hashParams.get("callbackToken") || "").trim();
   } else {
     return;
   }
@@ -2768,15 +3296,30 @@ function importGstoolsPayloadFromHash() {
       ascMilestonesImport.value = blocks.ascMilestones;
       ascMilestonesImport.dispatchEvent(new Event("input", { bubbles: true }));
     }
+    if (typeof blocks.enhanciveList === "string" && enhanciveListImport) {
+      enhanciveListImport.value = blocks.enhanciveList;
+      enhanciveListImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.enhanciveTotals === "string" && enhanciveTotalsImport) {
+      enhanciveTotalsImport.value = blocks.enhanciveTotals;
+      enhanciveTotalsImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (typeof blocks.enhanciveTotalsDetails === "string" && enhanciveDetailsImport) {
+      enhanciveDetailsImport.value = blocks.enhanciveTotalsDetails;
+      enhanciveDetailsImport.dispatchEvent(new Event("input", { bubbles: true }));
+    }
 
     if (!profileName.value.trim() && payloadCharacterName) {
       profileName.value = payloadCharacterName;
     }
 
     // Auto-create/update + select profile after hash import.
-    handleProfileSave({ preserveUnsyncedFromExisting: true });
+    const savedRecord = handleProfileSave({ preserveUnsyncedFromExisting: true });
     importStatus.textContent = "Imported quick-start blocks from gstools payload.";
     importStatus.style.color = "";
+    if (savedRecord) {
+      await postGs4toolsNormalizedProfile(savedRecord, callbackPort, callbackToken);
+    }
     const nextPageByKey = {
       profile: "",
       home: "../index.html",

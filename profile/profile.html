@@ -100,6 +100,33 @@
                 </div>
                 <div class="helper" id="ascMilestonesImportStatus">Paste ASC MILESTONES to load milestones reached.</div>
               </div>
+
+              <div class="input-block import-card">
+                <h2>INV ENH LIST</h2>
+                <div class="input-group">
+                  <label for="enhanciveListImport">Paste INV ENHANCIVE LIST output</label>
+                  <textarea id="enhanciveListImport" rows="7" placeholder="Paste INV ENHANCIVE LIST block"></textarea>
+                </div>
+                <div class="helper" id="enhanciveListImportStatus">Paste INV ENHANCIVE LIST to load worn enhancive item names.</div>
+              </div>
+
+              <div class="input-block import-card">
+                <h2>INV ENH TOTALS</h2>
+                <div class="input-group">
+                  <label for="enhanciveTotalsImport">Paste INV ENHANCIVE TOTALS output</label>
+                  <textarea id="enhanciveTotalsImport" rows="7" placeholder="Paste INV ENHANCIVE TOTALS block"></textarea>
+                </div>
+                <div class="helper" id="enhanciveTotalsImportStatus">Optional fallback aggregate block.</div>
+              </div>
+
+              <div class="input-block import-card">
+                <h2>INV ENH TOTALS DETAILS</h2>
+                <div class="input-group">
+                  <label for="enhanciveDetailsImport">Paste INV ENHANCIVE TOTALS DETAILS output</label>
+                  <textarea id="enhanciveDetailsImport" rows="7" placeholder="Paste INV ENHANCIVE TOTALS DETAILS block"></textarea>
+                </div>
+                <div class="helper" id="enhanciveDetailsImportStatus">Paste INV ENHANCIVE TOTALS DETAILS to load active enhancive contributions.</div>
+              </div>
             </section>
             <div class="inline-actions">
               <button class="btn profile-reload-btn" type="button">Reload from Profile</button>
@@ -197,6 +224,7 @@
             <section class="calc-panel">
               <div class="table-panel enhancive-panel">
                 <h2>Enhancives</h2>
+                <div class="helper" id="enhImportedSummary">Imported enhancive snapshot: none.</div>
                 <h3>Stat Enhancives</h3>
                 <table>
                   <thead>
@@ -220,6 +248,48 @@
                     </tr>
                   </thead>
                   <tbody id="enhSkillTable"></tbody>
+                </table>
+                <h3>Imported Enhancive Items</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Source</th>
+                      <th>Active</th>
+                      <th>Effects</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhImportedItemsTable"></tbody>
+                </table>
+                <h3>Unresolved Imported Effects</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Target</th>
+                      <th>Value / Limit</th>
+                      <th>Note</th>
+                      <th>Resolve</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhImportedUnresolvedTable"></tbody>
+                </table>
+                <h3>Manual Resolutions</h3>
+                <div class="inline-actions">
+                  <button class="btn ghost" id="addManualEnhItem" type="button">Add Manual Effect</button>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Active</th>
+                      <th>Type</th>
+                      <th>Target</th>
+                      <th>Value</th>
+                      <th>Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enhManualResolutionTable"></tbody>
                 </table>
                 <div class="helper" id="enhStatus">Effective bonus is calculated per row and is capped by the shown limit.</div>
               </div>
@@ -407,6 +477,7 @@
     <script src="../site.js" defer></script>
     <script src="../data/gs4-data.js"></script>
     <script src="profile-logic.js"></script>
+    <script src="enhancive-import.js"></script>
     <script src="profile.js"></script>
   </body>
 </html>
