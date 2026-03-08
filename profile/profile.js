@@ -3257,22 +3257,38 @@ async function importGstoolsPayloadFromHash() {
 
   let encoded = "";
   let nextTarget = "";
+  let payloadPort = "";
+  let payloadToken = "";
   let callbackPort = "";
   let callbackToken = "";
   if (rawHash.includes("=")) {
     const hashParams = new URLSearchParams(rawHash);
     encoded = hashParams.get("gstools") || "";
+    payloadPort = String(hashParams.get("payloadPort") || "").trim();
+    payloadToken = String(hashParams.get("payloadToken") || "").trim();
     nextTarget = String(hashParams.get("next") || "").trim().toLowerCase();
     callbackPort = String(hashParams.get("callbackPort") || "").trim();
     callbackToken = String(hashParams.get("callbackToken") || "").trim();
   } else {
     return;
   }
-  if (!encoded) return;
 
   try {
-    const jsonText = decodeBase64UrlUtf8(encoded);
-    const payload = JSON.parse(jsonText);
+    let payload = null;
+    if (payloadPort && payloadToken) {
+      const response = await fetch(`http://127.0.0.1:${payloadPort}/gs4tools-payload?token=${encodeURIComponent(payloadToken)}`, {
+        method: "GET",
+        mode: "cors",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("payload_fetch_failed");
+      payload = await response.json();
+    } else if (encoded) {
+      const jsonText = decodeBase64UrlUtf8(encoded);
+      payload = JSON.parse(jsonText);
+    } else {
+      return;
+    }
     const blocks = payload?.blocks || {};
     const payloadCharacterName = stripMarkupTags(payload?.character || "");
 

@@ -11,7 +11,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.1.12'
+SCRIPT_VERSION = '0.1.13'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -387,9 +387,15 @@ def base64url_encode(raw)
   Base64.strict_encode64(raw).tr('+/', '-_').delete('=')
 end
 
-def build_open_url(payload, base_url, next_page_key: nil, callback_port: nil, callback_token: nil)
-  encoded = base64url_encode(payload.to_json)
-  params = ["gstools=#{encoded}"]
+def build_open_url(base_url, payload_port: nil, payload_token: nil, payload: nil, next_page_key: nil, callback_port: nil, callback_token: nil)
+  params = []
+  if payload_port && payload_token
+    params << "payloadPort=#{payload_port}"
+    params << "payloadToken=#{payload_token}"
+  elsif payload
+    encoded = base64url_encode(payload.to_json)
+    params << "gstools=#{encoded}"
+  end
   params << "next=#{next_page_key}" if next_page_key && !next_page_key.empty?
   params << "callbackPort=#{callback_port}" if callback_port
   params << "callbackToken=#{callback_token}" if callback_token
@@ -472,18 +478,20 @@ def build_http_response(status_code, status_text, body = '', content_type = 'tex
   headers.join("\r\n") + "\r\n\r\n" + body_text
 end
 
-def start_profile_callback_server
+def start_payload_bridge_server(payload)
   server = TCPServer.new('127.0.0.1', 0)
   {
     server: server,
     port: server.addr[1],
-    token: SecureRandom.hex(16)
+    token: SecureRandom.hex(16),
+    payload: payload
   }
 end
 
-def wait_for_profile_callback(callback_state, timeout_seconds: 120)
+def wait_for_bridge_server(callback_state, timeout_seconds: 120)
   server = callback_state[:server]
   deadline = Time.now + timeout_seconds
+  saved_profile = nil
 
   begin
     loop do
@@ -512,8 +520,21 @@ def wait_for_profile_callback(callback_state, timeout_seconds: 120)
           next
         end
 
-        unless method == 'POST'
-          client.write(build_http_response(405, 'Method Not Allowed', 'POST only'))
+        path = _path.to_s
+
+        if method == 'GET' && path.start_with?('/gs4tools-payload')
+          query = path.split('?', 2)[1].to_s
+          params = query.split('&').map { |part| part.split('=', 2) }.to_h
+          unless params['token'].to_s == callback_state[:token].to_s
+            client.write(build_http_response(403, 'Forbidden', 'Invalid token'))
+            next
+          end
+          client.write(build_http_response(200, 'OK', JSON.generate(callback_state[:payload]), 'application/json'))
+          next
+        end
+
+        unless method == 'POST' && path.start_with?('/gs4tools-profile')
+          client.write(build_http_response(405, 'Method Not Allowed', 'Unsupported request'))
           next
         end
 
@@ -534,7 +555,8 @@ def wait_for_profile_callback(callback_state, timeout_seconds: 120)
         File.write(normalized_profile_path, JSON.pretty_generate(profile))
         client.write(build_http_response(200, 'OK', 'Saved'))
         say "saved normalized profile #{normalized_profile_path}"
-        return profile
+        saved_profile = profile
+        return saved_profile
       rescue JSON::ParserError
         client.write(build_http_response(400, 'Bad Request', 'Invalid JSON')) rescue nil
       ensure
@@ -545,7 +567,7 @@ def wait_for_profile_callback(callback_state, timeout_seconds: 120)
     server.close rescue nil
   end
 
-  nil
+  saved_profile
 end
 
 args = script_args
@@ -568,18 +590,19 @@ when 'open'
   page_key = resolve_page_key(args[1])
   if wants_sync
     payload = collect_blocks
-    callback_state = start_profile_callback_server
+    callback_state = start_payload_bridge_server(payload)
     open_browser(
       build_open_url(
-        payload,
         DEFAULT_PROFILE_URL,
+        payload_port: callback_state[:port],
+        payload_token: callback_state[:token],
         next_page_key: (page_key == 'profile' ? nil : page_key),
         callback_port: callback_state[:port],
         callback_token: callback_state[:token]
       )
     )
     say 'waiting for normalized profile callback...'
-    unless wait_for_profile_callback(callback_state)
+    unless wait_for_bridge_server(callback_state)
       say 'normalized profile callback not received before timeout'
     end
   else
@@ -588,17 +611,18 @@ when 'open'
   end
 when 'sync'
   payload = collect_blocks
-  callback_state = start_profile_callback_server
+  callback_state = start_payload_bridge_server(payload)
   open_browser(
     build_open_url(
-      payload,
       DEFAULT_PROFILE_URL,
+      payload_port: callback_state[:port],
+      payload_token: callback_state[:token],
       callback_port: callback_state[:port],
       callback_token: callback_state[:token]
     )
   )
   say 'waiting for normalized profile callback...'
-  unless wait_for_profile_callback(callback_state)
+  unless wait_for_bridge_server(callback_state)
     say 'normalized profile callback not received before timeout'
   end
 when 'load'
