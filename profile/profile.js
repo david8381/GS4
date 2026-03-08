@@ -1473,14 +1473,12 @@ function renderEnhanciveTables() {
     const manualEnhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.stat) || 0));
     const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.bonus) || 0));
     const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
+    const totalEnhStat = manualEnhStat + importedEnhStat;
     const row = document.createElement("tr");
     row.style.color = statRow.enhValid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${stat.abbr}</td>
-      <td>
-        <input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${manualEnhStat}" />
-        <div class="helper compact-note" data-enh-imported-stat="${stat.key}">${importedEnhStat ? `Imported +${importedEnhStat}` : ""}</div>
-      </td>
+      <td><input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${totalEnhStat}" /></td>
       <td><input type="number" min="0" max="20" step="1" data-enh-stat="${stat.key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
       <td>${statRow.enhEffective}/20</td>
     `;
@@ -1498,6 +1496,8 @@ function renderEnhanciveTables() {
     const manualEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0));
     const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
     const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
+    const totalEnhRank = manualEnhRank + importedEnhRank;
+    const totalEnhBonus = manualEnhBonus + importedEnhBonus;
     const rankBonusGain = skillBonusFromRanks(baseRanks + enhRank) - skillBonusFromRanks(baseRanks);
     const effective = rankBonusGain + enhBonus;
     const valid = enhRank <= 50 && enhBonus <= 50 && effective <= 50;
@@ -1505,14 +1505,8 @@ function renderEnhanciveTables() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${skill.name}</td>
-      <td>
-        <input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${manualEnhRank}" />
-        <div class="helper compact-note" data-enh-imported-rank="${key}">${importedEnhRank ? `Imported +${importedEnhRank}` : ""}</div>
-      </td>
-      <td>
-        <input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${manualEnhBonus}" />
-        <div class="helper compact-note" data-enh-imported-bonus="${key}">${importedEnhBonus ? `Imported +${importedEnhBonus}` : ""}</div>
-      </td>
+      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${totalEnhRank}" /></td>
+      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${totalEnhBonus}" /></td>
       <td>${effective}/50</td>
     `;
     enhSkillTable.appendChild(row);
@@ -1522,14 +1516,15 @@ function renderEnhanciveTables() {
     input.addEventListener("input", () => {
       const statKey = input.dataset.enhStat;
       if (!enhanciveState.stats[statKey]) enhanciveState.stats[statKey] = { stat: 0, bonus: 0 };
+      const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[statKey]) || 0));
       const value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      if (input.dataset.kind === "stat") enhanciveState.stats[statKey].stat = value;
+      if (input.dataset.kind === "stat") enhanciveState.stats[statKey].stat = Math.max(0, value - importedEnhStat);
       else enhanciveState.stats[statKey].bonus = value;
       enforceStatEnhanciveRowLimits(statKey, input.dataset.kind);
       const rowState = enhanciveState.stats[statKey];
       const siblingStat = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="stat"]`);
       const siblingBonus = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="bonus"]`);
-      if (siblingStat && document.activeElement !== siblingStat) siblingStat.value = String(rowState.stat);
+      if (siblingStat && document.activeElement !== siblingStat) siblingStat.value = String(rowState.stat + importedEnhStat);
       if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
       updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
     });
@@ -1541,15 +1536,17 @@ function renderEnhanciveTables() {
       const skill = currentSkills.find((entry) => skillKey(entry.name) === key);
       const baseRanks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
       if (!enhanciveState.skills[key]) enhanciveState.skills[key] = { rank: 0, bonus: 0 };
+      const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
+      const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
       const value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      if (input.dataset.kind === "rank") enhanciveState.skills[key].rank = value;
-      else enhanciveState.skills[key].bonus = value;
+      if (input.dataset.kind === "rank") enhanciveState.skills[key].rank = Math.max(0, value - importedEnhRank);
+      else enhanciveState.skills[key].bonus = Math.max(0, value - importedEnhBonus);
       enforceSkillEnhanciveRowLimits(key, baseRanks, input.dataset.kind);
       const rowState = enhanciveState.skills[key];
       const siblingRank = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="rank"]`);
       const siblingBonus = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="bonus"]`);
-      if (siblingRank && document.activeElement !== siblingRank) siblingRank.value = String(rowState.rank);
-      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
+      if (siblingRank && document.activeElement !== siblingRank) siblingRank.value = String(rowState.rank + importedEnhRank);
+      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus + importedEnhBonus);
       updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
     });
   });
@@ -1787,10 +1784,11 @@ function updateEnhanciveDisplay() {
     row.style.color = values.enhValid ? "#1f4e42" : "#b42318";
     const effCell = row.lastElementChild;
     if (effCell) effCell.textContent = `${values.enhEffective}/20`;
-    const importedCell = row.querySelector(`[data-enh-imported-stat="${stat.key}"]`);
-    if (importedCell) {
-      const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
-      importedCell.textContent = importedEnhStat ? `Imported +${importedEnhStat}` : "";
+    const statInput = row.querySelector(`input[data-enh-stat="${stat.key}"][data-kind="stat"]`);
+    if (statInput && document.activeElement !== statInput) {
+      const totalEnhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.stat) || 0))
+        + Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
+      statInput.value = String(totalEnhStat);
     }
   });
 
@@ -1810,15 +1808,17 @@ function updateEnhanciveDisplay() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     const effCell = row.lastElementChild;
     if (effCell) effCell.textContent = `${effective}/50`;
-    const importedRankCell = row.querySelector(`[data-enh-imported-rank="${key}"]`);
-    if (importedRankCell) {
-      const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
-      importedRankCell.textContent = importedEnhRank ? `Imported +${importedEnhRank}` : "";
+    const rankInput = row.querySelector(`input[data-enh-skill="${key}"][data-kind="rank"]`);
+    if (rankInput && document.activeElement !== rankInput) {
+      const totalEnhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0))
+        + Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
+      rankInput.value = String(totalEnhRank);
     }
-    const importedBonusCell = row.querySelector(`[data-enh-imported-bonus="${key}"]`);
-    if (importedBonusCell) {
-      const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
-      importedBonusCell.textContent = importedEnhBonus ? `Imported +${importedEnhBonus}` : "";
+    const bonusInput = row.querySelector(`input[data-enh-skill="${key}"][data-kind="bonus"]`);
+    if (bonusInput && document.activeElement !== bonusInput) {
+      const totalEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0))
+        + Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
+      bonusInput.value = String(totalEnhBonus);
     }
   });
 }
