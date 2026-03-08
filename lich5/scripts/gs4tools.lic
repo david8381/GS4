@@ -11,7 +11,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.1.13'
+SCRIPT_VERSION = '0.1.14'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -469,8 +469,9 @@ def build_http_response(status_code, status_text, body = '', content_type = 'tex
   headers = [
     "HTTP/1.1 #{status_code} #{status_text}",
     "Access-Control-Allow-Origin: *",
-    "Access-Control-Allow-Methods: POST, OPTIONS",
+    "Access-Control-Allow-Methods: GET, POST, OPTIONS",
     "Access-Control-Allow-Headers: Content-Type",
+    "Access-Control-Allow-Private-Network: true",
     "Content-Type: #{content_type}",
     "Content-Length: #{body_text.bytesize}",
     "Connection: close"
