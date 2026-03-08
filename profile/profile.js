@@ -1478,9 +1478,9 @@ function renderEnhanciveTables() {
     row.style.color = statRow.enhValid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${stat.abbr}</td>
-      <td><input type="number" min="0" max="40" step="1" data-enh-stat="${stat.key}" data-kind="stat" value="${totalEnhStat}" /></td>
-      <td><input type="number" min="0" max="20" step="1" data-enh-stat="${stat.key}" data-kind="bonus" value="${manualEnhBonus}" /></td>
-      <td>${statRow.enhEffective}/20</td>
+      <td data-enh-stat-total="${stat.key}">${totalEnhStat}</td>
+      <td data-enh-bonus-total="${stat.key}">${manualEnhBonus}</td>
+      <td data-enh-effective="${stat.key}">${statRow.enhEffective}/20</td>
     `;
     enhStatTable.appendChild(row);
   });
@@ -1505,50 +1505,11 @@ function renderEnhanciveTables() {
     row.style.color = valid ? "#1f4e42" : "#b42318";
     row.innerHTML = `
       <td>${skill.name}</td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="rank" value="${totalEnhRank}" /></td>
-      <td><input type="number" min="0" max="50" step="1" data-enh-skill="${key}" data-kind="bonus" value="${totalEnhBonus}" /></td>
-      <td>${effective}/50</td>
+      <td data-enh-skill-rank-total="${key}">${totalEnhRank}</td>
+      <td data-enh-skill-bonus-total="${key}">${totalEnhBonus}</td>
+      <td data-enh-skill-effective="${key}">${effective}/50</td>
     `;
     enhSkillTable.appendChild(row);
-  });
-
-  enhStatTable.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", () => {
-      const statKey = input.dataset.enhStat;
-      if (!enhanciveState.stats[statKey]) enhanciveState.stats[statKey] = { stat: 0, bonus: 0 };
-      const importedEnhStat = Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[statKey]) || 0));
-      const value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      if (input.dataset.kind === "stat") enhanciveState.stats[statKey].stat = Math.max(0, value - importedEnhStat);
-      else enhanciveState.stats[statKey].bonus = value;
-      enforceStatEnhanciveRowLimits(statKey, input.dataset.kind);
-      const rowState = enhanciveState.stats[statKey];
-      const siblingStat = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="stat"]`);
-      const siblingBonus = enhStatTable.querySelector(`input[data-enh-stat="${statKey}"][data-kind="bonus"]`);
-      if (siblingStat && document.activeElement !== siblingStat) siblingStat.value = String(rowState.stat + importedEnhStat);
-      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus);
-      updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
-    });
-  });
-
-  enhSkillTable.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", () => {
-      const key = input.dataset.enhSkill;
-      const skill = currentSkills.find((entry) => skillKey(entry.name) === key);
-      const baseRanks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
-      if (!enhanciveState.skills[key]) enhanciveState.skills[key] = { rank: 0, bonus: 0 };
-      const importedEnhRank = Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
-      const importedEnhBonus = Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
-      const value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      if (input.dataset.kind === "rank") enhanciveState.skills[key].rank = Math.max(0, value - importedEnhRank);
-      else enhanciveState.skills[key].bonus = Math.max(0, value - importedEnhBonus);
-      enforceSkillEnhanciveRowLimits(key, baseRanks, input.dataset.kind);
-      const rowState = enhanciveState.skills[key];
-      const siblingRank = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="rank"]`);
-      const siblingBonus = enhSkillTable.querySelector(`input[data-enh-skill="${key}"][data-kind="bonus"]`);
-      if (siblingRank && document.activeElement !== siblingRank) siblingRank.value = String(rowState.rank + importedEnhRank);
-      if (siblingBonus && document.activeElement !== siblingBonus) siblingBonus.value = String(rowState.bonus + importedEnhBonus);
-      updateDerivedDisplays({ skipEnhRender: true, skipAscRender: true });
-    });
   });
 
   renderImportedEnhanciveTables();
@@ -1657,7 +1618,7 @@ function renderImportedEnhanciveTables() {
       const item = currentEnhanciveEquipment.importedSnapshot.items.find((entry) => entry.id === input.dataset.importedEnhActive);
       if (!item) return;
       item.active = input.checked;
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1691,7 +1652,7 @@ function renderImportedEnhanciveTables() {
         }));
       }
       currentEnhanciveEquipment.manualResolutions.resolvedFromImported.push(entry.id);
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1709,7 +1670,7 @@ function renderImportedEnhanciveTables() {
       const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === input.dataset.manualEnhActive);
       if (!item) return;
       item.active = input.checked;
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1719,7 +1680,7 @@ function renderImportedEnhanciveTables() {
       if (!item || !item.effects[0]) return;
       item.effects[0].type = select.value;
       item.effects[0].target = buildEnhanciveTargetOptions(select.value)[0]?.value || "";
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1728,7 +1689,7 @@ function renderImportedEnhanciveTables() {
       const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === select.dataset.manualEnhTarget);
       if (!item || !item.effects[0]) return;
       item.effects[0].target = select.value;
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1737,7 +1698,7 @@ function renderImportedEnhanciveTables() {
       const item = currentEnhanciveEquipment.manualResolutions.items.find((entry) => entry.id === input.dataset.manualEnhValue);
       if (!item || !item.effects[0]) return;
       item.effects[0].value = Math.max(0, Math.trunc(Number(input.value) || 0));
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 
@@ -1745,7 +1706,7 @@ function renderImportedEnhanciveTables() {
     button.addEventListener("click", () => {
       const targetId = button.dataset.deleteManualEnh;
       currentEnhanciveEquipment.manualResolutions.items = currentEnhanciveEquipment.manualResolutions.items.filter((item) => item.id !== targetId);
-      updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+      updateDerivedDisplays({ skipAscRender: true });
     });
   });
 }
@@ -1782,14 +1743,18 @@ function updateEnhanciveDisplay() {
     const values = statRows[stat.key];
     if (!values) return;
     row.style.color = values.enhValid ? "#1f4e42" : "#b42318";
-    const effCell = row.lastElementChild;
-    if (effCell) effCell.textContent = `${values.enhEffective}/20`;
-    const statInput = row.querySelector(`input[data-enh-stat="${stat.key}"][data-kind="stat"]`);
-    if (statInput && document.activeElement !== statInput) {
+    const totalEnhStatCell = row.querySelector(`[data-enh-stat-total="${stat.key}"]`);
+    if (totalEnhStatCell) {
       const totalEnhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.stat) || 0))
         + Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[stat.key]) || 0));
-      statInput.value = String(totalEnhStat);
+      totalEnhStatCell.textContent = String(totalEnhStat);
     }
+    const totalEnhBonusCell = row.querySelector(`[data-enh-bonus-total="${stat.key}"]`);
+    if (totalEnhBonusCell) {
+      totalEnhBonusCell.textContent = String(Math.max(0, Math.trunc(Number(enhanciveState.stats?.[stat.key]?.bonus) || 0)));
+    }
+    const effCell = row.querySelector(`[data-enh-effective="${stat.key}"]`);
+    if (effCell) effCell.textContent = `${values.enhEffective}/20`;
   });
 
   enhSkillTable.querySelectorAll("tr").forEach((row) => {
@@ -1806,20 +1771,20 @@ function updateEnhanciveDisplay() {
     const effective = rankBonusGain + enhBonus;
     const valid = enhRank <= 50 && enhBonus <= 50 && effective <= 50;
     row.style.color = valid ? "#1f4e42" : "#b42318";
-    const effCell = row.lastElementChild;
-    if (effCell) effCell.textContent = `${effective}/50`;
-    const rankInput = row.querySelector(`input[data-enh-skill="${key}"][data-kind="rank"]`);
-    if (rankInput && document.activeElement !== rankInput) {
+    const rankCell = row.querySelector(`[data-enh-skill-rank-total="${key}"]`);
+    if (rankCell) {
       const totalEnhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0))
         + Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[key]) || 0));
-      rankInput.value = String(totalEnhRank);
+      rankCell.textContent = String(totalEnhRank);
     }
-    const bonusInput = row.querySelector(`input[data-enh-skill="${key}"][data-kind="bonus"]`);
-    if (bonusInput && document.activeElement !== bonusInput) {
+    const bonusCell = row.querySelector(`[data-enh-skill-bonus-total="${key}"]`);
+    if (bonusCell) {
       const totalEnhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0))
         + Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[key]) || 0));
-      bonusInput.value = String(totalEnhBonus);
+      bonusCell.textContent = String(totalEnhBonus);
     }
+    const effCell = row.querySelector(`[data-enh-skill-effective="${key}"]`);
+    if (effCell) effCell.textContent = `${effective}/50`;
   });
 }
 
@@ -2654,13 +2619,6 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
     const selectedLevel0 = selectedProfile.level0Stats?.[stat.key] ?? null;
     toggleDiffHighlight(level0Input, currentLevel0 !== selectedLevel0);
 
-    const enhStatInputs = enhStatTable.querySelectorAll(`input[data-enh-stat="${stat.key}"]`);
-    enhStatInputs.forEach((input) => {
-      const kind = input.dataset.kind;
-      const currentValue = currentProfile.enhancive.stats?.[stat.key]?.[kind] ?? 0;
-      const selectedValue = selectedProfile.enhancive.stats?.[stat.key]?.[kind] ?? 0;
-      toggleDiffHighlight(input, currentValue !== selectedValue);
-    });
   });
 
   const currentSkillsMap = mapSkillsByKey(currentProfile.skills);
@@ -2682,13 +2640,6 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
     toggleDiffHighlight(input, currentValue !== selectedValue);
   });
 
-  enhSkillTable.querySelectorAll('input[data-enh-skill]').forEach((input) => {
-    const key = input.dataset.enhSkill;
-    const kind = input.dataset.kind;
-    const currentValue = currentProfile.enhancive.skills?.[key]?.[kind] ?? 0;
-    const selectedValue = selectedProfile.enhancive.skills?.[key]?.[kind] ?? 0;
-    toggleDiffHighlight(input, currentValue !== selectedValue);
-  });
 }
 
 function buildCurrentProfileRecord(nameOverride = null) {
@@ -3230,17 +3181,17 @@ ascMilestonesImport?.addEventListener("input", () => {
 
 enhanciveListImport?.addEventListener("input", () => {
   rebuildImportedEnhanciveState();
-  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+  updateDerivedDisplays({ skipAscRender: true });
 });
 
 enhanciveTotalsImport?.addEventListener("input", () => {
   rebuildImportedEnhanciveState();
-  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+  updateDerivedDisplays({ skipAscRender: true });
 });
 
 enhanciveDetailsImport?.addEventListener("input", () => {
   rebuildImportedEnhanciveState();
-  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+  updateDerivedDisplays({ skipAscRender: true });
 });
 
 addManualEnhItem?.addEventListener("click", () => {
@@ -3251,7 +3202,7 @@ addManualEnhItem?.addEventListener("click", () => {
     label: "Strength",
     value: 0,
   }));
-  updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
+  updateDerivedDisplays({ skipAscRender: true });
 });
 
 document.querySelector("main.calculator").addEventListener("input", () => {
