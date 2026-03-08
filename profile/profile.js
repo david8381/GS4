@@ -2916,83 +2916,96 @@ profileSelect.addEventListener("change", () => {
 
 function handleProfileSave(options = {}) {
   const { preserveUnsyncedFromExisting = false } = options;
-  profiles = loadProfiles();
-  const parsedInfoStart = parseInfoStartBlock(infoImport.value);
-  const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
-  const name = profileName.value.trim() || (parsedInfo ? parsedInfo.name : "");
+  let saveStage = "load profiles";
+  try {
+    profiles = loadProfiles();
+    saveStage = "parse imported info";
+    const parsedInfoStart = parseInfoStartBlock(infoImport.value);
+    const parsedInfo = parsedInfoStart && !parsedInfoStart.error ? parsedInfoStart : parseInfoBlock(infoImport.value);
+    const name = profileName.value.trim() || (parsedInfo ? parsedInfo.name : "");
 
-  if (!name) {
-    importStatus.textContent = "Paste INFO output or enter a profile name.";
-    return null;
-  }
+    if (!name) {
+      importStatus.textContent = "Paste INFO output or enter a profile name.";
+      return null;
+    }
 
-  const currentRecord = buildCurrentProfileRecord(name);
-  const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
-  const professionPayload = parsedInfoStart?.profession || profileProfession.value;
-  const levelPayload = clamp(Number(profileLevel.value), 0, 100);
-  const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
+    saveStage = "build current record";
+    const currentRecord = buildCurrentProfileRecord(name);
+    const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
+    const professionPayload = parsedInfoStart?.profession || profileProfession.value;
+    const levelPayload = clamp(Number(profileLevel.value), 0, 100);
+    const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
-  let record = {
-    id: "",
-    ...currentRecord,
-    race: racePayload,
-    profession: professionPayload,
-    level: levelPayload,
-    experience: expPayload,
-    level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
-  };
-
-  const selectedId = profileSelect.value || "";
-  const normalizedName = normalizeProfileNameForMatch(name);
-  const existingById = selectedId ? profiles.find((entry) => entry.id === selectedId) : null;
-  const existingByName = profiles.find((entry) => normalizeProfileNameForMatch(entry.name) === normalizedName);
-  const isUpdate = Boolean(existingById || existingByName);
-  const existing = existingById || existingByName || null;
-  const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
-  record.id = id;
-
-  if (preserveUnsyncedFromExisting && existing) {
-    const existingDefaults = existing.defaults && typeof existing.defaults === "object" ? existing.defaults : {};
-    const recordDefaults = record.defaults && typeof record.defaults === "object" ? record.defaults : {};
-    const existingEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState(existing?.equipment?.enhancives);
-    const currentEnhanciveEquipmentState = enhanciveImport.normalizeEnhanciveEquipmentState(record?.equipment?.enhancives);
-    const hasImportedEnhanciveInput = Boolean(
-      currentEnhanciveEquipmentState.raw.list
-      || currentEnhanciveEquipmentState.raw.totals
-      || currentEnhanciveEquipmentState.raw.totalsDetails
-      || currentEnhanciveEquipmentState.importedSnapshot.items.length
-      || currentEnhanciveEquipmentState.importedSnapshot.unresolved.length
-    );
-    record = {
-      ...record,
-      ascension: existing.ascension || record.ascension,
-      enhancive: existing.enhancive || record.enhancive,
-      equipment: {
-        enhancives: hasImportedEnhanciveInput
-          ? enhanciveImport.normalizeEnhanciveEquipmentState({
-            ...currentEnhanciveEquipmentState,
-            manualResolutions: existingEnhanciveEquipment.manualResolutions,
-            enhancivesEnabled: currentEnhanciveEquipmentState.enhancivesEnabled,
-          })
-          : existingEnhanciveEquipment,
-      },
-      defaults: {
-        ...recordDefaults,
-        ...existingDefaults,
-        badge: normalizeBadgeDefaults(existingDefaults.badge ?? recordDefaults.badge),
-      },
+    let record = {
+      id: "",
+      ...currentRecord,
+      race: racePayload,
+      profession: professionPayload,
+      level: levelPayload,
+      experience: expPayload,
+      level0Stats: parsedInfoStart?.level0Stats || currentLevel0Stats,
     };
-  }
 
-  profiles = profiles.filter((entry) => entry.id !== id).concat(record);
-  saveProfiles(profiles);
-  refreshProfileSelect(profiles);
-  profileSelect.value = id;
-  localStorage.setItem(SELECTED_PROFILE_KEY, id);
-  importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
-  applyProfile(record);
-  applySectionDefaultVisibility();
-  return record;
+    saveStage = "match existing profile";
+    const selectedId = profileSelect.value || "";
+    const normalizedName = normalizeProfileNameForMatch(name);
+    const existingById = selectedId ? profiles.find((entry) => entry.id === selectedId) : null;
+    const existingByName = profiles.find((entry) => normalizeProfileNameForMatch(entry.name) === normalizedName);
+    const isUpdate = Boolean(existingById || existingByName);
+    const existing = existingById || existingByName || null;
+    const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
+    record.id = id;
+
+    if (preserveUnsyncedFromExisting && existing) {
+      saveStage = "merge existing profile state";
+      const existingDefaults = existing.defaults && typeof existing.defaults === "object" ? existing.defaults : {};
+      const recordDefaults = record.defaults && typeof record.defaults === "object" ? record.defaults : {};
+      const existingEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState(existing?.equipment?.enhancives);
+      const currentEnhanciveEquipmentState = enhanciveImport.normalizeEnhanciveEquipmentState(record?.equipment?.enhancives);
+      const hasImportedEnhanciveInput = Boolean(
+        currentEnhanciveEquipmentState.raw.list
+        || currentEnhanciveEquipmentState.raw.totals
+        || currentEnhanciveEquipmentState.raw.totalsDetails
+        || currentEnhanciveEquipmentState.importedSnapshot.items.length
+        || currentEnhanciveEquipmentState.importedSnapshot.unresolved.length
+      );
+      record = {
+        ...record,
+        ascension: existing.ascension || record.ascension,
+        enhancive: existing.enhancive || record.enhancive,
+        equipment: {
+          enhancives: hasImportedEnhanciveInput
+            ? enhanciveImport.normalizeEnhanciveEquipmentState({
+              ...currentEnhanciveEquipmentState,
+              manualResolutions: existingEnhanciveEquipment.manualResolutions,
+              enhancivesEnabled: currentEnhanciveEquipmentState.enhancivesEnabled,
+            })
+            : existingEnhanciveEquipment,
+        },
+        defaults: {
+          ...recordDefaults,
+          ...existingDefaults,
+          badge: normalizeBadgeDefaults(existingDefaults.badge ?? recordDefaults.badge),
+        },
+      };
+    }
+
+    saveStage = "persist profile";
+    profiles = profiles.filter((entry) => entry.id !== id).concat(record);
+    saveProfiles(profiles);
+    refreshProfileSelect(profiles);
+    profileSelect.value = id;
+    localStorage.setItem(SELECTED_PROFILE_KEY, id);
+    importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
+
+    saveStage = "apply profile";
+    applyProfile(record);
+    applySectionDefaultVisibility();
+    return record;
+  } catch (error) {
+    error.message = `${saveStage}: ${error.message || "unknown error"}`;
+    throw error;
+  }
 }
 
 saveProfileButtons.forEach((button) => {
@@ -3320,7 +3333,8 @@ async function importGstoolsPayloadFromHash() {
     }
 
     if (saveError) {
-      importStatus.textContent = `Imported quick-start blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}.`;
+      const stackLine = String(saveError.stack || "").split("\n")[1]?.trim() || "";
+      importStatus.textContent = `Imported quick-start blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}${stackLine ? ` (${stackLine})` : ""}.`;
       importStatus.style.color = "#b42318";
       return;
     }
