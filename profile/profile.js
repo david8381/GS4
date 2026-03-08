@@ -1643,7 +1643,7 @@ function renderImportedEnhanciveTables() {
     unresolvedEntries.forEach((entry) => {
       const normalizedEffect = normalizeEnhanciveEffectForUse(entry);
       const resolveOptions = importedItems.length
-        ? importedItems.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")
+        ? `${importedItems.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}<option value="">Manual Enhancive</option>`
         : '<option value="">Manual Enhancive</option>';
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -1707,14 +1707,29 @@ function renderImportedEnhanciveTables() {
       if (!entry) return;
       const targetSelect = enhImportedUnresolvedTable.querySelector(`[data-resolve-enh-target="${entry.id}"]`);
       const selectedItem = currentEnhanciveEquipment.importedSnapshot.items.find((item) => item.id === targetSelect?.value);
-      currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
-        name: selectedItem?.name || "Resolved Enhancive",
+      const resolvedEffect = normalizeEnhanciveEffectForUse({
         category: entry.category,
         type: guessEnhanciveEffectType(entry.category, entry.label),
         label: entry.label,
+        target: entry.target,
         value: entry.value,
         limit: entry.limit,
-      }));
+        knownSource: true,
+      });
+      if (selectedItem) {
+        selectedItem.effects = Array.isArray(selectedItem.effects) ? selectedItem.effects : [];
+        selectedItem.effects.push(resolvedEffect);
+      } else {
+        currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
+          name: "Resolved Enhancive",
+          category: entry.category,
+          type: resolvedEffect.type,
+          label: resolvedEffect.label,
+          target: resolvedEffect.target,
+          value: resolvedEffect.value,
+          limit: resolvedEffect.limit,
+        }));
+      }
       currentEnhanciveEquipment.manualResolutions.resolvedFromImported.push(entry.id);
       updateDerivedDisplays({ skipStatsRender: true, skipSkillsRender: true, skipAscRender: true });
     });
