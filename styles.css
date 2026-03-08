@@ -861,6 +861,23 @@ textarea {
   background: #f9f6fb;
 }
 
+.enh-group {
+  border: 1px solid #d9cfbf;
+  border-radius: 10px;
+  background: #fdf9f2;
+  margin-top: 12px;
+}
+
+.enh-group > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.enh-group-body {
+  padding: 0 10px 10px;
+}
+
 .table-panel table {
   width: 100%;
   border-collapse: collapse;

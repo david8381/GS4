@@ -225,72 +225,85 @@
               <div class="table-panel enhancive-panel">
                 <h2>Enhancives</h2>
                 <div class="helper" id="enhImportedSummary">Imported enhancive snapshot: none.</div>
-                <h3>Stat Enhancives</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Stat</th>
-                      <th>Enh Stat +</th>
-                      <th>Enh Bonus +</th>
-                      <th>Effective Bonus / Limit</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhStatTable"></tbody>
-                </table>
-                <h3>Skill Enhancives</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Skill</th>
-                      <th>Enh Rank +</th>
-                      <th>Enh Bonus +</th>
-                      <th>Effective Bonus / Limit</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhSkillTable"></tbody>
-                </table>
-                <h3>Imported Enhancive Items</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Source</th>
-                      <th>Active</th>
-                      <th>Effects</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhImportedItemsTable"></tbody>
-                </table>
-                <h3>Unresolved Imported Effects</h3>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Target</th>
-                      <th>Value / Limit</th>
-                      <th>Note</th>
-                      <th>Resolve</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhImportedUnresolvedTable"></tbody>
-                </table>
-                <h3>Manual Resolutions</h3>
-                <div class="inline-actions">
-                  <button class="btn ghost" id="addManualEnhItem" type="button">Add Manual Effect</button>
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Active</th>
-                      <th>Type</th>
-                      <th>Target</th>
-                      <th>Value</th>
-                      <th>Delete</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enhManualResolutionTable"></tbody>
-                </table>
+                <details class="enh-group" open>
+                  <summary>Equipment</summary>
+                  <div class="enh-group-body">
+                    <h3>Imported Enhancive Items</h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Source</th>
+                          <th>Active</th>
+                          <th>Effects</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enhImportedItemsTable"></tbody>
+                    </table>
+                    <h3>Unresolved Imported Effects</h3>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Category</th>
+                          <th>Target</th>
+                          <th>Value / Limit</th>
+                          <th>Note</th>
+                          <th>Resolve</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enhImportedUnresolvedTable"></tbody>
+                    </table>
+                    <h3>Manual Resolutions</h3>
+                    <div class="inline-actions">
+                      <button class="btn ghost" id="addManualEnhItem" type="button">Add Manual Effect</button>
+                    </div>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Item</th>
+                          <th>Active</th>
+                          <th>Type</th>
+                          <th>Target</th>
+                          <th>Value</th>
+                          <th>Delete</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enhManualResolutionTable"></tbody>
+                    </table>
+                  </div>
+                </details>
+                <details class="enh-group">
+                  <summary>Stat Enhancives</summary>
+                  <div class="enh-group-body">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Stat</th>
+                          <th>Enh Stat +</th>
+                          <th>Enh Bonus +</th>
+                          <th>Effective Bonus / Limit</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enhStatTable"></tbody>
+                    </table>
+                  </div>
+                </details>
+                <details class="enh-group">
+                  <summary>Skill Enhancives</summary>
+                  <div class="enh-group-body">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Skill</th>
+                          <th>Enh Rank +</th>
+                          <th>Enh Bonus +</th>
+                          <th>Effective Bonus / Limit</th>
+                        </tr>
+                      </thead>
+                      <tbody id="enhSkillTable"></tbody>
+                    </table>
+                  </div>
+                </details>
                 <div class="helper" id="enhStatus">Effective bonus is calculated per row and is capped by the shown limit.</div>
               </div>
             </section>
@@ -475,10 +488,10 @@
       <div data-footer></div>
     </div>
 
-    <script src="../site.js?v=0.1.30" defer></script>
-    <script src="../data/gs4-data.js?v=0.1.30"></script>
-    <script src="profile-logic.js?v=0.1.30"></script>
-    <script src="enhancive-import.js?v=0.1.30"></script>
-    <script src="profile.js?v=0.1.30"></script>
+    <script src="../site.js?v=0.1.31" defer></script>
+    <script src="../data/gs4-data.js?v=0.1.31"></script>
+    <script src="profile-logic.js?v=0.1.31"></script>
+    <script src="enhancive-import.js?v=0.1.31"></script>
+    <script src="profile.js?v=0.1.31"></script>
   </body>
 </html>
