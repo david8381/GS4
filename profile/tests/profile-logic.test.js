@@ -31,6 +31,18 @@ const {
   trainingPointsPerLevelForStats,
   estimateTotalTrainingPointsFromExperience,
   estimateSpentTrainingPointsFromRanks,
+  getStatAdjustment,
+  buildDerivedStatRows,
+  enforceStatEnhanciveRowLimits,
+  enforceSkillEnhanciveRowLimits,
+  getSkillTrainingRowName,
+  getSkillPoolKey,
+  getSkillPoolLabel,
+  formatPoolHeaderText,
+  formatTrainingCostDisplay,
+  getDisplaySkillCategory,
+  buildSkillRankCapContext,
+  getNextRankCostDisplay,
 } = require("../profile-logic.js");
 
 const stats = [
@@ -281,4 +293,93 @@ test("training point helpers compute per-level totals and spent pools", () => {
     getSkillPoolKey: (_skillName, rowName) => rowName,
   });
   assert.deepEqual(spent, { ptp: 8, mtp: 16 });
+});
+
+test("derived stat helpers combine ascension, enhancives, and racial bonus", () => {
+  const equipmentTotals = { stats: { agi: 4 } };
+  assert.deepEqual(
+    getStatAdjustment({
+      statKey: "agi",
+      ascensionState: { stats: { agi: { stat: 5, bonus: 0 } } },
+      enhanciveState: { stats: { agi: { stat: 0, bonus: 0 } } },
+      equipmentTotals,
+    }),
+    { ascStat: 5, ascBonus: 0, enhStat: 4, enhBonus: 0 }
+  );
+
+  const rows = buildDerivedStatRows({
+    stats: [{ key: "agi" }],
+    currentBaseStats: { agi: 70 },
+    raceName: "Dark Elf",
+    getRaceBonusModifierFn: (race, key) => (race === "Dark Elf" && key === "agi" ? 5 : 0),
+    ascensionState: { stats: { agi: { stat: 5, bonus: 0 } } },
+    enhanciveState: { stats: { agi: { stat: 0, bonus: 0 } } },
+    equipmentTotals,
+  });
+  assert.deepEqual(rows.agi, {
+    baseStat: 70,
+    baseBonus: 15,
+    ascStat: 5,
+    ascBonus: 0,
+    enhStat: 4,
+    enhBonus: 0,
+    enhEffective: 2,
+    enhValid: true,
+    finalStat: 79,
+    finalBonus: 19,
+  });
+});
+
+test("enhancive row limit helpers clamp stat and skill entries", () => {
+  assert.deepEqual(enforceStatEnhanciveRowLimits({ stat: 40, bonus: 20 }, "stat"), { stat: 40, bonus: 0 });
+  assert.deepEqual(
+    enforceSkillEnhanciveRowLimits({
+      entry: { rank: 50, bonus: 50 },
+      baseRanks: 0,
+    }),
+    { rank: 0, bonus: 50 }
+  );
+});
+
+test("skill cap helpers group pools and compute next rank cost", () => {
+  const spellCircles = new Set(["Minor Elemental"]);
+  const loreSkillNames = new Set(["Elemental Lore - Air"]);
+  assert.equal(getSkillTrainingRowName("Minor Elemental", spellCircles, loreSkillNames), "Spell Research");
+  assert.equal(getSkillTrainingRowName("Elemental Lore - Air", spellCircles, loreSkillNames), "Elemental Lore");
+  assert.equal(getSkillPoolKey("Minor Elemental", "Spell Research", spellCircles), "pool:spell-research");
+  assert.equal(getSkillPoolLabel("pool:lore-elemental", "Elemental Lore"), "Elemental Lore");
+  assert.equal(formatPoolHeaderText("Spell Research", 10, 20), "Spell Research Max Ranks: 20 (Used: 10)");
+  assert.equal(formatTrainingCostDisplay(1, 2), "1/2");
+  assert.equal(getDisplaySkillCategory("Perception", { Perception: "Survival and Utility" }), "General Skills");
+
+  const capContext = buildSkillRankCapContext({
+    skills: [
+      { name: "Minor Elemental", ranks: 35 },
+      { name: "Elemental Lore - Air", ranks: 12 },
+    ],
+    profession: "Sorcerer",
+    level: 80,
+    costProfessionOrder: ["Sorcerer"],
+    maxPerLevelRows: {
+      "Spell Research": [3],
+      "Elemental Lore": [1],
+    },
+    spellCircles,
+    loreSkillNames,
+  });
+
+  assert.equal(capContext.bySkill.get("minor elemental").maxRanks, 246);
+  assert.equal(
+    getNextRankCostDisplay({
+      skill: { name: "Minor Elemental", ranks: 35 },
+      profession: "Sorcerer",
+      level: 80,
+      capContext,
+      costProfessionOrder: ["Sorcerer"],
+      trainingCostRows: { "Spell Research": [[0, 20]] },
+      spellCircles,
+      loreSkillNames,
+    }),
+    "0/20"
+  );
 });

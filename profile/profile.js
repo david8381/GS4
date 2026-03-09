@@ -156,6 +156,49 @@ const estimateSpentTrainingPointsFromRanks = (skills, profession, level) => (
     multiplierUnitsForRanksFn: multiplierUnitsForRanks,
   })
 );
+const getStatAdjustment = (statKey) => logic.getStatAdjustment({
+  statKey,
+  ascensionState,
+  enhanciveState,
+  equipmentTotals: getEquipmentEnhanciveTotals(),
+});
+const getDerivedStatRows = () => logic.buildDerivedStatRows({
+  stats,
+  currentBaseStats,
+  raceName: getSelectedRaceName(),
+  getRaceBonusModifierFn: getRaceBonusModifier,
+  statToBonusFn: statToBonus,
+  ascensionState,
+  enhanciveState,
+  equipmentTotals: getEquipmentEnhanciveTotals(),
+  clampFn: clamp,
+});
+const getSkillTrainingRowName = (skillName) => logic.getSkillTrainingRowName(skillName, spellCircles, loreSkillNames);
+const getSkillPoolKey = (skillName, trainingRowName) => logic.getSkillPoolKey(skillName, trainingRowName, spellCircles);
+const getSkillPoolLabel = (poolKey, trainingRowName) => logic.getSkillPoolLabel(poolKey, trainingRowName);
+const formatPoolHeaderText = (poolLabel, poolUsed, poolMax) => logic.formatPoolHeaderText(poolLabel, poolUsed, poolMax);
+const formatTrainingCostDisplay = (ptp, mtp) => logic.formatTrainingCostDisplay(ptp, mtp);
+const getDisplaySkillCategory = (skillName) => logic.getDisplaySkillCategory(skillName, skillCategoryByName);
+const buildSkillRankCapContext = (skills = currentSkills) => logic.buildSkillRankCapContext({
+  skills,
+  profession: profileProfession.value,
+  level: Number(profileLevel.value),
+  costProfessionOrder,
+  maxPerLevelRows,
+  spellCircles,
+  loreSkillNames,
+  skillKeyFn: skillKey,
+});
+const getNextRankCostDisplay = (skill, capContext) => logic.getNextRankCostDisplay({
+  skill,
+  profession: profileProfession.value,
+  level: Number(profileLevel.value),
+  capContext,
+  costProfessionOrder,
+  trainingCostRows,
+  spellCircles,
+  loreSkillNames,
+});
 
 const defaultStatMap = (value = 0) => logic.defaultStatMap(stats, value);
 const canonicalSkillName = (rawName) => logic.canonicalSkillName(rawName, skillAliasMap, skillCatalog);
@@ -655,90 +698,19 @@ function syncSkillAdjustmentState() {
   syncAscensionStateFromAbilities();
 }
 
-function getStatAdjustment(statKey) {
-  const equipmentTotals = getEquipmentEnhanciveTotals();
-  return {
-    ascStat: Math.max(0, Math.trunc(Number(ascensionState.stats?.[statKey]?.stat) || 0)),
-    ascBonus: Math.max(0, Math.trunc(Number(ascensionState.stats?.[statKey]?.bonus) || 0)),
-    enhStat: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[statKey]?.stat) || 0)) + Math.max(0, Math.trunc(Number(equipmentTotals.stats?.[statKey]) || 0)),
-    enhBonus: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[statKey]?.bonus) || 0)),
-  };
-}
-
-function getDerivedStatRows() {
-  const raceName = getSelectedRaceName();
-  const rows = {};
-
-  stats.forEach((stat) => {
-    const adj = getStatAdjustment(stat.key);
-    const baseStat = clamp(Number(currentBaseStats[stat.key] ?? 50), 1, 200);
-    const racial = getRaceBonusModifier(raceName, stat.key);
-    const baseBonus = statToBonus(baseStat) + racial;
-    const finalStat = clamp(baseStat + adj.ascStat + adj.enhStat, 1, 200);
-    const finalBonus = statToBonus(finalStat) + racial + adj.ascBonus + adj.enhBonus;
-    const enhEffective = Math.floor(adj.enhStat / 2) + adj.enhBonus;
-    const enhValid = adj.enhStat <= 40 && adj.enhBonus <= 20 && enhEffective <= 20;
-    rows[stat.key] = {
-      baseStat,
-      baseBonus,
-      ascStat: adj.ascStat,
-      ascBonus: adj.ascBonus,
-      enhStat: adj.enhStat,
-      enhBonus: adj.enhBonus,
-      enhEffective,
-      enhValid,
-      finalStat,
-      finalBonus,
-    };
-  });
-
-  return rows;
-}
-
 function enforceStatEnhanciveRowLimits(statKey, changedKind = null) {
   if (!enhanciveState.stats[statKey]) enhanciveState.stats[statKey] = { stat: 0, bonus: 0 };
-  let enhStat = Math.max(0, Math.trunc(Number(enhanciveState.stats[statKey].stat) || 0));
-  let enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.stats[statKey].bonus) || 0));
-  enhStat = Math.min(enhStat, 40);
-  enhBonus = Math.min(enhBonus, 20);
-
-  const statCapForBonus = Math.max(0, Math.min(40, (20 - enhBonus) * 2 + 1));
-  const bonusCapForStat = Math.max(0, Math.min(20, 20 - Math.floor(enhStat / 2)));
-
-  if (changedKind === "stat") {
-    enhBonus = Math.min(enhBonus, bonusCapForStat);
-  } else if (changedKind === "bonus") {
-    enhStat = Math.min(enhStat, statCapForBonus);
-  } else {
-    enhStat = Math.min(enhStat, statCapForBonus);
-    enhBonus = Math.min(enhBonus, Math.max(0, Math.min(20, 20 - Math.floor(enhStat / 2))));
-  }
-
-  enhanciveState.stats[statKey].stat = enhStat;
-  enhanciveState.stats[statKey].bonus = enhBonus;
+  enhanciveState.stats[statKey] = logic.enforceStatEnhanciveRowLimits(enhanciveState.stats[statKey], changedKind);
 }
 
 function enforceSkillEnhanciveRowLimits(skillKeyName, baseRanks, changedKind = null) {
   if (!enhanciveState.skills[skillKeyName]) enhanciveState.skills[skillKeyName] = { rank: 0, bonus: 0 };
-  let enhRank = Math.max(0, Math.trunc(Number(enhanciveState.skills[skillKeyName].rank) || 0));
-  let enhBonus = Math.max(0, Math.trunc(Number(enhanciveState.skills[skillKeyName].bonus) || 0));
-  enhRank = Math.min(enhRank, 50);
-  enhBonus = Math.min(enhBonus, 50);
-
-  const rankGain = (rankValue) => skillBonusFromRanks(baseRanks + rankValue) - skillBonusFromRanks(baseRanks);
-  const maxBonusForRank = (rankValue) => Math.max(0, Math.min(50, 50 - rankGain(rankValue)));
-
-  if (changedKind === "rank") {
-    enhBonus = Math.min(enhBonus, maxBonusForRank(enhRank));
-  } else if (changedKind === "bonus") {
-    while (enhRank > 0 && rankGain(enhRank) + enhBonus > 50) enhRank -= 1;
-  } else {
-    while (enhRank > 0 && rankGain(enhRank) + enhBonus > 50) enhRank -= 1;
-    enhBonus = Math.min(enhBonus, maxBonusForRank(enhRank));
-  }
-
-  enhanciveState.skills[skillKeyName].rank = enhRank;
-  enhanciveState.skills[skillKeyName].bonus = enhBonus;
+  enhanciveState.skills[skillKeyName] = logic.enforceSkillEnhanciveRowLimits({
+    entry: enhanciveState.skills[skillKeyName],
+    baseRanks,
+    changedKind,
+    skillBonusFromRanksFn: skillBonusFromRanks,
+  });
 }
 
 function buildStatInputs() {
@@ -1110,46 +1082,6 @@ function updateArmorWeight() {
   }
 }
 
-function getSkillTrainingRowName(skillName) {
-  if (spellCircles.has(skillName)) return "Spell Research";
-  if (loreSkillNames.has(skillName)) {
-    if (skillName.startsWith("Elemental Lore -")) return "Elemental Lore";
-    if (skillName.startsWith("Spiritual Lore -")) return "Spiritual Lore";
-    if (skillName.startsWith("Sorcerous Lore -")) return "Sorcerous Lore";
-    if (skillName.startsWith("Mental Lore -")) return "Mental Lore";
-  }
-  return skillName;
-}
-
-function getSkillPoolKey(skillName, trainingRowName) {
-  if (spellCircles.has(skillName) || trainingRowName === "Spell Research") return "pool:spell-research";
-  if (trainingRowName === "Elemental Lore") return "pool:lore-elemental";
-  if (trainingRowName === "Spiritual Lore") return "pool:lore-spiritual";
-  if (trainingRowName === "Sorcerous Lore") return "pool:lore-sorcerous";
-  if (trainingRowName === "Mental Lore") return "pool:lore-mental";
-  return `pool:skill:${skillKey(skillName)}`;
-}
-
-function getSkillPoolLabel(poolKey, trainingRowName) {
-  if (poolKey === "pool:spell-research") return "Spell Research";
-  if (poolKey.startsWith("pool:lore-")) return trainingRowName;
-  return trainingRowName;
-}
-
-function formatPoolHeaderText(poolLabel, poolUsed, poolMax) {
-  return `${poolLabel} Max Ranks: ${poolMax} (Used: ${poolUsed})`;
-}
-
-function formatTrainingCostDisplay(ptp, mtp) {
-  return `${ptp}/${mtp}`;
-}
-
-function getDisplaySkillCategory(skillName) {
-  const baseCategory = skillCategoryByName[skillName] || "Other";
-  if (baseCategory === "Subterfuge" || baseCategory === "Survival and Utility") return "General Skills";
-  return baseCategory;
-}
-
 const displaySkillCategoryOrder = [
   "Armor and Shield",
   "Weapon Skills",
@@ -1160,85 +1092,6 @@ const displaySkillCategoryOrder = [
   "Spell Circles",
   "Other",
 ];
-
-function buildSkillRankCapContext(skills = currentSkills) {
-  const professionIndex = costProfessionOrder.indexOf(profileProfession.value);
-  const level = Math.max(0, Math.trunc(Number(profileLevel.value) || 0));
-  const effectiveLevels = level + 2;
-  const poolTotals = new Map();
-  const entries = [];
-  const byPool = new Map();
-
-  skills.forEach((skill) => {
-    const key = skillKey(skill.name);
-    const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    const trainingRowName = getSkillTrainingRowName(skill.name);
-    const perLevelCap = professionIndex >= 0 ? maxPerLevelRows[trainingRowName]?.[professionIndex] : null;
-    const poolKey = getSkillPoolKey(skill.name, trainingRowName);
-    const maxTotal = Number.isFinite(perLevelCap) ? Math.max(0, Math.trunc(perLevelCap * effectiveLevels)) : null;
-    entries.push({ key, ranks, trainingRowName, poolKey, maxTotal });
-    if (maxTotal == null) return;
-    poolTotals.set(poolKey, (poolTotals.get(poolKey) || 0) + ranks);
-    if (!byPool.has(poolKey)) {
-      byPool.set(poolKey, {
-        poolKey,
-        poolLabel: getSkillPoolLabel(poolKey, trainingRowName),
-        poolMax: maxTotal,
-        pooled: poolKey.startsWith("pool:lore-") || poolKey === "pool:spell-research",
-      });
-    }
-  });
-
-  const bySkill = new Map();
-  byPool.forEach((pool) => {
-    pool.poolUsed = poolTotals.get(pool.poolKey) || 0;
-  });
-
-  entries.forEach((entry) => {
-    if (entry.maxTotal == null) {
-      bySkill.set(entry.key, null);
-      return;
-    }
-    const poolUsed = poolTotals.get(entry.poolKey) || 0;
-    const maxRanks = Math.max(0, entry.maxTotal - (poolUsed - entry.ranks));
-    const poolMeta = byPool.get(entry.poolKey);
-    bySkill.set(entry.key, {
-      trainingRowName: entry.trainingRowName,
-      poolKey: entry.poolKey,
-      poolLabel: poolMeta?.poolLabel || entry.trainingRowName,
-      pooled: Boolean(poolMeta?.pooled),
-      poolUsed: poolMeta?.poolUsed ?? poolUsed,
-      maxRanks,
-      poolMax: entry.maxTotal,
-    });
-  });
-
-  return { bySkill, byPool };
-}
-
-function getNextRankCostDisplay(skill, capContext) {
-  const professionIndex = costProfessionOrder.indexOf(profileProfession.value);
-  if (professionIndex < 0) return "—";
-
-  const key = skillKey(skill.name);
-  const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-  const cap = capContext.bySkill.get(key);
-  if (cap && ranks >= cap.maxRanks) return "—";
-
-  const trainingRowName = cap?.trainingRowName || getSkillTrainingRowName(skill.name);
-  const costRow = trainingCostRows[trainingRowName]?.[professionIndex];
-  if (!Array.isArray(costRow) || costRow.length < 2) return "—";
-
-  const basePtp = Math.max(0, Math.trunc(Number(costRow[0]) || 0));
-  const baseMtp = Math.max(0, Math.trunc(Number(costRow[1]) || 0));
-  const effectiveLevels = Math.max(0, Math.trunc(Number(profileLevel.value) || 0)) + 2;
-  const oneXLimit = effectiveLevels;
-  const twoXLimit = effectiveLevels * 2;
-
-  const nextOrdinal = (cap?.pooled ? cap.poolUsed : ranks) + 1;
-  const multiplier = nextOrdinal <= oneXLimit ? 1 : (nextOrdinal <= twoXLimit ? 2 : 4);
-  return formatTrainingCostDisplay(basePtp * multiplier, baseMtp * multiplier);
-}
 
 function renderSkillsTable(skills) {
   const visibleSkills = getVisibleSkills(skills);
