@@ -123,17 +123,32 @@
           knownSource: true,
         });
         if (selectedItem) {
-          currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
-            name: selectedItem.name,
-            linkedImportedName: selectedItem.name,
-            category: entry.category,
-            type: resolvedEffect.type,
-            label: resolvedEffect.label,
-            target: resolvedEffect.target,
-            value: resolvedEffect.value,
-            limit: resolvedEffect.limit,
-            active: true,
-          }));
+          const existingStandalone = currentEnhanciveEquipment.manualResolutions.items.find((item) => {
+            const effect = item?.effects?.[0] || {};
+            return !String(item?.linkedImportedName || "").trim()
+              && String(item?.name || "").trim() === String(selectedItem.name || "").trim()
+              && String(effect.type || "") === String(resolvedEffect.type || "")
+              && String(effect.target || "") === String(resolvedEffect.target || "")
+              && Math.trunc(Number(effect.value) || 0) === Math.trunc(Number(resolvedEffect.value) || 0)
+              && Math.trunc(Number(effect.limit) || 0) === Math.trunc(Number(resolvedEffect.limit) || 0);
+          });
+
+          if (existingStandalone) {
+            existingStandalone.linkedImportedName = selectedItem.name;
+            existingStandalone.active = true;
+          } else {
+            currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
+              name: selectedItem.name,
+              linkedImportedName: selectedItem.name,
+              category: entry.category,
+              type: resolvedEffect.type,
+              label: resolvedEffect.label,
+              target: resolvedEffect.target,
+              value: resolvedEffect.value,
+              limit: resolvedEffect.limit,
+              active: true,
+            }));
+          }
         } else {
           currentEnhanciveEquipment.manualResolutions.items.push(createManualEnhanciveItem({
             name: "Resolved Enhancive",

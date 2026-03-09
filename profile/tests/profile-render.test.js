@@ -23,3 +23,17 @@ test('getStandaloneManualResolutionItems excludes linked imported-item resolutio
   assert.equal(result.length, 1);
   assert.equal(result[0].id, 'manual-2');
 });
+
+test('getStandaloneManualResolutionItems excludes migrated linked items after old duplicate state', () => {
+  const items = [
+    {
+      id: 'manual-legacy',
+      name: 'a tin-bound ceramic badge',
+      linkedImportedName: 'a tin-bound ceramic badge',
+      effects: [{ type: 'stat', target: 'agi', label: 'Agility', value: 4 }],
+    },
+  ];
+
+  const result = profileRender.getStandaloneManualResolutionItems(items);
+  assert.equal(result.length, 0);
+});
