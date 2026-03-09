@@ -5,6 +5,17 @@
     root.ProfileLogic = factory();
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const ENHANCIVE_RESOURCE_OPTIONS = [
+    { value: 'max_health', label: 'Max Health' },
+    { value: 'max_mana', label: 'Max Mana' },
+    { value: 'max_spirit', label: 'Max Spirit' },
+    { value: 'max_stamina', label: 'Max Stamina' },
+    { value: 'health_recovery', label: 'Health Recovery' },
+    { value: 'mana_recovery', label: 'Mana Recovery' },
+    { value: 'spirit_recovery', label: 'Spirit Recovery' },
+    { value: 'stamina_recovery', label: 'Stamina Recovery' },
+  ];
+
   function clamp(value, min, max) {
     if (!Number.isFinite(value)) return min;
     return Math.min(Math.max(value, min), max);
@@ -212,7 +223,192 @@
     };
   }
 
+  function normalizeEnhanciveTargetLabel(label) {
+    return String(label || '')
+      .replace(/\([^)]*\)/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function buildEnhanciveTargetOptions(effectType, stats, skillCatalog) {
+    if (effectType === 'stat' || effectType === 'stat_bonus') {
+      return (stats || []).map((stat) => ({ value: stat.key, label: stat.label }));
+    }
+    if (effectType === 'skill_rank' || effectType === 'skill_bonus') {
+      return (skillCatalog || []).map((name) => ({ value: skillKey(name), label: name }));
+    }
+    return ENHANCIVE_RESOURCE_OPTIONS;
+  }
+
+  function guessEnhanciveEffectType(category, label, stats) {
+    const normalizedCategory = String(category || '').trim().toLowerCase();
+    const normalizedLabel = normalizeEnhanciveTargetLabel(label);
+    const stat = (stats || []).find((entry) => entry.label.toLowerCase() === normalizedLabel.toLowerCase());
+    if (normalizedCategory === 'stats' || stat) return 'stat';
+    if (normalizedCategory === 'skills') return 'skill_bonus';
+    if (normalizedCategory === 'resources') return 'resource';
+    return 'unknown';
+  }
+
+  function guessEnhanciveTarget(params) {
+    const {
+      effectType,
+      label,
+      stats,
+      skillCatalog,
+      skillAliasMap,
+    } = params || {};
+    const normalizedLabel = normalizeEnhanciveTargetLabel(label);
+    if (effectType === 'stat' || effectType === 'stat_bonus') {
+      const stat = (stats || []).find((entry) => (
+        entry.label.toLowerCase() === normalizedLabel.toLowerCase()
+        || entry.abbr.toLowerCase() === normalizedLabel.toLowerCase()
+      ));
+      return stat?.key || '';
+    }
+    if (effectType === 'skill_rank' || effectType === 'skill_bonus') {
+      const canonical = canonicalSkillName(normalizedLabel, skillAliasMap, skillCatalog);
+      return canonical ? skillKey(canonical) : '';
+    }
+    if (effectType === 'resource') {
+      const labelKey = normalizedLabel.toLowerCase();
+      if (labelKey === 'max health' || labelKey === 'maximum health') return 'max_health';
+      if (labelKey === 'max mana' || labelKey === 'maximum mana') return 'max_mana';
+      if (labelKey === 'max spirit' || labelKey === 'maximum spirit' || labelKey === 'spirit') return 'max_spirit';
+      if (labelKey === 'max stamina' || labelKey === 'maximum stamina') return 'max_stamina';
+      if (labelKey === 'health recovery' || labelKey === 'health regen' || labelKey === 'health regeneration') return 'health_recovery';
+      if (labelKey === 'mana recovery' || labelKey === 'mana regen' || labelKey === 'mana regeneration') return 'mana_recovery';
+      if (labelKey === 'spirit recovery' || labelKey === 'spirit regen' || labelKey === 'spirit regeneration') return 'spirit_recovery';
+      if (labelKey === 'stamina recovery' || labelKey === 'stamina regen' || labelKey === 'stamina regeneration') return 'stamina_recovery';
+    }
+    return '';
+  }
+
+  function effectDisplayType(effect) {
+    const type = String(effect?.type || '');
+    if (type === 'stat') return 'Stat +';
+    if (type === 'stat_bonus') return 'Stat Bonus +';
+    if (type === 'skill_rank') return 'Skill Rank +';
+    if (type === 'skill_bonus') return 'Skill Bonus +';
+    if (type === 'resource') return 'Resource';
+    return 'Unknown';
+  }
+
+  function effectDisplayTarget(effect, stats, skillCatalog) {
+    const type = String(effect?.type || '');
+    const target = String(effect?.target || '');
+    if (type === 'stat' || type === 'stat_bonus') {
+      return (stats || []).find((entry) => entry.key === target)?.label || effect?.label || target;
+    }
+    if (type === 'skill_rank' || type === 'skill_bonus') {
+      return (skillCatalog || []).find((name) => skillKey(name) === target) || effect?.label || target;
+    }
+    if (type === 'resource') {
+      return ENHANCIVE_RESOURCE_OPTIONS.find((entry) => entry.value === target)?.label || effect?.label || target;
+    }
+    return effect?.label || target || 'Unknown';
+  }
+
+  function normalizeEnhanciveEffectForUse(effect, stats, skillCatalog, skillAliasMap) {
+    const guessedType = guessEnhanciveEffectType(effect?.category, effect?.label || effect?.target, stats);
+    const type = effect?.type && effect.type !== 'unknown' ? effect.type : guessedType;
+    const target = effect?.target && effect.target !== effect?.label
+      ? effect.target
+      : guessEnhanciveTarget({ effectType: type, label: effect?.label || effect?.target, stats, skillCatalog, skillAliasMap });
+    return {
+      ...effect,
+      type,
+      target,
+      label: effect?.label || effect?.target || '',
+      value: Math.max(0, Math.trunc(Number(effect?.value) || 0)),
+      limit: Math.max(0, Math.trunc(Number(effect?.limit) || 0)),
+    };
+  }
+
+  function normalizeEnhanciveItemLinkName(value) {
+    return String(value || '')
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function normalizeProfileNameForMatch(value) {
+    return String(value || '')
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function normalizeBadgeDefaults(raw) {
+    const source = raw && typeof raw === 'object' ? raw : {};
+    const components = Array.isArray(source.components)
+      ? source.components.slice(0, 5).map((value) => clamp(Math.trunc(Number(value) || 0), 0, 10))
+      : [0, 0, 0, 0, 0];
+    while (components.length < 5) components.push(0);
+
+    const fallbackBoosts = [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }];
+    const boosts = Array.isArray(source.boosts)
+      ? source.boosts.slice(0, 3).map((entry, index) => {
+        const fallback = fallbackBoosts[index] || fallbackBoosts[0];
+        return {
+          id: Math.max(1, Math.trunc(Number(entry?.id) || fallback.id)),
+          value: Math.max(0, Math.trunc(Number(entry?.value) || 0)),
+        };
+      })
+      : fallbackBoosts.map((entry) => ({ ...entry }));
+    while (boosts.length < 3) boosts.push({ ...fallbackBoosts[boosts.length] });
+
+    return {
+      lifetimeBp: Math.max(0, Math.trunc(Number(source.lifetimeBp) || 0)),
+      components,
+      boosts,
+    };
+  }
+
+  function resolveStatKeyFromAscName(name, stats) {
+    const raw = String(name || '').trim().toLowerCase();
+    if (!raw) return null;
+    const direct = (stats || []).find((stat) => stat.key === raw);
+    if (direct) return direct.key;
+    const byAbbr = (stats || []).find((stat) => stat.abbr.toLowerCase() === raw);
+    if (byAbbr) return byAbbr.key;
+    const byLabel = (stats || []).find((stat) => stat.label.toLowerCase() === raw);
+    if (byLabel) return byLabel.key;
+    return null;
+  }
+
+  function getAscensionDisplayGroup(ability) {
+    const mnemonic = String(ability?.mnemonic || '').toLowerCase();
+    if (mnemonic === 'porter' || mnemonic === 'trandest') return 'other';
+    const raw = String(ability?.subcategory || '').toLowerCase();
+    if (raw.includes('stat')) return 'stat';
+    if (raw.includes('skill')) return 'skill';
+    if (raw.includes('resist')) return 'resist';
+    if (raw.includes('regen')) return 'regen';
+    return 'other';
+  }
+
+  function ascensionRankCost(ability, rankOrdinal) {
+    const ordinal = Math.max(1, Math.trunc(Number(rankOrdinal) || 1));
+    if (ability?.mnemonic === 'trandest') {
+      return ordinal <= 5 ? ordinal * 10 : 50;
+    }
+    return Math.ceil(ordinal / 5);
+  }
+
+  function ascensionPointsForRanks(ranks, ability = null) {
+    const capped = Math.max(0, Math.trunc(Number(ranks) || 0));
+    let total = 0;
+    for (let rank = 1; rank <= capped; rank += 1) {
+      total += ascensionRankCost(ability, rank);
+    }
+    return total;
+  }
+
   return {
+    ENHANCIVE_RESOURCE_OPTIONS,
     clamp,
     normalizeRaceName,
     normalizeRaceForModifierLookup,
@@ -230,5 +426,19 @@
     estimateTotalAscensionPoints,
     multiplierUnitsForRanks,
     summarizeTrainingPointConversion,
+    normalizeEnhanciveTargetLabel,
+    buildEnhanciveTargetOptions,
+    guessEnhanciveEffectType,
+    guessEnhanciveTarget,
+    effectDisplayType,
+    effectDisplayTarget,
+    normalizeEnhanciveEffectForUse,
+    normalizeEnhanciveItemLinkName,
+    normalizeProfileNameForMatch,
+    normalizeBadgeDefaults,
+    resolveStatKeyFromAscName,
+    getAscensionDisplayGroup,
+    ascensionRankCost,
+    ascensionPointsForRanks,
   };
 });

@@ -15,7 +15,25 @@ const {
   estimateTotalAscensionPoints,
   multiplierUnitsForRanks,
   summarizeTrainingPointConversion,
+  normalizeEnhanciveTargetLabel,
+  guessEnhanciveEffectType,
+  guessEnhanciveTarget,
+  normalizeEnhanciveEffectForUse,
+  normalizeEnhanciveItemLinkName,
+  normalizeProfileNameForMatch,
+  normalizeBadgeDefaults,
+  resolveStatKeyFromAscName,
+  getAscensionDisplayGroup,
+  ascensionRankCost,
+  ascensionPointsForRanks,
 } = require("../profile-logic.js");
+
+const stats = [
+  { key: "agi", label: "Agility", abbr: "AGI" },
+  { key: "aur", label: "Aura", abbr: "AUR" },
+];
+const skillCatalog = ["Arcane Symbols", "Magic Item Use"];
+const skillAliasMap = { "arc symbols": "Arcane Symbols" };
 
 test("clamp limits values", () => {
   assert.equal(clamp(5, 1, 10), 5);
@@ -141,4 +159,70 @@ test("summarizeTrainingPointConversion mirrors 2:1 pool conversion", () => {
       remainingDeficitMtp: 0,
     }
   );
+});
+
+test("enhancive target helpers normalize labels and infer types/targets", () => {
+  assert.equal(normalizeEnhanciveTargetLabel("Agility (AGI)"), "Agility");
+  assert.equal(guessEnhanciveEffectType("Stats", "Agility (AGI)", stats), "stat");
+  assert.equal(guessEnhanciveEffectType("Resources", "Max Mana", stats), "resource");
+  assert.equal(
+    guessEnhanciveTarget({ effectType: "stat", label: "Agility (AGI)", stats, skillCatalog, skillAliasMap }),
+    "agi"
+  );
+  assert.equal(
+    guessEnhanciveTarget({ effectType: "skill_bonus", label: "arc symbols", stats, skillCatalog, skillAliasMap }),
+    "arcane symbols"
+  );
+  assert.equal(
+    guessEnhanciveTarget({ effectType: "resource", label: "Mana Regen", stats, skillCatalog, skillAliasMap }),
+    "mana_recovery"
+  );
+});
+
+test("normalizeEnhanciveEffectForUse canonicalizes effect fields", () => {
+  assert.deepEqual(
+    normalizeEnhanciveEffectForUse(
+      { category: "Stats", label: "Agility (AGI)", value: "4", limit: "40" },
+      stats,
+      skillCatalog,
+      skillAliasMap
+    ),
+    {
+      category: "Stats",
+      label: "Agility (AGI)",
+      type: "stat",
+      target: "agi",
+      value: 4,
+      limit: 40,
+    }
+  );
+});
+
+test("profile and item link name normalization is stable", () => {
+  assert.equal(normalizeEnhanciveItemLinkName("  A Tin-Bound   Ceramic Badge "), "a tin-bound ceramic badge");
+  assert.equal(normalizeProfileNameForMatch("  Sajehn "), "sajehn");
+});
+
+test("normalizeBadgeDefaults clamps malformed badge state", () => {
+  assert.deepEqual(
+    normalizeBadgeDefaults({
+      lifetimeBp: "123",
+      components: [1, 11],
+      boosts: [{ id: "5", value: "9" }],
+    }),
+    {
+      lifetimeBp: 123,
+      components: [1, 10, 0, 0, 0],
+      boosts: [{ id: 5, value: 9 }, { id: 22, value: 0 }, { id: 87, value: 0 }],
+    }
+  );
+});
+
+test("ascension helper functions group and cost ranks correctly", () => {
+  assert.equal(resolveStatKeyFromAscName("Agility", stats), "agi");
+  assert.equal(getAscensionDisplayGroup({ subcategory: "Resist", mnemonic: "resistacid" }), "resist");
+  assert.equal(getAscensionDisplayGroup({ subcategory: "Other", mnemonic: "trandest" }), "other");
+  assert.equal(ascensionRankCost({ mnemonic: "agility" }, 6), 2);
+  assert.equal(ascensionRankCost({ mnemonic: "trandest" }, 5), 50);
+  assert.equal(ascensionPointsForRanks(6, { mnemonic: "agility" }), 7);
 });
