@@ -407,6 +407,181 @@
     return total;
   }
 
+  function buildDefaultAscensionAbilities(defaultCatalog) {
+    return (defaultCatalog || []).map((entry) => ({
+      name: entry.name,
+      mnemonic: entry.mnemonic,
+      cap: entry.cap,
+      category: entry.category || 'Common',
+      subcategory: entry.subcategory || 'Skill',
+      ranks: 0,
+    }));
+  }
+
+  function normalizeAscensionAbilities(entries, defaultCatalog) {
+    const byMnemonic = new Map();
+    buildDefaultAscensionAbilities(defaultCatalog).forEach((entry) => {
+      byMnemonic.set(entry.mnemonic, { ...entry });
+    });
+
+    (entries || []).forEach((entry) => {
+      const mnemonic = String(entry?.mnemonic || '').trim().toLowerCase();
+      if (!mnemonic) return;
+      const existing = byMnemonic.get(mnemonic);
+      const cap = Math.max(0, Math.trunc(Number(entry?.cap ?? existing?.cap ?? 50) || 50));
+      const ranks = clamp(Math.trunc(Number(entry?.ranks ?? existing?.ranks ?? 0) || 0), 0, cap);
+      byMnemonic.set(mnemonic, {
+        name: String(entry?.name || existing?.name || mnemonic).trim() || mnemonic,
+        mnemonic,
+        cap,
+        category: String(entry?.category || existing?.category || 'Common'),
+        subcategory: String(entry?.subcategory || existing?.subcategory || 'Skill'),
+        ranks,
+      });
+    });
+
+    const groupOrder = { stat: 0, skill: 1, resist: 2, regen: 3, other: 4 };
+    const groupIndex = (ability) => {
+      const raw = String(ability?.subcategory || '').toLowerCase();
+      if (raw.includes('stat')) return groupOrder.stat;
+      if (raw.includes('skill')) return groupOrder.skill;
+      if (raw.includes('resist')) return groupOrder.resist;
+      if (raw.includes('regen')) return groupOrder.regen;
+      return groupOrder.other;
+    };
+
+    return Array.from(byMnemonic.values()).sort((a, b) => {
+      const groupDiff = groupIndex(a) - groupIndex(b);
+      if (groupDiff !== 0) return groupDiff;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  function trainingPointsPerLevelForStats(statSnapshot, profession, professionPrimeReqs) {
+    const primes = new Set(professionPrimeReqs?.[profession] || []);
+    const weighted = (key) => {
+      const value = clamp(Number(statSnapshot?.[key] ?? 50), 1, 100);
+      return primes.has(key) ? value * 2 : value;
+    };
+    const str = weighted('str');
+    const con = weighted('con');
+    const dex = weighted('dex');
+    const agi = weighted('agi');
+    const aur = weighted('aur');
+    const dis = weighted('dis');
+    const log = weighted('log');
+    const int = weighted('int');
+    const wis = weighted('wis');
+    const inf = weighted('inf');
+    const hybrid = (aur + dis) / 2;
+
+    const ptpPerLevel = Math.max(0, Math.floor((str + con + dex + agi + hybrid) / 20 + 25));
+    const mtpPerLevel = Math.max(0, Math.floor((log + int + wis + inf + hybrid) / 20 + 25));
+    return { ptpPerLevel, mtpPerLevel };
+  }
+
+  function estimateTotalTrainingPointsFromExperience(params) {
+    const {
+      experience,
+      profession,
+      levelThresholds,
+      getTrainingPointStatsForLevel,
+      professionPrimeReqs,
+    } = params || {};
+    const totalExp = Math.max(0, Math.trunc(Number(experience) || 0));
+    const thresholdEntries = Array.isArray(levelThresholds) ? levelThresholds : [];
+    const capIndex = thresholdEntries.length > 100 ? 100 : Math.max(0, thresholdEntries.length - 1);
+    const capExp = Math.max(0, Math.trunc(Number(levelThresholds?.[capIndex]) || 0));
+    const expForLeveledGain = Math.min(totalExp, capExp);
+
+    let totalPtp = 0;
+    let totalMtp = 0;
+
+    const level0Stats = getTrainingPointStatsForLevel?.(0) || {};
+    const level0Gain = trainingPointsPerLevelForStats(level0Stats, profession, professionPrimeReqs);
+    totalPtp += level0Gain.ptpPerLevel;
+    totalMtp += level0Gain.mtpPerLevel;
+
+    for (let level = 0; level < 100; level += 1) {
+      const start = levelThresholds?.[level];
+      const end = levelThresholds?.[level + 1];
+      if (expForLeveledGain <= start) break;
+      const gained = Math.min(expForLeveledGain, end) - start;
+      if (gained <= 0) continue;
+      const interval = Math.max(1, end - start);
+      const perLevel = trainingPointsPerLevelForStats(
+        getTrainingPointStatsForLevel?.(Math.min(100, level + 1)) || {},
+        profession,
+        professionPrimeReqs
+      );
+      if (gained >= interval) {
+        totalPtp += perLevel.ptpPerLevel;
+        totalMtp += perLevel.mtpPerLevel;
+      } else {
+        totalPtp += Math.floor((gained * perLevel.ptpPerLevel) / interval);
+        totalMtp += Math.floor((gained * perLevel.mtpPerLevel) / interval);
+        break;
+      }
+    }
+
+    if (totalExp > capExp) {
+      const postCapChunks = Math.floor((totalExp - capExp) / 2500);
+      totalPtp += postCapChunks;
+      totalMtp += postCapChunks;
+    }
+
+    return {
+      ptp: Math.max(0, Math.trunc(totalPtp)),
+      mtp: Math.max(0, Math.trunc(totalMtp)),
+    };
+  }
+
+  function estimateSpentTrainingPointsFromRanks(params) {
+    const {
+      skills,
+      profession,
+      level,
+      costProfessionOrder,
+      trainingCostRows,
+      getSkillTrainingRowName,
+      getSkillPoolKey,
+      multiplierUnitsForRanksFn = multiplierUnitsForRanks,
+    } = params || {};
+    const professionIndex = (costProfessionOrder || []).indexOf(profession);
+    if (professionIndex < 0) return { ptp: 0, mtp: 0 };
+
+    const effectiveLevels = Math.max(0, Math.trunc(Number(level) || 0)) + 2;
+    const pools = new Map();
+
+    (skills || []).forEach((skill) => {
+      const ranks = Math.max(0, Math.trunc(Number(skill?.ranks) || 0));
+      if (ranks <= 0) return;
+      const trainingRowName = getSkillTrainingRowName?.(skill.name);
+      const poolKey = getSkillPoolKey?.(skill.name, trainingRowName);
+      if (!pools.has(poolKey)) {
+        pools.set(poolKey, { trainingRowName, ranks: 0 });
+      }
+      pools.get(poolKey).ranks += ranks;
+    });
+
+    let spentPtp = 0;
+    let spentMtp = 0;
+    pools.forEach((pool) => {
+      const costRow = trainingCostRows?.[pool.trainingRowName]?.[professionIndex];
+      if (!Array.isArray(costRow) || costRow.length < 2) return;
+      const basePtp = Math.max(0, Math.trunc(Number(costRow[0]) || 0));
+      const baseMtp = Math.max(0, Math.trunc(Number(costRow[1]) || 0));
+      const units = multiplierUnitsForRanksFn(pool.ranks, effectiveLevels);
+      spentPtp += basePtp * units;
+      spentMtp += baseMtp * units;
+    });
+
+    return {
+      ptp: Math.max(0, Math.trunc(spentPtp)),
+      mtp: Math.max(0, Math.trunc(spentMtp)),
+    };
+  }
+
   return {
     ENHANCIVE_RESOURCE_OPTIONS,
     clamp,
@@ -440,5 +615,10 @@
     getAscensionDisplayGroup,
     ascensionRankCost,
     ascensionPointsForRanks,
+    buildDefaultAscensionAbilities,
+    normalizeAscensionAbilities,
+    trainingPointsPerLevelForStats,
+    estimateTotalTrainingPointsFromExperience,
+    estimateSpentTrainingPointsFromRanks,
   };
 });

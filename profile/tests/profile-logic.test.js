@@ -26,6 +26,11 @@ const {
   getAscensionDisplayGroup,
   ascensionRankCost,
   ascensionPointsForRanks,
+  buildDefaultAscensionAbilities,
+  normalizeAscensionAbilities,
+  trainingPointsPerLevelForStats,
+  estimateTotalTrainingPointsFromExperience,
+  estimateSpentTrainingPointsFromRanks,
 } = require("../profile-logic.js");
 
 const stats = [
@@ -225,4 +230,55 @@ test("ascension helper functions group and cost ranks correctly", () => {
   assert.equal(ascensionRankCost({ mnemonic: "agility" }, 6), 2);
   assert.equal(ascensionRankCost({ mnemonic: "trandest" }, 5), 50);
   assert.equal(ascensionPointsForRanks(6, { mnemonic: "agility" }), 7);
+});
+
+test("buildDefaultAscensionAbilities and normalizeAscensionAbilities fill and sort abilities", () => {
+  const catalog = [
+    { name: "Agility", mnemonic: "agility", cap: 40, subcategory: "Stat", category: "Common" },
+    { name: "Mana Regeneration", mnemonic: "regenmana", cap: 50, subcategory: "Regen", category: "Common" },
+  ];
+  assert.deepEqual(buildDefaultAscensionAbilities(catalog), [
+    { name: "Agility", mnemonic: "agility", cap: 40, subcategory: "Stat", category: "Common", ranks: 0 },
+    { name: "Mana Regeneration", mnemonic: "regenmana", cap: 50, subcategory: "Regen", category: "Common", ranks: 0 },
+  ]);
+
+  const normalized = normalizeAscensionAbilities([
+    { name: "Mana Regeneration", mnemonic: "regenmana", ranks: 3 },
+  ], catalog);
+  assert.deepEqual(normalized, [
+    { name: "Agility", mnemonic: "agility", cap: 40, subcategory: "Stat", category: "Common", ranks: 0 },
+    { name: "Mana Regeneration", mnemonic: "regenmana", cap: 50, subcategory: "Regen", category: "Common", ranks: 3 },
+  ]);
+});
+
+test("training point helpers compute per-level totals and spent pools", () => {
+  const professionPrimeReqs = { Sorcerer: ["aur", "wis"] };
+  assert.deepEqual(
+    trainingPointsPerLevelForStats(
+      { str: 70, con: 40, dex: 70, agi: 70, aur: 90, dis: 70, log: 70, int: 70, wis: 90, inf: 20 },
+      "Sorcerer",
+      professionPrimeReqs
+    ),
+    { ptpPerLevel: 43, mtpPerLevel: 48 }
+  );
+
+  const total = estimateTotalTrainingPointsFromExperience({
+    experience: 1000,
+    profession: "Sorcerer",
+    levelThresholds: [0, 1000, 3000],
+    professionPrimeReqs,
+    getTrainingPointStatsForLevel: () => ({ str: 70, con: 40, dex: 70, agi: 70, aur: 90, dis: 70, log: 70, int: 70, wis: 90, inf: 20 }),
+  });
+  assert.deepEqual(total, { ptp: 86, mtp: 96 });
+
+  const spent = estimateSpentTrainingPointsFromRanks({
+    skills: [{ name: "Arcane Symbols", ranks: 5 }, { name: "Magic Item Use", ranks: 3 }],
+    profession: "Sorcerer",
+    level: 10,
+    costProfessionOrder: ["Sorcerer"],
+    trainingCostRows: { "MIU / AS": [[1, 2]] },
+    getSkillTrainingRowName: () => "MIU / AS",
+    getSkillPoolKey: (_skillName, rowName) => rowName,
+  });
+  assert.deepEqual(spent, { ptp: 8, mtp: 16 });
 });
