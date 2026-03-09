@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.1.48";
+const SITE_VERSION = "0.1.49";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");

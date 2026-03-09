@@ -5,6 +5,10 @@
     root.ProfileRender = factory();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  function getStandaloneManualResolutionItems(items = []) {
+    return (items || []).filter((item) => !String(item?.linkedImportedName || "").trim());
+  }
+
   function refreshProfileSelect({ profileSelect, profiles }) {
     if (!profileSelect) return;
     profileSelect.innerHTML = "<option value=\"\">Select a profile</option>";
@@ -338,7 +342,7 @@
     const unresolvedEntries = currentEnhanciveEquipment.importedSnapshot.unresolved.filter(
       (entry) => !currentEnhanciveEquipment.manualResolutions.resolvedFromImported.includes(entry.id),
     );
-    const manualItems = currentEnhanciveEquipment.manualResolutions.items;
+    const manualItems = getStandaloneManualResolutionItems(currentEnhanciveEquipment.manualResolutions.items);
     const activeCount = getActiveEnhanciveEquipmentItems().length;
 
     enhImportedSummary.textContent = `Imported snapshot: ${currentEnhanciveEquipment.importedSnapshot.summary.itemCount || importedItems.length} item(s), `
@@ -684,6 +688,7 @@
   }
 
   return {
+    getStandaloneManualResolutionItems,
     refreshProfileSelect,
     updateEnhanciveImportStatusMessages,
     updateTrainingPointEstimateDisplay,
