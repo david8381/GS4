@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.1.55";
+const SITE_VERSION = "0.1.56";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
@@ -201,6 +201,35 @@ function renderFooter() {
   `;
 }
 
+function getPageScripts() {
+  const raw = document.body?.dataset?.pageScripts || "";
+  return raw
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function loadScriptSequentially(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    const versionedSrc = src.includes("?") ? `${src}&v=${SITE_VERSION}` : `${src}?v=${SITE_VERSION}`;
+    script.src = versionedSrc;
+    script.async = false;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.body.appendChild(script);
+  });
+}
+
+async function loadPageScripts() {
+  const scripts = getPageScripts();
+  for (const src of scripts) {
+    // Preserve declared order because many pages rely on globals from prior scripts.
+    // eslint-disable-next-line no-await-in-loop
+    await loadScriptSequentially(src);
+  }
+}
+
 renderHeader();
 renderFooter();
 
@@ -231,4 +260,8 @@ goatcounterScript.async = true;
 goatcounterScript.dataset.goatcounter = "https://aspoonfulofbias.goatcounter.com/count";
 goatcounterScript.src = "//gc.zgo.at/count.js";
 document.head.appendChild(goatcounterScript);
+
+loadPageScripts().catch((error) => {
+  console.error(error);
+});
 })();
