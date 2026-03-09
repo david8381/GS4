@@ -614,57 +614,23 @@ function enforceSkillEnhanciveRowLimits(skillKeyName, baseRanks, changedKind = n
 }
 
 function buildStatInputs() {
-  statGrid.innerHTML = "";
-  const headers = [
-    { title: "Stat", field: "stat" },
-    { title: "Level 0", field: "level0" },
-    { title: "At Level 0", field: "base-stat" },
-    { title: "Bonus", field: "base-bonus" },
-    { title: "Final Stat", field: "final-stat" },
-    { title: "Final Bonus", field: "final-bonus" },
-  ];
-  headers.forEach((headerMeta) => {
-    const header = document.createElement("div");
-    header.className = "stat-header";
-    header.dataset.statHeader = headerMeta.field;
-    header.textContent = headerMeta.title;
-    statGrid.appendChild(header);
-  });
-
-  stats.forEach((stat) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "stat-row";
-    wrapper.innerHTML = `
-      <div class=\"stat-label\">${stat.abbr}</div>
-      <input type=\"number\" min=\"1\" max=\"100\" step=\"1\" class=\"stat-edit\" data-stat=\"${stat.key}\" data-field=\"level0\" value=\"50\" />
-      <div class=\"stat-output\" data-stat=\"${stat.key}\" data-field=\"base-stat\">50</div>
-      <div class=\"stat-output\" data-stat=\"${stat.key}\" data-field=\"base-bonus\">0</div>
-      <div class=\"stat-output\" data-stat=\"${stat.key}\" data-field=\"final-stat\">50</div>
-      <div class=\"stat-output\" data-stat=\"${stat.key}\" data-field=\"final-bonus\">0</div>
-    `;
-    statGrid.appendChild(wrapper);
-  });
-
-  statGrid.querySelectorAll('input[data-field="level0"]').forEach((input) => {
-    input.addEventListener("input", () => {
-      const key = input.dataset.stat;
-      const value = clamp(Number(input.value), 1, 100);
-      if (!currentLevel0Stats) {
-        currentLevel0Stats = {};
-        stats.forEach((stat) => {
-          currentLevel0Stats[stat.key] = clamp(Number(currentBaseStats[stat.key] ?? 50), 1, 100);
-        });
-      }
-      currentLevel0Stats[key] = value;
-      recalcFromLevel0();
-    });
+  profileRender.buildStatInputs({ statGrid, stats });
+  profileEvents.bindStatLevel0Inputs({
+    statGrid,
+    clamp,
+    stats,
+    getCurrentLevel0Stats: () => currentLevel0Stats,
+    setCurrentLevel0Stats: (value) => { currentLevel0Stats = value; },
+    getCurrentBaseStats: () => currentBaseStats,
+    recalcFromLevel0,
   });
 }
 
 function updateStatHeaderLabels() {
-  const level = clamp(Number(profileLevel?.value), 0, 100);
-  const baseHeader = statGrid?.querySelector('[data-stat-header="base-stat"]');
-  if (baseHeader) baseHeader.textContent = `At Level ${level}`;
+  profileRender.updateStatHeaderLabels({
+    statGrid,
+    level: clamp(Number(profileLevel?.value), 0, 100),
+  });
 }
 
 function renderAscensionTables() {

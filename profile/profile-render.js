@@ -128,6 +128,45 @@
     atpEstimateStatus.textContent = `Total ATP from milestones + asc exp: ${atp.totalAtp} (${atp.milestones} milestones + ${atp.expAtp} from asc exp)`;
   }
 
+  function buildStatInputs({ statGrid, stats }) {
+    if (!statGrid) return;
+    statGrid.innerHTML = "";
+    const headers = [
+      { title: "Stat", field: "stat" },
+      { title: "Level 0", field: "level0" },
+      { title: "At Level 0", field: "base-stat" },
+      { title: "Bonus", field: "base-bonus" },
+      { title: "Final Stat", field: "final-stat" },
+      { title: "Final Bonus", field: "final-bonus" },
+    ];
+    headers.forEach((headerMeta) => {
+      const header = document.createElement("div");
+      header.className = "stat-header";
+      header.dataset.statHeader = headerMeta.field;
+      header.textContent = headerMeta.title;
+      statGrid.appendChild(header);
+    });
+
+    (stats || []).forEach((stat) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "stat-row";
+      wrapper.innerHTML = `
+        <div class="stat-label">${stat.abbr}</div>
+        <input type="number" min="1" max="100" step="1" class="stat-edit" data-stat="${stat.key}" data-field="level0" value="50" />
+        <div class="stat-output" data-stat="${stat.key}" data-field="base-stat">50</div>
+        <div class="stat-output" data-stat="${stat.key}" data-field="base-bonus">0</div>
+        <div class="stat-output" data-stat="${stat.key}" data-field="final-stat">50</div>
+        <div class="stat-output" data-stat="${stat.key}" data-field="final-bonus">0</div>
+      `;
+      statGrid.appendChild(wrapper);
+    });
+  }
+
+  function updateStatHeaderLabels({ statGrid, level }) {
+    const baseHeader = statGrid?.querySelector('[data-stat-header="base-stat"]');
+    if (baseHeader) baseHeader.textContent = `At Level ${level}`;
+  }
+
   function updateStatDerivedDisplay({ stats, statGrid, currentLevel0Stats, currentBaseStats, clamp, getDerivedStatRows, formatBonus }) {
     const rows = getDerivedStatRows();
     stats.forEach((stat) => {
@@ -694,6 +733,8 @@
     updateEnhanciveImportStatusMessages,
     updateTrainingPointEstimateDisplay,
     updateAscensionPointEstimateDisplay,
+    buildStatInputs,
+    updateStatHeaderLabels,
     updateStatDerivedDisplay,
     updateEnhanciveDisplay,
     updateEnhStatus,

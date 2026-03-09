@@ -47,6 +47,34 @@
     });
   }
 
+  function bindStatLevel0Inputs({
+    statGrid,
+    clamp,
+    stats,
+    getCurrentLevel0Stats,
+    setCurrentLevel0Stats,
+    getCurrentBaseStats,
+    recalcFromLevel0,
+  }) {
+    statGrid?.querySelectorAll('input[data-field="level0"]').forEach((input) => {
+      input.addEventListener("input", () => {
+        const key = input.dataset.stat;
+        const value = clamp(Number(input.value), 1, 100);
+        let currentLevel0Stats = getCurrentLevel0Stats();
+        if (!currentLevel0Stats) {
+          currentLevel0Stats = {};
+          const currentBaseStats = getCurrentBaseStats() || {};
+          (stats || []).forEach((stat) => {
+            currentLevel0Stats[stat.key] = clamp(Number(currentBaseStats[stat.key] ?? 50), 1, 100);
+          });
+        }
+        currentLevel0Stats[key] = value;
+        setCurrentLevel0Stats(currentLevel0Stats);
+        recalcFromLevel0();
+      });
+    });
+  }
+
   function bindAscensionInputs({
     ascAbilityGroups,
     currentAscensionAbilities,
@@ -669,6 +697,7 @@
   }
 
   return {
+    bindStatLevel0Inputs,
     bindSkillRankInputs,
     bindAscensionInputs,
     bindImportedEnhanciveInputs,
