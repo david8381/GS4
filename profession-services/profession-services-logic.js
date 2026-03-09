@@ -401,9 +401,9 @@
     return 7500 + ((bonus - 24) * 7500);
   }
 
-  function getEnchantDifficultyOffset(currentBonus) {
-    const bonus = asNumber(currentBonus, 0);
-    return -Math.round(((bonus - 2) * (bonus - 2)) / 9);
+  function getEnchantDifficultyOffset(targetBonus) {
+    const bonus = asNumber(targetBonus, 0);
+    return Math.trunc(((bonus - 2) * (bonus - 2)) / 9);
   }
 
   function getWpsCer(services) {
@@ -582,15 +582,16 @@
       const baseItemDifficulty = asNumber(progressionState?.baseItemDifficulty, 0);
 
       for (let step = 0; step < asInteger(progression.rowCount, 0) && currentBonus < progression.maxBonus; step += 1) {
-        const difficulty = baseItemDifficulty + getEnchantDifficultyOffset(currentBonus);
+        const targetBonus = currentBonus + 1;
+        const difficulty = baseItemDifficulty + getEnchantDifficultyOffset(targetBonus);
         rows.push({
           fromLabel: "+" + currentBonus,
-          toLabel: "+" + (currentBonus + 1),
+          toLabel: "+" + targetBonus,
           difficulty,
           resourceCost: getEnchantEssenceCost(currentBonus),
           currentMargin: asNumber(currentTotal, 0) - difficulty,
           whatIfMargin: asNumber(whatIfTotal, 0) - difficulty,
-          note: "Offset " + getEnchantDifficultyOffset(currentBonus),
+          note: "Offset +" + getEnchantDifficultyOffset(targetBonus),
         });
         currentBonus += 1;
       }
