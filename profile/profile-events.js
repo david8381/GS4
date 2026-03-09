@@ -58,7 +58,8 @@
     updateDerivedDisplays,
   }) {
     ascAbilityGroups?.querySelectorAll("input[data-asc-ability]").forEach((input) => {
-      input.addEventListener("input", () => {
+      const handleAscensionInput = (options = {}) => {
+        const { rerender = false } = options;
         const mnemonic = String(input.dataset.ascAbility || "");
         const ability = currentAscensionAbilities.find((entry) => entry.mnemonic === mnemonic);
         if (!ability) return;
@@ -80,8 +81,16 @@
         }
         input.value = String(ability.ranks);
         syncAscensionStateFromAbilities();
-        updateDerivedDisplays({ skipSkillsRender: true, skipEnhRender: true });
-      });
+        updateDerivedDisplays({
+          skipSkillsRender: true,
+          skipEnhRender: true,
+          skipAscRender: !rerender,
+        });
+      };
+
+      input.addEventListener("input", () => handleAscensionInput({ rerender: false }));
+      input.addEventListener("change", () => handleAscensionInput({ rerender: true }));
+      input.addEventListener("blur", () => handleAscensionInput({ rerender: true }));
     });
   }
 

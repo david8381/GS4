@@ -2147,6 +2147,20 @@ try {
     runProfileTestsBtn,
   });
 
+  const initiallySelectedProfileId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
+  if (initiallySelectedProfileId) {
+    const initialProfile = storage.findProfile(profiles, initiallySelectedProfileId);
+    if (initialProfile) {
+      profileSelect.value = initiallySelectedProfileId;
+      applyProfile(initialProfile);
+      applySectionDefaultVisibility();
+    } else {
+      localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
+      profileSelect.value = "";
+      updateProfileActionState();
+    }
+  }
+
   profileGstools.importGstoolsPayloadFromHash({
     windowObject: window,
     stripMarkupTags,
