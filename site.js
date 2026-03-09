@@ -1,17 +1,8 @@
 (() => {
-const SITE_PROFILE_KEY = "gs4.characterProfiles";
-const SITE_SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
-const SITE_VERSION = "0.1.37";
+const SITE_VERSION = "0.1.48";
+const storage = globalThis.GS4Storage;
 
-function loadProfiles() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(SITE_PROFILE_KEY) || "[]");
-    if (Array.isArray(stored)) return stored;
-  } catch (error) {
-    return [];
-  }
-  return [];
-}
+if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
 
 function getPageProfileElements() {
   const select =
@@ -78,7 +69,7 @@ function refreshHeaderProfileControls() {
   if (!headerSelect || !headerLoad) return;
 
   const profiles = loadProfiles();
-  const selected = localStorage.getItem(SITE_SELECTED_PROFILE_KEY) || "";
+  const selected = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
   headerSelect.innerHTML = '<option value="">Select Profile</option>';
   profiles.forEach((profile) => {
     const option = document.createElement("option");
@@ -89,7 +80,7 @@ function refreshHeaderProfileControls() {
   if (selected && profiles.some((profile) => profile.id === selected)) {
     headerSelect.value = selected;
   } else if (selected) {
-    localStorage.removeItem(SITE_SELECTED_PROFILE_KEY);
+    localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
     headerSelect.value = "";
   } else {
     headerSelect.value = "";
@@ -161,8 +152,8 @@ function renderHeader() {
   if (headerSelect) {
     headerSelect.addEventListener("change", () => {
       const value = headerSelect.value || "";
-      if (value) localStorage.setItem(SITE_SELECTED_PROFILE_KEY, value);
-      else localStorage.removeItem(SITE_SELECTED_PROFILE_KEY);
+      if (value) localStorage.setItem(storage.SELECTED_PROFILE_KEY, value);
+      else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
       syncPageSelect(value);
       refreshHeaderProfileControls();
     });
@@ -174,7 +165,7 @@ function renderHeader() {
       if (loadButton && !loadButton.disabled) {
         loadButton.click();
       } else {
-        syncPageSelect(localStorage.getItem(SITE_SELECTED_PROFILE_KEY) || "");
+        syncPageSelect(localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "");
       }
       refreshHeaderProfileControls();
     });
@@ -182,7 +173,7 @@ function renderHeader() {
 
   if (headerNew) {
     headerNew.addEventListener("click", () => {
-      localStorage.removeItem(SITE_SELECTED_PROFILE_KEY);
+      localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
       window.location.assign(`${root}profile/profile.html`);
     });
   }
@@ -195,7 +186,7 @@ function renderHeader() {
     });
   }
 
-  const selected = localStorage.getItem(SITE_SELECTED_PROFILE_KEY) || "";
+  const selected = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
   if (selected) syncPageSelect(selected);
 }
 
@@ -212,6 +203,10 @@ function renderFooter() {
 
 renderHeader();
 renderFooter();
+
+function loadProfiles() {
+  return storage.loadProfiles();
+}
 
 function scheduleHeaderRefreshFromEvent(event) {
   const target = event?.target;

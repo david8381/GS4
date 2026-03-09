@@ -155,6 +155,63 @@
     };
   }
 
+  function experienceForLevel(level, levelThresholds) {
+    const safeLevel = clamp(Math.trunc(Number(level) || 0), 0, 100);
+    return Math.max(0, Math.trunc(Number(levelThresholds?.[safeLevel]) || 0));
+  }
+
+  function estimateTotalAscensionPoints(ascensionExperience, ascensionMilestones) {
+    const ascExp = Math.max(0, Math.trunc(Number(ascensionExperience) || 0));
+    const milestones = clamp(Math.trunc(Number(ascensionMilestones) || 0), 0, 10);
+    const expAtp = Math.floor(ascExp / 50000);
+    return {
+      totalAtp: expAtp + milestones,
+      expAtp,
+      milestones,
+    };
+  }
+
+  function multiplierUnitsForRanks(rankCount, effectiveLevels) {
+    const ranks = Math.max(0, Math.trunc(Number(rankCount) || 0));
+    const oneX = Math.max(0, Math.trunc(Number(effectiveLevels) || 0));
+    const baseCount = Math.min(ranks, oneX);
+    const doubleCount = Math.min(Math.max(ranks - oneX, 0), oneX);
+    const quadCount = Math.max(ranks - oneX * 2, 0);
+    return baseCount + doubleCount * 2 + quadCount * 4;
+  }
+
+  function summarizeTrainingPointConversion(totalTp, spentTp) {
+    let balancePtp = Math.trunc(Number(totalTp?.ptp) || 0) - Math.trunc(Number(spentTp?.ptp) || 0);
+    let balanceMtp = Math.trunc(Number(totalTp?.mtp) || 0) - Math.trunc(Number(spentTp?.mtp) || 0);
+    let phyToMnt = 0;
+    let mntToPhy = 0;
+
+    if (balancePtp > 0 && balanceMtp < 0) {
+      const neededMtp = Math.abs(balanceMtp);
+      let convertiblePtp = Math.min(balancePtp, neededMtp * 2);
+      convertiblePtp = Math.floor(convertiblePtp / 2) * 2;
+      phyToMnt = Math.max(0, convertiblePtp);
+      balancePtp -= phyToMnt;
+      balanceMtp += Math.floor(phyToMnt / 2);
+    } else if (balanceMtp > 0 && balancePtp < 0) {
+      const neededPtp = Math.abs(balancePtp);
+      let convertibleMtp = Math.min(balanceMtp, neededPtp * 2);
+      convertibleMtp = Math.floor(convertibleMtp / 2) * 2;
+      mntToPhy = Math.max(0, convertibleMtp);
+      balanceMtp -= mntToPhy;
+      balancePtp += Math.floor(mntToPhy / 2);
+    }
+
+    return {
+      phyToMnt,
+      mntToPhy,
+      pointsLeftPtp: Math.max(0, balancePtp),
+      pointsLeftMtp: Math.max(0, balanceMtp),
+      remainingDeficitPtp: Math.max(0, -balancePtp),
+      remainingDeficitMtp: Math.max(0, -balanceMtp),
+    };
+  }
+
   return {
     clamp,
     normalizeRaceName,
@@ -169,5 +226,9 @@
     mergeSkillsWithCatalog,
     skillBonusFromRanks,
     normalizeSkillEntry,
+    experienceForLevel,
+    estimateTotalAscensionPoints,
+    multiplierUnitsForRanks,
+    summarizeTrainingPointConversion,
   };
 });

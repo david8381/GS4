@@ -20,6 +20,105 @@ You are wearing the following enhancive items:
   assert.equal(parsed.summary.itemCount, 2);
 });
 
+test('parseEnhancive blocks handle Sajehn inventory enhancive outputs', () => {
+  const listParsed = enhanciveImport.parseEnhanciveListBlock(`
+You are not holding any enhancive items.
+
+You are wearing the following enhancive items:
+  a gilded locus
+  a tin-bound ceramic badge
+
+(Items: 2)
+
+For more information, see INVENTORY ENHANCIVE TOTALS.
+  `);
+  assert.equal(listParsed.items.length, 2);
+  assert.equal(listParsed.items[0].name, 'a gilded locus');
+  assert.equal(listParsed.items[1].name, 'a tin-bound ceramic badge');
+
+  const detailParsed = enhanciveImport.parseEnhanciveDetailsBlock(`
+Stats:
+  Agility (AGI): 4/40
+    +4: an unknown source (needs loresong)
+
+
+Resources:
+  Max Mana: 1/600
+    +1: an unknown source (needs loresong)
+
+
+Statistics:
+  Enhancive Items: 2
+  Enhancive Properties: 2
+  Total Enhancive Amount: 5
+
+For fewer details, see INVENTORY ENHANCIVE TOTALS.
+You are not currently accepting the benefit of any enhancive items in your inventory.
+  `);
+
+  assert.equal(detailParsed.items.length, 0);
+  assert.equal(detailParsed.unresolved.length, 2);
+  assert.equal(detailParsed.unresolved[0].target, 'Agility (AGI)');
+  assert.equal(detailParsed.unresolved[0].value, 4);
+  assert.equal(detailParsed.unresolved[1].target, 'Max Mana');
+  assert.equal(detailParsed.unresolved[1].value, 1);
+  assert.equal(detailParsed.summary.itemCount, 2);
+  assert.equal(detailParsed.summary.propertyCount, 2);
+  assert.equal(detailParsed.summary.totalAmount, 5);
+
+  const merged = enhanciveImport.mergeImportedEnhanciveSnapshot(
+    `
+You are not holding any enhancive items.
+
+You are wearing the following enhancive items:
+  a gilded locus
+  a tin-bound ceramic badge
+
+(Items: 2)
+
+For more information, see INVENTORY ENHANCIVE TOTALS.
+    `,
+    `
+Stats:
+  Agility (AGI):  4/40
+
+Resources:
+  Max Mana:   1/600
+
+Statistics:
+  Enhancive Items: 2
+  Enhancive Properties: 2
+  Total Enhancive Amount: 5
+
+For more details, see INVENTORY ENHANCIVE TOTALS DETAILS.
+You are not currently accepting the benefit of any enhancive items in your inventory.
+    `,
+    `
+Stats:
+  Agility (AGI): 4/40
+    +4: an unknown source (needs loresong)
+
+
+Resources:
+  Max Mana: 1/600
+    +1: an unknown source (needs loresong)
+
+
+Statistics:
+  Enhancive Items: 2
+  Enhancive Properties: 2
+  Total Enhancive Amount: 5
+
+For fewer details, see INVENTORY ENHANCIVE TOTALS.
+You are not currently accepting the benefit of any enhancive items in your inventory.
+    `
+  );
+
+  assert.equal(merged.importedSnapshot.items.length, 2);
+  assert.equal(merged.importedSnapshot.unresolved.length, 2);
+  assert.equal(merged.enhancivesEnabled, false);
+});
+
 test('parseEnhanciveDetailsBlock separates unresolved and known-source contributions', () => {
   const parsed = enhanciveImport.parseEnhanciveDetailsBlock(`
 Stats:

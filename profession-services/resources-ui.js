@@ -1,14 +1,12 @@
 (() => {
+  const storage = window.GS4Storage;
   const servicesData = window.GS4_PROFESSION_SERVICES_DATA;
   const serviceLogic = window.ProfessionServicesLogic;
 
-  if (!servicesData || !serviceLogic) {
+  if (!storage || !servicesData || !serviceLogic) {
     console.error("Profession services page dependencies are missing.");
     return;
   }
-
-  const PROFILE_KEY = "gs4.characterProfiles";
-  const SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
 
   const profileSelect = document.getElementById("profileSelect");
   const professionSelect = document.getElementById("resourceProfession");
@@ -42,12 +40,7 @@
   const ROGUE_RECHARGE_VIEW_ID = "rogue_recharge";
 
   function loadProfiles() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_error) {
-      return [];
-    }
+    return storage.loadProfiles();
   }
 
   function findProfile(profileId) {
@@ -1518,7 +1511,7 @@
     refreshProfileSelect();
     refreshProfessionSelect();
 
-    const storedProfileId = localStorage.getItem(SELECTED_PROFILE_KEY) || "";
+    const storedProfileId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
     const storedProfile = storedProfileId ? findProfile(storedProfileId) : null;
     setActiveProfile(storedProfile);
     renderAll();
@@ -1526,8 +1519,8 @@
 
   profileSelect.addEventListener("change", () => {
     const profileId = profileSelect.value || "";
-    if (profileId) localStorage.setItem(SELECTED_PROFILE_KEY, profileId);
-    else localStorage.removeItem(SELECTED_PROFILE_KEY);
+    if (profileId) localStorage.setItem(storage.SELECTED_PROFILE_KEY, profileId);
+    else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
     setActiveProfile(findProfile(profileId));
     renderAll();
   });
@@ -1558,7 +1551,7 @@
 
   window.addEventListener("storage", () => {
     state.profiles = loadProfiles();
-    const selectedProfileId = localStorage.getItem(SELECTED_PROFILE_KEY) || "";
+    const selectedProfileId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
     setActiveProfile(findProfile(selectedProfileId));
     renderAll();
   });

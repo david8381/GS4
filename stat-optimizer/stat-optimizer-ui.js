@@ -1,15 +1,14 @@
 (() => {
+  const storage = window.GS4Storage;
   const data = window.GS4_DATA;
   const config = window.STAT_OPTIMIZER_DATA;
   const logic = window.StatOptimizerLogic;
   const profileLogic = window.ProfileLogic;
 
-  if (!data || !logic || !config) {
+  if (!storage || !data || !logic || !config) {
     console.error("Stat optimizer dependencies are missing.");
     return;
   }
-
-  const PROFILE_KEY = "gs4.characterProfiles";
 
   const profileSelect = document.getElementById("profileSelect");
   const profileLoad = document.getElementById("profileLoad");
@@ -79,12 +78,7 @@
   };
 
   function loadProfiles() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_error) {
-      return [];
-    }
+    return storage.loadProfiles();
   }
 
   function fillSelect(select, items, key = "key", label = "name") {
@@ -505,7 +499,7 @@
       profileSelect.appendChild(option);
     });
 
-    const selected = localStorage.getItem("gs4.selectedProfileId") || "";
+    const selected = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
     if (selected) profileSelect.value = selected;
   }
 
@@ -1487,8 +1481,8 @@
 
   profileSelect.addEventListener("change", () => {
     const value = profileSelect.value || "";
-    if (value) localStorage.setItem("gs4.selectedProfileId", value);
-    else localStorage.removeItem("gs4.selectedProfileId");
+    if (value) localStorage.setItem(storage.SELECTED_PROFILE_KEY, value);
+    else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
     applySelectedProfileFromPicker();
     updateCurrentLevelTpDelta();
   });

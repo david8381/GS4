@@ -1,27 +1,22 @@
-const PROFILE_KEY = "gs4.characterProfiles";
-const SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
+const storage = globalThis.GS4Storage;
+
+if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before manager.js.");
 
 const bodyEl = document.getElementById("profileManagerBody");
 const statusEl = document.getElementById("profileManagerStatus");
 const newProfileBtn = document.getElementById("newProfileBtn");
 
 function loadProfiles() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-    if (Array.isArray(stored)) return stored;
-  } catch (_error) {
-    return [];
-  }
-  return [];
+  return storage.loadProfiles();
 }
 
 function saveProfiles(profiles) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles));
+  storage.saveProfiles(profiles);
 }
 
 function openProfileEditor(profileId) {
-  if (profileId) localStorage.setItem(SELECTED_PROFILE_KEY, profileId);
-  else localStorage.removeItem(SELECTED_PROFILE_KEY);
+  if (profileId) localStorage.setItem(storage.SELECTED_PROFILE_KEY, profileId);
+  else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
   window.location.assign("./profile.html");
 }
 
@@ -74,8 +69,8 @@ function render() {
       if (!confirmed) return;
       const next = loadProfiles().filter((entry) => entry.id !== profile.id);
       saveProfiles(next);
-      const selectedId = localStorage.getItem(SELECTED_PROFILE_KEY) || "";
-      if (selectedId === profile.id) localStorage.removeItem(SELECTED_PROFILE_KEY);
+      const selectedId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
+      if (selectedId === profile.id) localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
       render();
       window.dispatchEvent(new Event("storage"));
     });
