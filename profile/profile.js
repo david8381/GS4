@@ -1099,6 +1099,15 @@ function updateStatHeaderLabels() {
 }
 
 function renderAscensionTables() {
+  const activeAscInput = document.activeElement?.matches?.("input[data-asc-ability]")
+    ? {
+      mnemonic: document.activeElement.dataset.ascAbility,
+      selectionStart: document.activeElement.selectionStart,
+      selectionEnd: document.activeElement.selectionEnd,
+    }
+    : null;
+  const previousScrollY = window.scrollY;
+
   profileRender.renderAscensionTables({
     ascAbilityGroups,
     ascShowTrainedOnly,
@@ -1118,6 +1127,21 @@ function renderAscensionTables() {
     syncAscensionStateFromAbilities,
     updateDerivedDisplays,
   });
+
+  if (activeAscInput?.mnemonic) {
+    const nextInput = ascAbilityGroups?.querySelector(`input[data-asc-ability="${activeAscInput.mnemonic}"]`);
+    if (nextInput) {
+      nextInput.focus({ preventScroll: true });
+      if (typeof activeAscInput.selectionStart === "number" && typeof activeAscInput.selectionEnd === "number") {
+        try {
+          nextInput.setSelectionRange(activeAscInput.selectionStart, activeAscInput.selectionEnd);
+        } catch (error) {
+          // Ignore selection restoration failures on numeric inputs.
+        }
+      }
+    }
+  }
+  window.scrollTo(0, previousScrollY);
 }
 
 function updateAscensionStatus() {
