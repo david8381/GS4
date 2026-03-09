@@ -325,6 +325,119 @@
     };
   }
 
+  function getActiveEnhanciveEquipmentItems(params) {
+    const {
+      currentEnhanciveEquipment,
+      normalizeEnhanciveEquipmentStateFn,
+      normalizeEnhanciveItemLinkNameFn = normalizeEnhanciveItemLinkName,
+    } = params || {};
+    const state = normalizeEnhanciveEquipmentStateFn?.(currentEnhanciveEquipment);
+    const importedItems = (state?.importedSnapshot?.items || []).filter((item) => item.active !== false);
+    const manualItems = (state?.manualResolutions?.items || []).filter((item) => {
+      if (item?.active === false) return false;
+      if (!item?.linkedImportedName) return true;
+      const linkedImportedItem = (state?.importedSnapshot?.items || []).find(
+        (entry) => normalizeEnhanciveItemLinkNameFn(entry?.name) === normalizeEnhanciveItemLinkNameFn(item?.linkedImportedName),
+      );
+      return Boolean(linkedImportedItem?.active !== false);
+    });
+    return importedItems.concat(manualItems);
+  }
+
+  function getEquipmentEnhanciveTotals(params) {
+    const {
+      currentEnhanciveEquipment,
+      defaultStatMapFn,
+      skillCatalog,
+      skillKeyFn = skillKey,
+      normalizeEnhanciveEffectForUseFn,
+      getActiveEnhanciveEquipmentItemsFn = getActiveEnhanciveEquipmentItems,
+      normalizeEnhanciveEquipmentStateFn,
+      normalizeEnhanciveItemLinkNameFn = normalizeEnhanciveItemLinkName,
+    } = params || {};
+    const totals = {
+      stats: defaultStatMapFn?.(0) || {},
+      skillRanks: {},
+      skillBonuses: {},
+      resources: {},
+    };
+
+    (skillCatalog || []).forEach((name) => {
+      const key = skillKeyFn(name);
+      totals.skillRanks[key] = 0;
+      totals.skillBonuses[key] = 0;
+    });
+
+    getActiveEnhanciveEquipmentItemsFn({
+      currentEnhanciveEquipment,
+      normalizeEnhanciveEquipmentStateFn,
+      normalizeEnhanciveItemLinkNameFn,
+    }).forEach((item) => {
+      (item?.effects || []).forEach((rawEffect) => {
+        const effect = normalizeEnhanciveEffectForUseFn?.(rawEffect) || {};
+        if (!effect.type || !effect.target || effect.value <= 0) return;
+        if (effect.type === 'stat') {
+          if (totals.stats[effect.target] != null) totals.stats[effect.target] += effect.value;
+        } else if (effect.type === 'skill_rank') {
+          if (totals.skillRanks[effect.target] != null) totals.skillRanks[effect.target] += effect.value;
+        } else if (effect.type === 'skill_bonus') {
+          if (totals.skillBonuses[effect.target] != null) totals.skillBonuses[effect.target] += effect.value;
+        } else if (effect.type === 'resource') {
+          totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
+        }
+      });
+    });
+
+    return totals;
+  }
+
+  function getEffectiveSkillEnhancive(skillKeyName, enhanciveState, equipmentTotals) {
+    return {
+      rank: Math.max(0, Math.trunc(Number(enhanciveState?.skills?.[skillKeyName]?.rank) || 0))
+        + Math.max(0, Math.trunc(Number(equipmentTotals?.skillRanks?.[skillKeyName]) || 0)),
+      bonus: Math.max(0, Math.trunc(Number(enhanciveState?.skills?.[skillKeyName]?.bonus) || 0))
+        + Math.max(0, Math.trunc(Number(equipmentTotals?.skillBonuses?.[skillKeyName]) || 0)),
+    };
+  }
+
+  function createManualEnhanciveItem(params) {
+    const {
+      partial = {},
+      guessEnhanciveEffectTypeFn = guessEnhanciveEffectType,
+      guessEnhanciveTargetFn = guessEnhanciveTarget,
+      idFactory = () => `manual-enh-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    } = params || {};
+    const guessedType = partial.type && partial.type !== 'unknown'
+      ? partial.type
+      : guessEnhanciveEffectTypeFn(partial.category, partial.label || partial.target);
+    const guessedTarget = partial.target || guessEnhanciveTargetFn(guessedType, partial.label || partial.target);
+    return {
+      id: idFactory(),
+      name: String(partial.name || 'Manual Enhancive').trim(),
+      worn: true,
+      active: partial.active !== false,
+      source: 'manual',
+      linkedImportedName: String(partial.linkedImportedName || '').trim(),
+      effects: [{
+        category: String(partial.category || '').trim(),
+        type: guessedType,
+        target: guessedTarget,
+        label: String(partial.label || partial.target || guessedTarget || 'Unknown').trim(),
+        value: Math.max(0, Math.trunc(Number(partial.value) || 0)),
+        limit: Math.max(0, Math.trunc(Number(partial.limit) || 0)),
+        knownSource: true,
+      }],
+    };
+  }
+
+  function getManualEffectsLinkedToImportedItem(currentEnhanciveEquipment, itemName, normalizeEnhanciveItemLinkNameFn = normalizeEnhanciveItemLinkName) {
+    const target = normalizeEnhanciveItemLinkNameFn(itemName);
+    if (!target) return [];
+    return (currentEnhanciveEquipment?.manualResolutions?.items || []).filter(
+      (item) => normalizeEnhanciveItemLinkNameFn(item?.linkedImportedName) === target,
+    );
+  }
+
   function normalizeEnhanciveItemLinkName(value) {
     return String(value || '')
       .normalize('NFKC')
@@ -457,6 +570,149 @@
     });
   }
 
+  function calculateAscensionPointsUsed(abilities, ascensionPointsForRanksFn = ascensionPointsForRanks) {
+    return (abilities || []).reduce((sum, ability) => {
+      return sum + ascensionPointsForRanksFn(ability?.ranks, ability);
+    }, 0);
+  }
+
+  function getAscensionAbilityContext(abilities, ascensionPointsForRanksFn = ascensionPointsForRanks) {
+    const byMnemonic = new Map((abilities || []).map((ability) => [ability.mnemonic, ability]));
+    const commonAtpSpent = (abilities || []).reduce((sum, ability) => {
+      if (ability?.mnemonic === 'trandest') return sum;
+      if (String(ability?.category || '').toLowerCase() !== 'common') return sum;
+      return sum + ascensionPointsForRanksFn(ability?.ranks, ability);
+    }, 0);
+    const strengthRanks = Math.max(0, Math.trunc(Number(byMnemonic.get('strength')?.ranks) || 0));
+    const physicalFitnessRanks = Math.max(0, Math.trunc(Number(byMnemonic.get('physicalfitness')?.ranks) || 0));
+    return { byMnemonic, commonAtpSpent, strengthRanks, physicalFitnessRanks };
+  }
+
+  function getAscensionAbilityGate(ability, abilities, ascensionPointsForRanksFn = ascensionPointsForRanks) {
+    if (!ability) return { allowed: true, reason: '' };
+    const context = getAscensionAbilityContext(abilities, ascensionPointsForRanksFn);
+    if (ability.mnemonic === 'trandest' && context.commonAtpSpent < 150) {
+      return { allowed: false, reason: 'Requires 150 ATP spent in Common abilities.' };
+    }
+    if (ability.mnemonic === 'porter' && (context.strengthRanks + context.physicalFitnessRanks) < 10) {
+      return { allowed: false, reason: 'Requires 10 combined ranks in Strength + Physical Fitness.' };
+    }
+    return { allowed: true, reason: '' };
+  }
+
+  function getMaxAllowedAscensionRanks(ability, abilities, ascensionPointsForRanksFn = ascensionPointsForRanks) {
+    const gate = getAscensionAbilityGate(ability, abilities, ascensionPointsForRanksFn);
+    if (gate.allowed) return Math.max(0, Math.trunc(Number(ability?.cap) || 0));
+    return Math.max(0, Math.trunc(Number(ability?.ranks) || 0));
+  }
+
+  function getNextAscensionCostDisplay(
+    ability,
+    abilities,
+    ascensionRankCostFn = ascensionRankCost,
+    ascensionPointsForRanksFn = ascensionPointsForRanks,
+  ) {
+    const ranks = Math.max(0, Math.trunc(Number(ability?.ranks) || 0));
+    const cap = Math.max(0, Math.trunc(Number(ability?.cap) || 0));
+    if (ranks >= cap) return { display: '—', gateReason: '' };
+    const gate = getAscensionAbilityGate(ability, abilities, ascensionPointsForRanksFn);
+    if (!gate.allowed) return { display: 'Locked', gateReason: gate.reason };
+    const nextCost = ascensionRankCostFn(ability, ranks + 1);
+    return { display: String(nextCost), gateReason: '' };
+  }
+
+  function enforceAscensionPointBudget(params) {
+    const {
+      abilities,
+      availablePoints,
+      getMaxAllowedAscensionRanksFn = getMaxAllowedAscensionRanks,
+      calculateAscensionPointsUsedFn = calculateAscensionPointsUsed,
+    } = params || {};
+    const nextAbilities = (abilities || []).map((ability) => ({ ...ability }));
+    let used = calculateAscensionPointsUsedFn(nextAbilities);
+    if (used <= availablePoints) return nextAbilities;
+    const sorted = [...nextAbilities].sort((a, b) => b.ranks - a.ranks);
+    sorted.forEach((ability) => {
+      while (ability.ranks > 0 && used > availablePoints) {
+        ability.ranks -= 1;
+        ability.ranks = Math.min(ability.ranks, getMaxAllowedAscensionRanksFn(ability, nextAbilities));
+        used = calculateAscensionPointsUsedFn(nextAbilities);
+      }
+    });
+    return nextAbilities;
+  }
+
+  function syncAscensionStateFromAbilities(params) {
+    const {
+      currentAscensionAbilities,
+      stats,
+      currentSkills,
+      ascensionState,
+      ascMnemonicMap,
+      resolveStatKeyFromAscNameFn,
+      canonicalSkillNameFn,
+      skillKeyFn = skillKey,
+    } = params || {};
+    const nextState = { stats: {}, skills: {} };
+
+    (stats || []).forEach((stat) => {
+      nextState.stats[stat.key] = {
+        stat: 0,
+        bonus: Math.max(0, Math.trunc(Number(ascensionState?.stats?.[stat.key]?.bonus) || 0)),
+      };
+    });
+
+    (currentSkills || []).forEach((skill) => {
+      const key = skillKeyFn(skill.name);
+      if (!key) return;
+      nextState.skills[key] = { bonus: 0 };
+    });
+
+    (currentAscensionAbilities || []).forEach((ability) => {
+      const mapped = ascMnemonicMap?.[ability.mnemonic] || '';
+      if (!mapped) return;
+      const statKey = resolveStatKeyFromAscNameFn?.(mapped);
+      if (statKey) {
+        if (!nextState.stats[statKey]) nextState.stats[statKey] = { stat: 0, bonus: 0 };
+        nextState.stats[statKey].stat = Math.max(0, Math.trunc(Number(ability.ranks) || 0));
+        return;
+      }
+      const canonical = canonicalSkillNameFn?.(mapped) || mapped;
+      const key = skillKeyFn(canonical);
+      if (!key) return;
+      if (!nextState.skills[key]) nextState.skills[key] = { bonus: 0 };
+      nextState.skills[key].bonus = Math.max(0, Math.trunc(Number(ability.ranks) || 0));
+    });
+
+    return nextState;
+  }
+
+  function populateAbilitiesFromAscensionState(params) {
+    const {
+      currentAscensionAbilities,
+      ascensionState,
+      ascMnemonicMap,
+      resolveStatKeyFromAscNameFn,
+      canonicalSkillNameFn,
+      normalizeAscensionAbilitiesFn = normalizeAscensionAbilities,
+      clampFn = clamp,
+    } = params || {};
+    const next = normalizeAscensionAbilitiesFn(currentAscensionAbilities || []);
+    next.forEach((ability) => {
+      const mapped = ascMnemonicMap?.[ability.mnemonic] || '';
+      if (!mapped) return;
+      const statKey = resolveStatKeyFromAscNameFn?.(mapped);
+      if (statKey) {
+        ability.ranks = clampFn(Math.trunc(Number(ascensionState?.stats?.[statKey]?.stat) || 0), 0, ability.cap);
+        return;
+      }
+      const canonical = canonicalSkillNameFn?.(mapped) || mapped;
+      const key = skillKey(canonical);
+      ability.ranks = clampFn(Math.trunc(Number(ascensionState?.skills?.[key]?.bonus) || 0), 0, ability.cap);
+    });
+    return next;
+  }
+
   function trainingPointsPerLevelForStats(statSnapshot, profession, professionPrimeReqs) {
     const primes = new Set(professionPrimeReqs?.[profession] || []);
     const weighted = (key) => {
@@ -580,6 +836,36 @@
       ptp: Math.max(0, Math.trunc(spentPtp)),
       mtp: Math.max(0, Math.trunc(spentMtp)),
     };
+  }
+
+  function getTrainingPointStatsSnapshot(params) {
+    const {
+      currentLevel0Stats,
+      currentBaseStats,
+      level,
+      stats,
+      raceName,
+      profession,
+      computeStatsFromLevel0Fn,
+      clampFn = clamp,
+    } = params || {};
+
+    if (currentLevel0Stats) {
+      const computed = computeStatsFromLevel0Fn?.(currentLevel0Stats, level, raceName, profession);
+      if (computed && Object.keys(computed).length) {
+        const snapshot = {};
+        (stats || []).forEach((stat) => {
+          snapshot[stat.key] = clampFn(Number(computed?.[stat.key]?.base ?? 50), 1, 100);
+        });
+        return snapshot;
+      }
+    }
+
+    const fallback = {};
+    (stats || []).forEach((stat) => {
+      fallback[stat.key] = clampFn(Number(currentBaseStats?.[stat.key] ?? 50), 1, 100);
+    });
+    return fallback;
   }
 
   function getStatAdjustment(params) {
@@ -821,6 +1107,195 @@
     return formatTrainingCostDisplay(basePtp * multiplier, baseMtp * multiplier);
   }
 
+  function collectSkills(params) {
+    const {
+      currentSkills,
+      ascensionState,
+      getEffectiveSkillEnhanciveFn,
+      skillBonusFromRanksFn = skillBonusFromRanks,
+      skillKeyFn = skillKey,
+    } = params || {};
+    return (currentSkills || []).map((skill) => {
+      const key = skillKeyFn(skill.name);
+      const ascBonus = Math.max(0, Math.trunc(Number(ascensionState?.skills?.[key]?.bonus) || 0));
+      const effectiveEnh = getEffectiveSkillEnhanciveFn?.(key) || { rank: 0, bonus: 0 };
+      const enhRank = Math.max(0, Math.trunc(Number(effectiveEnh.rank) || 0));
+      const enhBonus = Math.max(0, Math.trunc(Number(effectiveEnh.bonus) || 0));
+      const finalRanks = Math.max(0, Math.trunc(Number(skill.ranks) || 0) + enhRank);
+      const finalBonus = skillBonusFromRanksFn(finalRanks) + ascBonus + enhBonus;
+      return {
+        name: skill.name,
+        ranks: Math.max(0, Math.trunc(Number(skill.ranks) || 0)),
+        finalRanks,
+        bonus: finalBonus,
+      };
+    });
+  }
+
+  function getVisibleSkills(params) {
+    const {
+      skills,
+      showTrainedOnly,
+      allowedCircles,
+      ascensionState,
+      getEffectiveSkillEnhanciveFn,
+      spellCircles,
+      skillKeyFn = skillKey,
+    } = params || {};
+    const allowed = allowedCircles || new Set();
+    return (skills || []).filter((skill) => {
+      const key = skillKeyFn(skill.name);
+      const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
+      const hasAsc = Math.max(0, Math.trunc(Number(ascensionState?.skills?.[key]?.bonus) || 0)) > 0;
+      const effectiveEnh = getEffectiveSkillEnhanciveFn?.(key) || { rank: 0, bonus: 0 };
+      const hasEnhRank = Math.max(0, Math.trunc(Number(effectiveEnh.rank) || 0)) > 0;
+      const hasEnhBonus = Math.max(0, Math.trunc(Number(effectiveEnh.bonus) || 0)) > 0;
+      const active = ranks > 0 || hasAsc || hasEnhRank || hasEnhBonus;
+      const isCircle = spellCircles?.has(skill.name);
+      const circleAllowed = allowed.has(skill.name);
+
+      if (showTrainedOnly && !active) return false;
+      if (isCircle && !circleAllowed && !active) return false;
+      return true;
+    });
+  }
+
+  function getSkillsImportFlagSets(params) {
+    const {
+      currentSkills,
+      profession,
+      professionSpellCircleMap,
+      spellCircles,
+      skillKeyFn = skillKey,
+    } = params || {};
+    const allowedCircles = professionSpellCircleMap?.[profession] || new Set();
+    const offProfession = new Set();
+    (currentSkills || []).forEach((skill) => {
+      if (!spellCircles?.has(skill.name)) return;
+      const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
+      if (ranks <= 0) return;
+      if (!allowedCircles.has(skill.name)) offProfession.add(skillKeyFn(skill.name));
+    });
+    return { allowedCircles, offProfession };
+  }
+
+  function buildSkillsStatusMessage(params) {
+    const {
+      currentSkills,
+      prefix = '',
+      skillsImportUnmatchedKeys,
+      skillsImportOffProfessionKeys,
+      skillKeyFn = skillKey,
+      profession,
+    } = params || {};
+    const unmatchedNames = (currentSkills || [])
+      .filter((skill) => skillsImportUnmatchedKeys?.has(skillKeyFn(skill.name)))
+      .map((skill) => skill.name);
+    const offProfessionNames = (currentSkills || [])
+      .filter((skill) => skillsImportOffProfessionKeys?.has(skillKeyFn(skill.name)))
+      .map((skill) => skill.name);
+
+    const parts = [];
+    if (prefix) parts.push(prefix);
+    if (unmatchedNames.length) parts.push(`Unmatched from paste: ${unmatchedNames.join(', ')}.`);
+    if (offProfessionNames.length) parts.push(`Off-profession circles for ${profession}: ${offProfessionNames.join(', ')}.`);
+
+    if (!parts.length) {
+      return { text: 'Paste SKILLS output to load ranks.', isError: false };
+    }
+    return {
+      text: parts.join(' '),
+      isError: unmatchedNames.length > 0 || offProfessionNames.length > 0,
+    };
+  }
+
+  function buildCurrentProfileRecord(params) {
+    const {
+      name,
+      raceName,
+      profession,
+      level,
+      experience,
+      ascensionExperience,
+      ascensionMilestones,
+      currentAscensionAbilities,
+      currentLevel0Stats,
+      stats,
+      currentSkills,
+      ascensionState,
+      enhanciveState,
+      currentEnhanciveEquipment,
+      currentBadgeDefaults,
+      normalizeAscensionAbilitiesFn,
+      normalizeBadgeDefaultsFn,
+      normalizeEnhanciveEquipmentState,
+      getDerivedStatRowsFn,
+      collectSkillsFn,
+      clampFn = clamp,
+    } = params || {};
+    const statRows = getDerivedStatRowsFn?.() || {};
+    const statsPayload = {};
+    const ascStats = {};
+    const enhStats = {};
+    (stats || []).forEach((stat) => {
+      const row = statRows[stat.key] || {};
+      statsPayload[stat.key] = {
+        base: Math.max(1, Math.trunc(Number(row.baseStat) || 50)),
+        enhanced: Math.max(1, Math.trunc(Number(row.finalStat) || row.baseStat || 50)),
+      };
+      ascStats[stat.key] = {
+        stat: Math.max(0, Math.trunc(Number(ascensionState?.stats?.[stat.key]?.stat) || 0)),
+        bonus: Math.max(0, Math.trunc(Number(ascensionState?.stats?.[stat.key]?.bonus) || 0)),
+      };
+      enhStats[stat.key] = {
+        stat: Math.max(0, Math.trunc(Number(enhanciveState?.stats?.[stat.key]?.stat) || 0)),
+        bonus: Math.max(0, Math.trunc(Number(enhanciveState?.stats?.[stat.key]?.bonus) || 0)),
+      };
+    });
+
+    const ascSkills = {};
+    const enhSkills = {};
+    (currentSkills || []).forEach((skill) => {
+      const key = skillKey(skill.name);
+      ascSkills[key] = { bonus: Math.max(0, Math.trunc(Number(ascensionState?.skills?.[key]?.bonus) || 0)) };
+      enhSkills[key] = {
+        rank: Math.max(0, Math.trunc(Number(enhanciveState?.skills?.[key]?.rank) || 0)),
+        bonus: Math.max(0, Math.trunc(Number(enhanciveState?.skills?.[key]?.bonus) || 0)),
+      };
+    });
+
+    const ascensionAbilities = normalizeAscensionAbilitiesFn?.(currentAscensionAbilities || []).map((entry) => ({
+      name: entry.name,
+      mnemonic: entry.mnemonic,
+      cap: entry.cap,
+      category: entry.category,
+      subcategory: entry.subcategory,
+      ranks: entry.ranks,
+    })) || [];
+
+    return {
+      name: String(name || '').trim(),
+      race: String(raceName || 'Human'),
+      profession: String(profession || ''),
+      level: clampFn(Number(level), 0, 100),
+      experience: Math.max(0, Math.trunc(Number(experience) || 0)),
+      ascensionExperience: Math.max(0, Math.trunc(Number(ascensionExperience) || 0)),
+      ascensionMilestones: clampFn(Math.trunc(Number(ascensionMilestones) || 0), 0, 10),
+      ascensionAbilities,
+      level0Stats: currentLevel0Stats || null,
+      stats: statsPayload,
+      ascension: { stats: ascStats, skills: ascSkills },
+      enhancive: { stats: enhStats, skills: enhSkills },
+      equipment: {
+        enhancives: normalizeEnhanciveEquipmentState?.(currentEnhanciveEquipment),
+      },
+      skills: collectSkillsFn?.() || [],
+      defaults: {
+        badge: normalizeBadgeDefaultsFn?.(currentBadgeDefaults),
+      },
+    };
+  }
+
   return {
     ENHANCIVE_RESOURCE_OPTIONS,
     clamp,
@@ -847,6 +1322,11 @@
     effectDisplayType,
     effectDisplayTarget,
     normalizeEnhanciveEffectForUse,
+    getActiveEnhanciveEquipmentItems,
+    getEquipmentEnhanciveTotals,
+    getEffectiveSkillEnhancive,
+    createManualEnhanciveItem,
+    getManualEffectsLinkedToImportedItem,
     normalizeEnhanciveItemLinkName,
     normalizeProfileNameForMatch,
     normalizeBadgeDefaults,
@@ -856,9 +1336,18 @@
     ascensionPointsForRanks,
     buildDefaultAscensionAbilities,
     normalizeAscensionAbilities,
+    calculateAscensionPointsUsed,
+    getAscensionAbilityContext,
+    getAscensionAbilityGate,
+    getMaxAllowedAscensionRanks,
+    getNextAscensionCostDisplay,
+    enforceAscensionPointBudget,
+    syncAscensionStateFromAbilities,
+    populateAbilitiesFromAscensionState,
     trainingPointsPerLevelForStats,
     estimateTotalTrainingPointsFromExperience,
     estimateSpentTrainingPointsFromRanks,
+    getTrainingPointStatsSnapshot,
     getStatAdjustment,
     buildDerivedStatRows,
     enforceStatEnhanciveRowLimits,
@@ -871,5 +1360,10 @@
     getDisplaySkillCategory,
     buildSkillRankCapContext,
     getNextRankCostDisplay,
+    collectSkills,
+    getVisibleSkills,
+    getSkillsImportFlagSets,
+    buildSkillsStatusMessage,
+    buildCurrentProfileRecord,
   };
 });

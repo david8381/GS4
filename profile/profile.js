@@ -132,6 +132,21 @@ const ascensionRankCost = logic.ascensionRankCost;
 const ascensionPointsForRanks = logic.ascensionPointsForRanks;
 const buildDefaultAscensionAbilities = () => logic.buildDefaultAscensionAbilities(defaultAscensionAbilityCatalog);
 const normalizeAscensionAbilities = (entries) => logic.normalizeAscensionAbilities(entries, defaultAscensionAbilityCatalog);
+const calculateAscensionPointsUsed = (abilities = currentAscensionAbilities) => (
+  logic.calculateAscensionPointsUsed(abilities, ascensionPointsForRanks)
+);
+const getAscensionAbilityContext = (abilities = currentAscensionAbilities) => (
+  logic.getAscensionAbilityContext(abilities, ascensionPointsForRanks)
+);
+const getAscensionAbilityGate = (ability, abilities = currentAscensionAbilities) => (
+  logic.getAscensionAbilityGate(ability, abilities, ascensionPointsForRanks)
+);
+const getMaxAllowedAscensionRanks = (ability, abilities = currentAscensionAbilities) => (
+  logic.getMaxAllowedAscensionRanks(ability, abilities, ascensionPointsForRanks)
+);
+const getNextAscensionCostDisplay = (ability, abilities = currentAscensionAbilities) => (
+  logic.getNextAscensionCostDisplay(ability, abilities, ascensionRankCost, ascensionPointsForRanks)
+);
 const trainingPointsPerLevelForStats = (statSnapshot, profession) => (
   logic.trainingPointsPerLevelForStats(statSnapshot, profession, professionPrimeReqs)
 );
@@ -156,6 +171,16 @@ const estimateSpentTrainingPointsFromRanks = (skills, profession, level) => (
     multiplierUnitsForRanksFn: multiplierUnitsForRanks,
   })
 );
+const getTrainingPointStatsForLevel = (level) => logic.getTrainingPointStatsSnapshot({
+  currentLevel0Stats,
+  currentBaseStats,
+  level,
+  stats,
+  raceName: getSelectedRaceName(),
+  profession: profileProfession.value,
+  computeStatsFromLevel0Fn: computeStatsFromLevel0,
+  clampFn: clamp,
+});
 const getStatAdjustment = (statKey) => logic.getStatAdjustment({
   statKey,
   ascensionState,
@@ -198,6 +223,22 @@ const getNextRankCostDisplay = (skill, capContext) => logic.getNextRankCostDispl
   trainingCostRows,
   spellCircles,
   loreSkillNames,
+});
+const collectSkills = () => logic.collectSkills({
+  currentSkills,
+  ascensionState,
+  getEffectiveSkillEnhanciveFn: getEffectiveSkillEnhancive,
+  skillBonusFromRanksFn: skillBonusFromRanks,
+  skillKeyFn: skillKey,
+});
+const getVisibleSkills = (skills) => logic.getVisibleSkills({
+  skills,
+  showTrainedOnly: Boolean(skillsShowTrainedOnly?.checked),
+  allowedCircles: professionSpellCircleMap[profileProfession.value] || new Set(),
+  ascensionState,
+  getEffectiveSkillEnhanciveFn: getEffectiveSkillEnhancive,
+  spellCircles,
+  skillKeyFn: skillKey,
 });
 
 const defaultStatMap = (value = 0) => logic.defaultStatMap(stats, value);
@@ -375,60 +416,27 @@ const ENHANCIVE_TYPE_OPTIONS = [
 ];
 
 function getActiveEnhanciveEquipmentItems() {
-  const state = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
-  const importedItems = state.importedSnapshot.items.filter((item) => item.active !== false);
-  const manualItems = state.manualResolutions.items.filter((item) => {
-    if (item.active === false) return false;
-    if (!item.linkedImportedName) return true;
-    const linkedImportedItem = state.importedSnapshot.items.find(
-      (entry) => normalizeEnhanciveItemLinkName(entry.name) === normalizeEnhanciveItemLinkName(item.linkedImportedName),
-    );
-    return Boolean(linkedImportedItem?.active !== false);
+  return logic.getActiveEnhanciveEquipmentItems({
+    currentEnhanciveEquipment,
+    normalizeEnhanciveEquipmentStateFn: enhanciveImport.normalizeEnhanciveEquipmentState,
+    normalizeEnhanciveItemLinkNameFn: normalizeEnhanciveItemLinkName,
   });
-  return importedItems.concat(manualItems);
 }
 
 function getEquipmentEnhanciveTotals() {
-  const totals = {
-    stats: defaultStatMap(0),
-    skillRanks: {},
-    skillBonuses: {},
-    resources: {},
-  };
-
-  skillCatalog.forEach((name) => {
-    const key = skillKey(name);
-    totals.skillRanks[key] = 0;
-    totals.skillBonuses[key] = 0;
+  return logic.getEquipmentEnhanciveTotals({
+    currentEnhanciveEquipment,
+    defaultStatMapFn: defaultStatMap,
+    skillCatalog,
+    skillKeyFn: skillKey,
+    normalizeEnhanciveEffectForUseFn: normalizeEnhanciveEffectForUse,
+    normalizeEnhanciveEquipmentStateFn: enhanciveImport.normalizeEnhanciveEquipmentState,
+    normalizeEnhanciveItemLinkNameFn: normalizeEnhanciveItemLinkName,
   });
-
-  getActiveEnhanciveEquipmentItems().forEach((item) => {
-    item.effects.forEach((rawEffect) => {
-      const effect = normalizeEnhanciveEffectForUse(rawEffect);
-      if (!effect.type || !effect.target || effect.value <= 0) return;
-      if (effect.type === "stat") {
-        if (totals.stats[effect.target] != null) totals.stats[effect.target] += effect.value;
-      } else if (effect.type === "skill_rank") {
-        if (totals.skillRanks[effect.target] != null) totals.skillRanks[effect.target] += effect.value;
-      } else if (effect.type === "skill_bonus") {
-        if (totals.skillBonuses[effect.target] != null) totals.skillBonuses[effect.target] += effect.value;
-      } else if (effect.type === "resource") {
-        totals.resources[effect.target] = (totals.resources[effect.target] || 0) + effect.value;
-      }
-    });
-  });
-
-  return totals;
 }
 
 function getEffectiveSkillEnhancive(skillKeyName) {
-  const equipmentTotals = getEquipmentEnhanciveTotals();
-  return {
-    rank: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[skillKeyName]?.rank) || 0))
-      + Math.max(0, Math.trunc(Number(equipmentTotals.skillRanks?.[skillKeyName]) || 0)),
-    bonus: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[skillKeyName]?.bonus) || 0))
-      + Math.max(0, Math.trunc(Number(equipmentTotals.skillBonuses?.[skillKeyName]) || 0)),
-  };
+  return logic.getEffectiveSkillEnhancive(skillKeyName, enhanciveState, getEquipmentEnhanciveTotals());
 }
 
 function updateEnhanciveImportStatusMessages() {
@@ -445,50 +453,32 @@ function updateEnhanciveImportStatusMessages() {
 
 function rebuildImportedEnhanciveState(options = {}) {
   const { preserveManual = true, importedAt = currentEnhanciveEquipment.lastImportedAt || new Date().toISOString() } = options;
-  const merged = enhanciveImport.mergeImportedEnhanciveSnapshot(
-    enhanciveListImport?.value || "",
-    enhanciveTotalsImport?.value || "",
-    enhanciveDetailsImport?.value || "",
+  currentEnhanciveEquipment = profileState.rebuildImportedEnhanciveState({
+    currentEnhanciveEquipment,
+    listText: enhanciveListImport?.value || "",
+    totalsText: enhanciveTotalsImport?.value || "",
+    detailsText: enhanciveDetailsImport?.value || "",
+    preserveManual,
     importedAt,
-  );
-  const prior = enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment);
-  currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState({
-    ...merged,
-    manualResolutions: preserveManual ? prior.manualResolutions : merged.manualResolutions,
-    enhancivesEnabled: merged.enhancivesEnabled,
+    mergeImportedEnhanciveSnapshot: enhanciveImport.mergeImportedEnhanciveSnapshot,
+    normalizeEnhanciveEquipmentState: enhanciveImport.normalizeEnhanciveEquipmentState,
   });
   updateEnhanciveImportStatusMessages();
 }
 
 function createManualEnhanciveItem(partial = {}) {
-  const guessedType = partial.type && partial.type !== "unknown"
-    ? partial.type
-    : guessEnhanciveEffectType(partial.category, partial.label || partial.target);
-  const guessedTarget = partial.target || guessEnhanciveTarget(guessedType, partial.label || partial.target);
-  return {
-    id: `manual-enh-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
-    name: String(partial.name || "Manual Enhancive").trim(),
-    worn: true,
-    active: partial.active !== false,
-    source: "manual",
-    linkedImportedName: String(partial.linkedImportedName || "").trim(),
-    effects: [{
-      category: String(partial.category || "").trim(),
-      type: guessedType,
-      target: guessedTarget,
-      label: String(partial.label || partial.target || guessedTarget || "Unknown").trim(),
-      value: Math.max(0, Math.trunc(Number(partial.value) || 0)),
-      limit: Math.max(0, Math.trunc(Number(partial.limit) || 0)),
-      knownSource: true,
-    }],
-  };
+  return logic.createManualEnhanciveItem({
+    partial,
+    guessEnhanciveEffectTypeFn: guessEnhanciveEffectType,
+    guessEnhanciveTargetFn: guessEnhanciveTarget,
+  });
 }
 
 function getManualEffectsLinkedToImportedItem(itemName) {
-  const target = normalizeEnhanciveItemLinkName(itemName);
-  if (!target) return [];
-  return currentEnhanciveEquipment.manualResolutions.items.filter(
-    (item) => normalizeEnhanciveItemLinkName(item.linkedImportedName) === target,
+  return logic.getManualEffectsLinkedToImportedItem(
+    currentEnhanciveEquipment,
+    itemName,
+    normalizeEnhanciveItemLinkName,
   );
 }
 
@@ -496,136 +486,46 @@ function getSelectedRaceName() {
   return races.find((race) => race.key === profileRace.value)?.name || "Human";
 }
 
-
-function calculateAscensionPointsUsed(abilities = currentAscensionAbilities) {
-  return (abilities || []).reduce((sum, ability) => sum + ascensionPointsForRanks(ability.ranks, ability), 0);
-}
-
 function totalAscensionPointsAvailable() {
   return estimateTotalAscensionPoints(currentAscensionExperience, currentAscensionMilestones).totalAtp;
 }
 
-function getAscensionAbilityContext(abilities = currentAscensionAbilities) {
-  const byMnemonic = new Map((abilities || []).map((ability) => [ability.mnemonic, ability]));
-  const commonAtpSpent = (abilities || []).reduce((sum, ability) => {
-    if (ability.mnemonic === "trandest") return sum;
-    if (String(ability.category || "").toLowerCase() !== "common") return sum;
-    return sum + ascensionPointsForRanks(ability.ranks, ability);
-  }, 0);
-  const strengthRanks = Math.max(0, Math.trunc(Number(byMnemonic.get("strength")?.ranks) || 0));
-  const physicalFitnessRanks = Math.max(0, Math.trunc(Number(byMnemonic.get("physicalfitness")?.ranks) || 0));
-  return { byMnemonic, commonAtpSpent, strengthRanks, physicalFitnessRanks };
-}
-
-function getAscensionAbilityGate(ability, abilities = currentAscensionAbilities) {
-  if (!ability) return { allowed: true, reason: "" };
-  const context = getAscensionAbilityContext(abilities);
-  if (ability.mnemonic === "trandest" && context.commonAtpSpent < 150) {
-    return { allowed: false, reason: "Requires 150 ATP spent in Common abilities." };
-  }
-  if (ability.mnemonic === "porter" && (context.strengthRanks + context.physicalFitnessRanks) < 10) {
-    return { allowed: false, reason: "Requires 10 combined ranks in Strength + Physical Fitness." };
-  }
-  return { allowed: true, reason: "" };
-}
-
-function getMaxAllowedAscensionRanks(ability, abilities = currentAscensionAbilities) {
-  const gate = getAscensionAbilityGate(ability, abilities);
-  if (gate.allowed) return ability.cap;
-  return Math.max(0, Math.trunc(Number(ability.ranks) || 0));
-}
-
-function getNextAscensionCostDisplay(ability, abilities = currentAscensionAbilities) {
-  const ranks = Math.max(0, Math.trunc(Number(ability?.ranks) || 0));
-  const cap = Math.max(0, Math.trunc(Number(ability?.cap) || 0));
-  if (ranks >= cap) return { display: "—", gateReason: "" };
-  const gate = getAscensionAbilityGate(ability, abilities);
-  if (!gate.allowed) return { display: "Locked", gateReason: gate.reason };
-  const nextCost = ascensionRankCost(ability, ranks + 1);
-  return { display: String(nextCost), gateReason: "" };
-}
-
 function enforceAscensionPointBudget() {
-  const available = totalAscensionPointsAvailable();
-  let used = calculateAscensionPointsUsed();
-  if (used <= available) return;
-  const sorted = [...currentAscensionAbilities].sort((a, b) => b.ranks - a.ranks);
-  sorted.forEach((ability) => {
-    while (ability.ranks > 0 && used > available) {
-      ability.ranks -= 1;
-      ability.ranks = Math.min(ability.ranks, getMaxAllowedAscensionRanks(ability));
-      used = calculateAscensionPointsUsed(currentAscensionAbilities);
-    }
+  currentAscensionAbilities = logic.enforceAscensionPointBudget({
+    abilities: currentAscensionAbilities,
+    availablePoints: totalAscensionPointsAvailable(),
+    getMaxAllowedAscensionRanksFn: getMaxAllowedAscensionRanks,
+    calculateAscensionPointsUsedFn: calculateAscensionPointsUsed,
   });
 }
 
 function syncAscensionStateFromAbilities() {
-  stats.forEach((stat) => {
-    if (!ascensionState.stats[stat.key]) ascensionState.stats[stat.key] = { stat: 0, bonus: 0 };
-    ascensionState.stats[stat.key].stat = 0;
-  });
-  currentSkills.forEach((skill) => {
-    const key = skillKey(skill.name);
-    if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
-    ascensionState.skills[key].bonus = 0;
-  });
-
-  currentAscensionAbilities.forEach((ability) => {
-    const mapped = ascMnemonicMap[ability.mnemonic] || "";
-    if (!mapped) return;
-    const statKey = resolveStatKeyFromAscName(mapped);
-    if (statKey) {
-      if (!ascensionState.stats[statKey]) ascensionState.stats[statKey] = { stat: 0, bonus: 0 };
-      ascensionState.stats[statKey].stat = ability.ranks;
-      return;
-    }
-    const canonical = canonicalSkillName(mapped);
-    const key = skillKey(canonical);
-    if (!key) return;
-    if (!ascensionState.skills[key]) ascensionState.skills[key] = { bonus: 0 };
-    ascensionState.skills[key].bonus = ability.ranks;
+  ascensionState = logic.syncAscensionStateFromAbilities({
+    currentAscensionAbilities,
+    stats,
+    currentSkills,
+    ascensionState,
+    ascMnemonicMap,
+    resolveStatKeyFromAscNameFn: resolveStatKeyFromAscName,
+    canonicalSkillNameFn: canonicalSkillName,
+    skillKeyFn: skillKey,
   });
 }
 
 function populateAbilitiesFromAscensionState() {
-  const next = normalizeAscensionAbilities(currentAscensionAbilities);
-  next.forEach((ability) => {
-    const mapped = ascMnemonicMap[ability.mnemonic] || "";
-    if (!mapped) return;
-    const statKey = resolveStatKeyFromAscName(mapped);
-    if (statKey) {
-      ability.ranks = clamp(Math.trunc(Number(ascensionState.stats?.[statKey]?.stat) || 0), 0, ability.cap);
-      return;
-    }
-    const canonical = canonicalSkillName(mapped);
-    const key = skillKey(canonical);
-    ability.ranks = clamp(Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0), 0, ability.cap);
+  currentAscensionAbilities = logic.populateAbilitiesFromAscensionState({
+    currentAscensionAbilities,
+    ascensionState,
+    ascMnemonicMap,
+    resolveStatKeyFromAscNameFn: resolveStatKeyFromAscName,
+    canonicalSkillNameFn: canonicalSkillName,
+    normalizeAscensionAbilitiesFn: normalizeAscensionAbilities,
+    clampFn: clamp,
   });
-  currentAscensionAbilities = next;
 }
 
 function setExperienceFromLevel(level) {
   profileExperience.value = String(experienceForLevel(level));
-}
-
-function getTrainingPointStatsForLevel(level) {
-  if (currentLevel0Stats) {
-    const raceName = races.find((race) => race.key === profileRace.value)?.name || "Human";
-    const profession = profileProfession.value;
-    const computed = computeStatsFromLevel0(currentLevel0Stats, level, raceName, profession);
-    if (computed && Object.keys(computed).length) {
-      const snapshot = {};
-      stats.forEach((stat) => {
-        snapshot[stat.key] = clamp(Number(computed?.[stat.key]?.base ?? 50), 1, 100);
-      });
-      return snapshot;
-    }
-  }
-  const fallback = {};
-  stats.forEach((stat) => {
-    fallback[stat.key] = clamp(Number(currentBaseStats?.[stat.key] ?? 50), 1, 100);
-  });
-  return fallback;
 }
 
 function updateTrainingPointEstimateDisplay() {
@@ -1127,60 +1027,28 @@ function renderSkillsTable(skills) {
   });
 }
 
-function getVisibleSkills(skills) {
-  const showTrainedOnly = Boolean(skillsShowTrainedOnly?.checked);
-  const allowedCircles = professionSpellCircleMap[profileProfession.value] || new Set();
-
-  return skills.filter((skill) => {
-    const key = skillKey(skill.name);
-    const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    const hasAsc = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0)) > 0;
-    const effectiveEnh = getEffectiveSkillEnhancive(key);
-    const hasEnhRank = effectiveEnh.rank > 0;
-    const hasEnhBonus = effectiveEnh.bonus > 0;
-    const active = ranks > 0 || hasAsc || hasEnhRank || hasEnhBonus;
-    const isCircle = spellCircles.has(skill.name);
-    const circleAllowed = allowedCircles.has(skill.name);
-
-    if (showTrainedOnly && !active) return false;
-    if (isCircle && !circleAllowed && !active) return false;
-    return true;
-  });
-}
-
 function updateSkillsImportFlags() {
-  const allowedCircles = professionSpellCircleMap[profileProfession.value] || new Set();
-  const offProfession = new Set();
-  currentSkills.forEach((skill) => {
-    if (!spellCircles.has(skill.name)) return;
-    const ranks = Math.max(0, Math.trunc(Number(skill.ranks) || 0));
-    if (ranks <= 0) return;
-    if (!allowedCircles.has(skill.name)) offProfession.add(skillKey(skill.name));
+  const flagSets = logic.getSkillsImportFlagSets({
+    currentSkills,
+    profession: profileProfession.value,
+    professionSpellCircleMap,
+    spellCircles,
+    skillKeyFn: skillKey,
   });
-  skillsImportOffProfessionKeys = offProfession;
+  skillsImportOffProfessionKeys = flagSets.offProfession;
 }
 
 function updateSkillsStatusMessage(prefix = "") {
-  const unmatchedNames = currentSkills
-    .filter((skill) => skillsImportUnmatchedKeys.has(skillKey(skill.name)))
-    .map((skill) => skill.name);
-  const offProfessionNames = currentSkills
-    .filter((skill) => skillsImportOffProfessionKeys.has(skillKey(skill.name)))
-    .map((skill) => skill.name);
-
-  const parts = [];
-  if (prefix) parts.push(prefix);
-  if (unmatchedNames.length) parts.push(`Unmatched from paste: ${unmatchedNames.join(", ")}.`);
-  if (offProfessionNames.length) parts.push(`Off-profession circles for ${profileProfession.value}: ${offProfessionNames.join(", ")}.`);
-
-  if (!parts.length) {
-    skillsStatus.textContent = "Paste SKILLS output to load ranks.";
-    skillsStatus.style.color = "";
-    return;
-  }
-
-  skillsStatus.textContent = parts.join(" ");
-  skillsStatus.style.color = unmatchedNames.length || offProfessionNames.length ? "#b42318" : "";
+  const message = logic.buildSkillsStatusMessage({
+    currentSkills,
+    prefix,
+    skillsImportUnmatchedKeys,
+    skillsImportOffProfessionKeys,
+    skillKeyFn: skillKey,
+    profession: profileProfession.value,
+  });
+  skillsStatus.textContent = message.text;
+  skillsStatus.style.color = message.isError ? "#b42318" : "";
 }
 
 function runProfileSelfTests() {
@@ -1297,24 +1165,6 @@ function applyAscList(text, options = {}) {
   ascImportStatus.style.color = "";
 }
 
-function collectSkills() {
-  return currentSkills.map((skill) => {
-    const key = skillKey(skill.name);
-    const ascBonus = Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0));
-    const effectiveEnh = getEffectiveSkillEnhancive(key);
-    const enhRank = effectiveEnh.rank;
-    const enhBonus = effectiveEnh.bonus;
-    const finalRanks = Math.max(0, skill.ranks + enhRank);
-    const finalBonus = skillBonusFromRanks(finalRanks) + ascBonus + enhBonus;
-    return {
-      name: skill.name,
-      ranks: skill.ranks,
-      finalRanks,
-      bonus: finalBonus,
-    };
-  });
-}
-
 function normalizeLevel0Stats(level0Stats) {
   return profileState.normalizeLevel0Stats(level0Stats, stats, clamp);
 }
@@ -1353,65 +1203,34 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
 }
 
 function buildCurrentProfileRecord(nameOverride = null) {
-  const statRows = getDerivedStatRows();
-  const statsPayload = {};
-  stats.forEach((stat) => {
-    const row = statRows[stat.key];
-    statsPayload[stat.key] = { base: row.baseStat, enhanced: row.finalStat };
+  const baseRecord = logic.buildCurrentProfileRecord({
+    name: nameOverride == null ? profileName.value : nameOverride,
+    raceName: races.find((race) => race.key === profileRace.value)?.name || "Human",
+    profession: profileProfession.value,
+    level: Number(profileLevel.value),
+    experience: Number(profileExperience.value),
+    ascensionExperience: currentAscensionExperience,
+    ascensionMilestones: currentAscensionMilestones,
+    currentAscensionAbilities,
+    currentLevel0Stats,
+    stats,
+    currentSkills,
+    ascensionState,
+    enhanciveState,
+    currentEnhanciveEquipment,
+    currentBadgeDefaults,
+    normalizeAscensionAbilitiesFn: normalizeAscensionAbilities,
+    normalizeBadgeDefaultsFn: normalizeBadgeDefaults,
+    normalizeEnhanciveEquipmentState: enhanciveImport.normalizeEnhanciveEquipmentState,
+    getDerivedStatRowsFn: getDerivedStatRows,
+    collectSkillsFn: collectSkills,
+    clampFn: clamp,
   });
-
-  const ascStats = {};
-  const enhStats = {};
-  stats.forEach((stat) => {
-    const key = stat.key;
-    ascStats[key] = {
-      stat: Math.max(0, Math.trunc(Number(ascensionState.stats?.[key]?.stat) || 0)),
-      bonus: Math.max(0, Math.trunc(Number(ascensionState.stats?.[key]?.bonus) || 0)),
-    };
-    enhStats[key] = {
-      stat: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[key]?.stat) || 0)),
-      bonus: Math.max(0, Math.trunc(Number(enhanciveState.stats?.[key]?.bonus) || 0)),
-    };
-  });
-
-  const ascSkills = {};
-  const enhSkills = {};
-  currentSkills.forEach((skill) => {
-    const key = skillKey(skill.name);
-    ascSkills[key] = { bonus: Math.max(0, Math.trunc(Number(ascensionState.skills?.[key]?.bonus) || 0)) };
-    enhSkills[key] = {
-      rank: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.rank) || 0)),
-      bonus: Math.max(0, Math.trunc(Number(enhanciveState.skills?.[key]?.bonus) || 0)),
-    };
-  });
-
-  const ascensionAbilities = normalizeAscensionAbilities(currentAscensionAbilities).map((entry) => ({
-    name: entry.name,
-    mnemonic: entry.mnemonic,
-    cap: entry.cap,
-    category: entry.category,
-    subcategory: entry.subcategory,
-    ranks: entry.ranks,
-  }));
 
   return {
-    name: (nameOverride == null ? profileName.value : nameOverride).trim(),
-    race: races.find((race) => race.key === profileRace.value)?.name || "Human",
-    profession: profileProfession.value,
-    level: clamp(Number(profileLevel.value), 0, 100),
-    experience: Math.max(0, Math.trunc(Number(profileExperience.value) || 0)),
-    ascensionExperience: Math.max(0, Math.trunc(Number(currentAscensionExperience) || 0)),
-    ascensionMilestones: clamp(Math.trunc(Number(currentAscensionMilestones) || 0), 0, 10),
-    ascensionAbilities,
-    level0Stats: currentLevel0Stats,
-    stats: statsPayload,
-    ascension: { stats: ascStats, skills: ascSkills },
-    enhancive: { stats: enhStats, skills: enhSkills },
-    equipment: {
-      enhancives: enhanciveImport.normalizeEnhanciveEquipmentState(currentEnhanciveEquipment),
-    },
-    skills: collectSkills(),
+    ...baseRecord,
     defaults: {
+      ...baseRecord.defaults,
       armorAsg: armorAsgSelect.value,
       armorWeight: Math.max(0, Number(armorWeightInput.value) || 0),
       useCustomArmorBase: Boolean(useCustomArmorBaseInput?.checked),
@@ -1419,7 +1238,6 @@ function buildCurrentProfileRecord(nameOverride = null) {
       accessoryWeight: Math.max(0, Number(accessoryWeightInput.value) || 0),
       gearWeight: Math.max(0, Number(gearWeightInput.value) || 0),
       silvers: Math.max(0, Number(silversInput.value) || 0),
-      badge: normalizeBadgeDefaults(currentBadgeDefaults),
     },
   };
 }

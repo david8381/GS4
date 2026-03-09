@@ -19,6 +19,11 @@ const {
   guessEnhanciveEffectType,
   guessEnhanciveTarget,
   normalizeEnhanciveEffectForUse,
+  getActiveEnhanciveEquipmentItems,
+  getEquipmentEnhanciveTotals,
+  getEffectiveSkillEnhancive,
+  createManualEnhanciveItem,
+  getManualEffectsLinkedToImportedItem,
   normalizeEnhanciveItemLinkName,
   normalizeProfileNameForMatch,
   normalizeBadgeDefaults,
@@ -28,9 +33,18 @@ const {
   ascensionPointsForRanks,
   buildDefaultAscensionAbilities,
   normalizeAscensionAbilities,
+  calculateAscensionPointsUsed,
+  getAscensionAbilityContext,
+  getAscensionAbilityGate,
+  getMaxAllowedAscensionRanks,
+  getNextAscensionCostDisplay,
+  enforceAscensionPointBudget,
+  syncAscensionStateFromAbilities,
+  populateAbilitiesFromAscensionState,
   trainingPointsPerLevelForStats,
   estimateTotalTrainingPointsFromExperience,
   estimateSpentTrainingPointsFromRanks,
+  getTrainingPointStatsSnapshot,
   getStatAdjustment,
   buildDerivedStatRows,
   enforceStatEnhanciveRowLimits,
@@ -43,6 +57,11 @@ const {
   getDisplaySkillCategory,
   buildSkillRankCapContext,
   getNextRankCostDisplay,
+  collectSkills,
+  getVisibleSkills,
+  getSkillsImportFlagSets,
+  buildSkillsStatusMessage,
+  buildCurrentProfileRecord,
 } = require("../profile-logic.js");
 
 const stats = [
@@ -215,6 +234,115 @@ test("normalizeEnhanciveEffectForUse canonicalizes effect fields", () => {
   );
 });
 
+test("equipment enhancive helpers honor linked manual effects and aggregate totals", () => {
+  const equipmentState = {
+    importedSnapshot: {
+      items: [
+        {
+          name: "a tin-bound ceramic badge",
+          active: true,
+          effects: [{ category: "Stats", label: "Agility (AGI)", value: 4 }],
+        },
+        {
+          name: "a gilded locus",
+          active: false,
+          effects: [{ category: "Resources", label: "Max Mana", value: 1 }],
+        },
+      ],
+    },
+    manualResolutions: {
+      items: [
+        {
+          name: "Linked Bonus",
+          active: true,
+          linkedImportedName: "a tin-bound ceramic badge",
+          effects: [{ category: "Skills", label: "Arcane Symbols", type: "skill_bonus", target: "arcane symbols", value: 5 }],
+        },
+        {
+          name: "Standalone",
+          active: true,
+          effects: [{ category: "Skills", label: "Magic Item Use", type: "skill_rank", target: "magic item use", value: 2 }],
+        },
+      ],
+    },
+  };
+
+  const activeItems = getActiveEnhanciveEquipmentItems({
+    currentEnhanciveEquipment: equipmentState,
+    normalizeEnhanciveEquipmentStateFn: (value) => value,
+    normalizeEnhanciveItemLinkNameFn: normalizeEnhanciveItemLinkName,
+  });
+  assert.deepEqual(activeItems.map((item) => item.name), [
+    "a tin-bound ceramic badge",
+    "Linked Bonus",
+    "Standalone",
+  ]);
+
+  const totals = getEquipmentEnhanciveTotals({
+    currentEnhanciveEquipment: equipmentState,
+    defaultStatMapFn: (value) => ({ agi: value, aur: value }),
+    skillCatalog,
+    skillKeyFn: skillKey,
+    normalizeEnhanciveEffectForUseFn: (effect) => normalizeEnhanciveEffectForUse(effect, stats, skillCatalog, skillAliasMap),
+    normalizeEnhanciveEquipmentStateFn: (value) => value,
+    normalizeEnhanciveItemLinkNameFn: normalizeEnhanciveItemLinkName,
+  });
+  assert.deepEqual(totals, {
+    stats: { agi: 4, aur: 0 },
+    skillRanks: { "arcane symbols": 0, "magic item use": 2 },
+    skillBonuses: { "arcane symbols": 5, "magic item use": 0 },
+    resources: {},
+  });
+  assert.deepEqual(getEffectiveSkillEnhancive("arcane symbols", {
+    skills: { "arcane symbols": { rank: 1, bonus: 2 } },
+  }, totals), {
+    rank: 1,
+    bonus: 7,
+  });
+});
+
+test("manual enhancive item helpers build canonical rows and linked lookups", () => {
+  const item = createManualEnhanciveItem({
+    partial: {
+      name: " Badge Resolve ",
+      category: "Stats",
+      label: "Agility (AGI)",
+      value: "4",
+      linkedImportedName: "a tin-bound ceramic badge",
+    },
+    guessEnhanciveEffectTypeFn: (category) => (category === "Stats" ? "stat" : "unknown"),
+    guessEnhanciveTargetFn: () => "agi",
+    idFactory: () => "manual-123",
+  });
+  assert.deepEqual(item, {
+    id: "manual-123",
+    name: "Badge Resolve",
+    worn: true,
+    active: true,
+    source: "manual",
+    linkedImportedName: "a tin-bound ceramic badge",
+    effects: [{
+      category: "Stats",
+      type: "stat",
+      target: "agi",
+      label: "Agility (AGI)",
+      value: 4,
+      limit: 0,
+      knownSource: true,
+    }],
+  });
+
+  const linked = getManualEffectsLinkedToImportedItem({
+    manualResolutions: {
+      items: [
+        item,
+        { name: "Other", linkedImportedName: "a gilded locus", effects: [] },
+      ],
+    },
+  }, "A Tin-Bound Ceramic Badge", normalizeEnhanciveItemLinkName);
+  assert.deepEqual(linked.map((entry) => entry.id), ["manual-123"]);
+});
+
 test("profile and item link name normalization is stable", () => {
   assert.equal(normalizeEnhanciveItemLinkName("  A Tin-Bound   Ceramic Badge "), "a tin-bound ceramic badge");
   assert.equal(normalizeProfileNameForMatch("  Sajehn "), "sajehn");
@@ -263,6 +391,83 @@ test("buildDefaultAscensionAbilities and normalizeAscensionAbilities fill and so
   ]);
 });
 
+test("ascension gating helpers enforce trandest and porter requirements", () => {
+  const abilities = [
+    { name: "Strength", mnemonic: "strength", category: "Common", subcategory: "Stat", cap: 40, ranks: 5 },
+    { name: "Physical Fitness", mnemonic: "physicalfitness", category: "Common", subcategory: "Skill", cap: 50, ranks: 5 },
+    { name: "Transcend Destiny", mnemonic: "trandest", category: "Elite", subcategory: "Other", cap: 10, ranks: 0 },
+    { name: "Porter", mnemonic: "porter", category: "Common", subcategory: "Other", cap: 50, ranks: 0 },
+  ];
+
+  assert.equal(calculateAscensionPointsUsed(abilities), 10);
+  assert.deepEqual(getAscensionAbilityContext(abilities), {
+    byMnemonic: new Map(abilities.map((ability) => [ability.mnemonic, ability])),
+    commonAtpSpent: 10,
+    strengthRanks: 5,
+    physicalFitnessRanks: 5,
+  });
+  assert.deepEqual(getAscensionAbilityGate(abilities[2], abilities), {
+    allowed: false,
+    reason: "Requires 150 ATP spent in Common abilities.",
+  });
+  assert.deepEqual(getAscensionAbilityGate(abilities[3], abilities), {
+    allowed: true,
+    reason: "",
+  });
+  assert.equal(getMaxAllowedAscensionRanks({ ...abilities[2], ranks: 2 }, abilities), 2);
+  assert.deepEqual(getNextAscensionCostDisplay(abilities[2], abilities), {
+    display: "Locked",
+    gateReason: "Requires 150 ATP spent in Common abilities.",
+  });
+
+  const budgeted = enforceAscensionPointBudget({
+    abilities: [{ ...abilities[0], ranks: 8 }, { ...abilities[1], ranks: 8 }],
+    availablePoints: 10,
+    getMaxAllowedAscensionRanksFn: (ability) => ability.cap,
+    calculateAscensionPointsUsedFn: (next) => next.reduce((sum, ability) => sum + ability.ranks, 0),
+  });
+  assert.deepEqual(budgeted.map((ability) => ability.ranks), [2, 8]);
+});
+
+test("ascension state sync helpers translate between abilities and state maps", () => {
+  const currentAscensionAbilities = [
+    { name: "Agility", mnemonic: "agility", cap: 40, category: "Common", subcategory: "Stat", ranks: 5 },
+    { name: "Arcane Symbols", mnemonic: "arcanesymbols", cap: 50, category: "Common", subcategory: "Skill", ranks: 3 },
+  ];
+  const ascMnemonicMap = {
+    agility: "Agility",
+    arcanesymbols: "Arcane Symbols",
+  };
+  const nextState = syncAscensionStateFromAbilities({
+    currentAscensionAbilities,
+    stats,
+    currentSkills: [{ name: "Arcane Symbols" }],
+    ascensionState: { stats: { agi: { stat: 0, bonus: 2 } }, skills: {} },
+    ascMnemonicMap,
+    resolveStatKeyFromAscNameFn: (name) => (name === "Agility" ? "agi" : ""),
+    canonicalSkillNameFn: (name) => name,
+  });
+  assert.deepEqual(nextState, {
+    stats: {
+      agi: { stat: 5, bonus: 2 },
+      aur: { stat: 0, bonus: 0 },
+    },
+    skills: {
+      "arcane symbols": { bonus: 3 },
+    },
+  });
+
+  const roundTripped = populateAbilitiesFromAscensionState({
+    currentAscensionAbilities: currentAscensionAbilities.map((ability) => ({ ...ability, ranks: 0 })),
+    ascensionState: nextState,
+    ascMnemonicMap,
+    resolveStatKeyFromAscNameFn: (name) => (name === "Agility" ? "agi" : ""),
+    canonicalSkillNameFn: (name) => name,
+    normalizeAscensionAbilitiesFn: (entries) => entries.map((entry) => ({ ...entry })),
+  });
+  assert.deepEqual(roundTripped.map((ability) => ability.ranks), [5, 3]);
+});
+
 test("training point helpers compute per-level totals and spent pools", () => {
   const professionPrimeReqs = { Sorcerer: ["aur", "wis"] };
   assert.deepEqual(
@@ -293,6 +498,17 @@ test("training point helpers compute per-level totals and spent pools", () => {
     getSkillPoolKey: (_skillName, rowName) => rowName,
   });
   assert.deepEqual(spent, { ptp: 8, mtp: 16 });
+
+  const snapshot = getTrainingPointStatsSnapshot({
+    currentLevel0Stats: { str: 70, con: 40 },
+    currentBaseStats: { str: 50, con: 50 },
+    level: 10,
+    stats: [{ key: "str" }, { key: "con" }],
+    raceName: "Human",
+    profession: "Wizard",
+    computeStatsFromLevel0Fn: () => ({ str: { base: 73 }, con: { base: 42 } }),
+  });
+  assert.deepEqual(snapshot, { str: 73, con: 42 });
 });
 
 test("derived stat helpers combine ascension, enhancives, and racial bonus", () => {
@@ -382,4 +598,148 @@ test("skill cap helpers group pools and compute next rank cost", () => {
     }),
     "0/20"
   );
+});
+
+test("skill collection and visibility helpers include ascension and enhancive state", () => {
+  const skills = [
+    { name: "Arcane Symbols", ranks: 10 },
+    { name: "Minor Elemental", ranks: 0 },
+  ];
+  const ascensionState = {
+    skills: {
+      "arcane symbols": { bonus: 0 },
+      "minor elemental": { bonus: 5 },
+    },
+  };
+  const getEffectiveSkillEnhanciveFn = (key) => (
+    key === "arcane symbols" ? { rank: 2, bonus: 3 } : { rank: 0, bonus: 0 }
+  );
+
+  const collected = collectSkills({
+    currentSkills: skills,
+    ascensionState,
+    getEffectiveSkillEnhanciveFn,
+  });
+  assert.deepEqual(collected, [
+    { name: "Arcane Symbols", ranks: 10, finalRanks: 12, bonus: 61 },
+    { name: "Minor Elemental", ranks: 0, finalRanks: 0, bonus: 5 },
+  ]);
+
+  const visible = getVisibleSkills({
+    skills,
+    showTrainedOnly: true,
+    allowedCircles: new Set(),
+    ascensionState,
+    getEffectiveSkillEnhanciveFn,
+    spellCircles: new Set(["Minor Elemental"]),
+  });
+  assert.deepEqual(visible.map((entry) => entry.name), ["Arcane Symbols", "Minor Elemental"]);
+});
+
+test("skills import flag and status helpers report off-profession circles and unmatched rows", () => {
+  const currentSkills = [
+    { name: "Minor Elemental", ranks: 35 },
+    { name: "Sorcerer", ranks: 100 },
+    { name: "Arcane Symbols", ranks: 80 },
+  ];
+  const flags = getSkillsImportFlagSets({
+    currentSkills,
+    profession: "Sorcerer",
+    professionSpellCircleMap: {
+      Sorcerer: new Set(["Minor Elemental", "Minor Spiritual", "Sorcerer"]),
+    },
+    spellCircles: new Set(["Minor Elemental", "Minor Spiritual", "Sorcerer", "Wizard"]),
+  });
+  assert.deepEqual([...flags.offProfession], []);
+
+  const mismatchFlags = getSkillsImportFlagSets({
+    currentSkills: [{ name: "Wizard", ranks: 5 }],
+    profession: "Sorcerer",
+    professionSpellCircleMap: {
+      Sorcerer: new Set(["Sorcerer"]),
+    },
+    spellCircles: new Set(["Wizard", "Sorcerer"]),
+  });
+  assert.deepEqual([...mismatchFlags.offProfession], ["wizard"]);
+
+  const message = buildSkillsStatusMessage({
+    currentSkills: [{ name: "Wizard", ranks: 5 }, { name: "Arcane Symbols", ranks: 80 }],
+    prefix: "Loaded SKILLS.",
+    skillsImportUnmatchedKeys: new Set(["arcane symbols"]),
+    skillsImportOffProfessionKeys: new Set(["wizard"]),
+    profession: "Sorcerer",
+  });
+  assert.equal(
+    message.text,
+    "Loaded SKILLS. Unmatched from paste: Arcane Symbols. Off-profession circles for Sorcerer: Wizard."
+  );
+  assert.equal(message.isError, true);
+});
+
+test("buildCurrentProfileRecord assembles normalized core profile payload", () => {
+  const record = buildCurrentProfileRecord({
+    name: " Sajehn ",
+    raceName: "Dark Elf",
+    profession: "Sorcerer",
+    level: 80,
+    experience: 5504113,
+    ascensionExperience: 1000368,
+    ascensionMilestones: 4,
+    currentAscensionAbilities: [{ name: "Agility", mnemonic: "agility", cap: 40, category: "Common", subcategory: "Stat", ranks: 5 }],
+    currentLevel0Stats: { agi: 70, aur: 90 },
+    stats,
+    currentSkills: [{ name: "Arcane Symbols", ranks: 80 }],
+    ascensionState: {
+      stats: { agi: { stat: 5, bonus: 0 }, aur: { stat: 5, bonus: 0 } },
+      skills: { "arcane symbols": { bonus: 0 } },
+    },
+    enhanciveState: {
+      stats: { agi: { stat: 4, bonus: 0 }, aur: { stat: 0, bonus: 0 } },
+      skills: { "arcane symbols": { rank: 0, bonus: 3 } },
+    },
+    currentEnhanciveEquipment: { importedSnapshot: { items: [] }, manualResolutions: { items: [] } },
+    currentBadgeDefaults: { lifetimeBp: 123 },
+    normalizeAscensionAbilitiesFn: (entries) => entries,
+    normalizeBadgeDefaultsFn: (badge) => ({ lifetimeBp: badge.lifetimeBp }),
+    normalizeEnhanciveEquipmentState: (equipment) => ({ importedSnapshot: equipment.importedSnapshot, manualResolutions: equipment.manualResolutions }),
+    getDerivedStatRowsFn: () => ({
+      agi: { baseStat: 70, finalStat: 79 },
+      aur: { baseStat: 90, finalStat: 95 },
+    }),
+    collectSkillsFn: () => [{ name: "Arcane Symbols", ranks: 80, finalRanks: 80, bonus: 180 }],
+  });
+
+  assert.deepEqual(record, {
+    name: "Sajehn",
+    race: "Dark Elf",
+    profession: "Sorcerer",
+    level: 80,
+    experience: 5504113,
+    ascensionExperience: 1000368,
+    ascensionMilestones: 4,
+    ascensionAbilities: [{ name: "Agility", mnemonic: "agility", cap: 40, category: "Common", subcategory: "Stat", ranks: 5 }],
+    level0Stats: { agi: 70, aur: 90 },
+    stats: {
+      agi: { base: 70, enhanced: 79 },
+      aur: { base: 90, enhanced: 95 },
+    },
+    ascension: {
+      stats: { agi: { stat: 5, bonus: 0 }, aur: { stat: 5, bonus: 0 } },
+      skills: { "arcane symbols": { bonus: 0 } },
+    },
+    enhancive: {
+      stats: { agi: { stat: 4, bonus: 0 }, aur: { stat: 0, bonus: 0 } },
+      skills: { "arcane symbols": { rank: 0, bonus: 3 } },
+    },
+    equipment: {
+      enhancives: {
+        importedSnapshot: { items: [] },
+        manualResolutions: { items: [] },
+      },
+    },
+    skills: [{ name: "Arcane Symbols", ranks: 80, finalRanks: 80, bonus: 180 }],
+    defaults: {
+      badge: { lifetimeBp: 123 },
+    },
+  });
 });

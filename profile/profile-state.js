@@ -169,11 +169,39 @@
     return JSON.stringify(a) === JSON.stringify(b);
   }
 
+  function rebuildImportedEnhanciveState(options) {
+    const {
+      currentEnhanciveEquipment,
+      listText = "",
+      totalsText = "",
+      detailsText = "",
+      preserveManual = true,
+      importedAt,
+      mergeImportedEnhanciveSnapshot,
+      normalizeEnhanciveEquipmentState,
+    } = options || {};
+
+    const nextImportedAt = importedAt || currentEnhanciveEquipment?.lastImportedAt || new Date().toISOString();
+    const merged = mergeImportedEnhanciveSnapshot?.(
+      listText,
+      totalsText,
+      detailsText,
+      nextImportedAt,
+    );
+    const prior = normalizeEnhanciveEquipmentState?.(currentEnhanciveEquipment);
+    return normalizeEnhanciveEquipmentState?.({
+      ...merged,
+      manualResolutions: preserveManual ? prior?.manualResolutions : merged?.manualResolutions,
+      enhancivesEnabled: merged?.enhancivesEnabled,
+    });
+  }
+
   return {
     mergeImportedProfileState,
     normalizeLevel0Stats,
     normalizeSkillForCompare,
     comparableProfile,
     profilesEqual,
+    rebuildImportedEnhanciveState,
   };
 });

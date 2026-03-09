@@ -90,3 +90,42 @@ test("mergeImportedProfileState keeps existing enhancive equipment when there is
   assert.equal(merged.equipment.enhancives.importedSnapshot.items[0].id, "existing-import");
   assert.equal(merged.equipment.enhancives.manualResolutions.items[0].id, "manual-1");
 });
+
+test("rebuildImportedEnhanciveState preserves manual resolutions when requested", () => {
+  const currentEnhanciveEquipment = enhanciveImport.normalizeEnhanciveEquipmentState({
+    importedSnapshot: {
+      items: [{ id: "old-import", name: "old item", effects: [] }],
+      unresolved: [],
+      summary: { itemCount: 1, propertyCount: 0, totalAmount: 0 },
+    },
+    manualResolutions: {
+      items: [{ id: "manual-1", name: "manual item", effects: [] }],
+      resolvedFromImported: [],
+    },
+  });
+
+  const rebuilt = profileState.rebuildImportedEnhanciveState({
+    currentEnhanciveEquipment,
+    listText: "new list",
+    totalsText: "",
+    detailsText: "",
+    preserveManual: true,
+    importedAt: "2026-03-09T00:00:00Z",
+    mergeImportedEnhanciveSnapshot: () => ({
+      lastImportedAt: "2026-03-09T00:00:00Z",
+      raw: { list: "new list", totals: "", totalsDetails: "" },
+      importedSnapshot: {
+        items: [{ id: "new-import", name: "new item", effects: [] }],
+        unresolved: [],
+        summary: { itemCount: 1, propertyCount: 0, totalAmount: 0 },
+      },
+      manualResolutions: { items: [], resolvedFromImported: [] },
+      enhancivesEnabled: true,
+    }),
+    normalizeEnhanciveEquipmentState: enhanciveImport.normalizeEnhanciveEquipmentState,
+  });
+
+  assert.equal(rebuilt.importedSnapshot.items[0].id, "new-import");
+  assert.equal(rebuilt.manualResolutions.items[0].id, "manual-1");
+  assert.equal(rebuilt.lastImportedAt, "2026-03-09T00:00:00Z");
+});
