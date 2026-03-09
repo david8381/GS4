@@ -276,6 +276,7 @@
 
       const wrapper = document.createElement("details");
       wrapper.className = "asc-group";
+      wrapper.dataset.ascGroup = group.key;
       if (group.open) wrapper.open = true;
       wrapper.innerHTML = `
         <summary>${group.label}</summary>

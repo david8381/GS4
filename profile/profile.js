@@ -1099,9 +1099,14 @@ function updateStatHeaderLabels() {
 }
 
 function renderAscensionTables() {
+  const groupOpenState = new Map();
+  ascAbilityGroups?.querySelectorAll("details.asc-group[data-asc-group]").forEach((group) => {
+    groupOpenState.set(group.dataset.ascGroup, Boolean(group.open));
+  });
   const activeAscInput = document.activeElement?.matches?.("input[data-asc-ability]")
     ? {
       mnemonic: document.activeElement.dataset.ascAbility,
+      groupKey: document.activeElement.closest("details.asc-group")?.dataset.ascGroup || "",
       selectionStart: document.activeElement.selectionStart,
       selectionEnd: document.activeElement.selectionEnd,
     }
@@ -1128,7 +1133,18 @@ function renderAscensionTables() {
     updateDerivedDisplays,
   });
 
+  ascAbilityGroups?.querySelectorAll("details.asc-group[data-asc-group]").forEach((group) => {
+    const groupKey = group.dataset.ascGroup || "";
+    if (groupOpenState.has(groupKey)) {
+      group.open = Boolean(groupOpenState.get(groupKey));
+    }
+  });
+
   if (activeAscInput?.mnemonic) {
+    if (activeAscInput.groupKey) {
+      const activeGroup = ascAbilityGroups?.querySelector(`details.asc-group[data-asc-group="${activeAscInput.groupKey}"]`);
+      if (activeGroup) activeGroup.open = true;
+    }
     const nextInput = ascAbilityGroups?.querySelector(`input[data-asc-ability="${activeAscInput.mnemonic}"]`);
     if (nextInput) {
       nextInput.focus({ preventScroll: true });
