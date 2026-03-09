@@ -43,7 +43,7 @@ const equipmentFields = [
 const runEncumbranceTestsBtn = document.getElementById("runEncumbranceTests");
 const encumbranceTestOutput = document.getElementById("encumbranceTestOutput");
 
-const PROFILE_KEY = "gs4.characterProfiles";
+const sharedStorage = globalThis.GS4Storage;
 const MAX_STAT_VALUE = 200;
 let loadedProfileSnapshot = null;
 let successFlashTimer = null;
@@ -108,20 +108,6 @@ function matchFutureToCurrent() {
   armorBaseWeightDeltaInput.value = armorBaseWeightInput.value;
 }
 
-function loadProfiles() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-    if (Array.isArray(stored)) return stored;
-  } catch (error) {
-    return [];
-  }
-  return [];
-}
-
-function saveProfiles(nextProfiles) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfiles));
-}
-
 function refreshProfileSelect(profiles) {
   profileSelect.innerHTML = "<option value=\"\">Select from Profile</option>";
   profiles.forEach((profile) => {
@@ -130,10 +116,6 @@ function refreshProfileSelect(profiles) {
     option.textContent = profile.name;
     profileSelect.appendChild(option);
   });
-}
-
-function findProfile(profiles, id) {
-  return profiles.find((profile) => profile.id === id);
 }
 
 function clamp(value, min, max) {
@@ -310,7 +292,7 @@ function updateProfileDefaultsSaveState(profileOverride = null) {
     return;
   }
 
-  const profile = profileOverride || findProfile(profiles, selected);
+  const profile = profileOverride || sharedStorage.findProfile(profiles, selected);
   if (!profile) {
     profileDefaultsSave.disabled = true;
     if (profileDefaultsReload) profileDefaultsReload.disabled = true;
@@ -348,7 +330,7 @@ function updateProfileLoadButtonState() {
     profileLoad.classList.add("attention");
   }
   const selected = profileSelect.value;
-  const profile = selected ? findProfile(profiles, selected) : null;
+  const profile = selected ? sharedStorage.findProfile(profiles, selected) : null;
   if (!profileStatsReload) return;
   if (!profile) {
     profileStatsReload.disabled = true;
@@ -611,7 +593,7 @@ setupColumnTabbing();
 if (armorBaseDetails) armorBaseDetails.open = Boolean(useCustomArmorBaseInput?.checked);
 updateResults();
 
-let profiles = loadProfiles();
+let profiles = sharedStorage.loadProfiles();
 refreshProfileSelect(profiles);
 
 [raceSelect, strInput, conInput, strDeltaInput, conDeltaInput, gearWeightInput, silversInput, armorAsgSelect,
@@ -654,7 +636,7 @@ profileSelect.addEventListener("change", () => {
     updateResults();
     return;
   }
-  const profile = findProfile(profiles, selected);
+  const profile = sharedStorage.findProfile(profiles, selected);
   if (profile) applyProfile(profile, { syncFuture: true });
 });
 
@@ -662,7 +644,7 @@ if (profileLoad) {
   profileLoad.addEventListener("click", () => {
     const selected = profileSelect.value;
     if (!selected) return;
-    const profile = findProfile(profiles, selected);
+    const profile = sharedStorage.findProfile(profiles, selected);
     if (profile) {
       applyProfile(profile, { syncFuture: true });
     }
@@ -673,8 +655,8 @@ if (profileDefaultsSave) {
   profileDefaultsSave.addEventListener("click", () => {
     const selected = profileSelect.value;
     if (!selected) return;
-    const profileList = loadProfiles();
-    const profile = findProfile(profileList, selected);
+    const profileList = sharedStorage.loadProfiles();
+    const profile = sharedStorage.findProfile(profileList, selected);
     if (!profile) {
       updateProfileDefaultsSaveState();
       return;
@@ -693,7 +675,7 @@ if (profileDefaultsSave) {
     profile.defaults.accessoryWeight = defaults.accessoryWeight;
 
     profiles = profileList.map((entry) => (entry.id === selected ? profile : entry));
-    saveProfiles(profiles);
+    sharedStorage.saveProfiles(profiles);
     refreshProfileSelect(profiles);
     profileSelect.value = selected;
     loadedProfileSnapshot = currentProfileSnapshot();
@@ -711,7 +693,7 @@ if (profileDefaultsReload) {
   profileDefaultsReload.addEventListener("click", () => {
     const selected = profileSelect.value;
     if (!selected) return;
-    const profile = findProfile(loadProfiles(), selected);
+    const profile = sharedStorage.findProfile(sharedStorage.loadProfiles(), selected);
     if (!profile) {
       updateProfileDefaultsSaveState();
       return;
@@ -731,7 +713,7 @@ if (profileStatsReload) {
   profileStatsReload.addEventListener("click", () => {
     const selected = profileSelect.value;
     if (!selected) return;
-    const profile = findProfile(loadProfiles(), selected);
+    const profile = sharedStorage.findProfile(sharedStorage.loadProfiles(), selected);
     if (!profile) {
       updateProfileLoadButtonState();
       return;
@@ -750,7 +732,7 @@ if (profileStatsReload) {
 useEnhanced.addEventListener("change", () => {
   const selected = profileSelect.value;
   if (selected) {
-    const profile = findProfile(profiles, selected);
+    const profile = sharedStorage.findProfile(profiles, selected);
     if (profile) applyProfile(profile, { syncFuture: false });
   } else {
     updateResults();
@@ -758,7 +740,7 @@ useEnhanced.addEventListener("change", () => {
 });
 
 window.addEventListener("focus", () => {
-  profiles = loadProfiles();
+  profiles = sharedStorage.loadProfiles();
   refreshProfileSelect(profiles);
   updateProfileLoadButtonState();
   updateProfileDefaultsSaveState();

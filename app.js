@@ -29,7 +29,7 @@ const OFFLINE_ABSORB_PER_INTERVAL = 15;
 const X_GRID_SECONDS = 300;
 const XP_GRID_STEP = 50;
 const RATE_GRID_STEP = 5;
-const PROFILE_KEY = "gs4.characterProfiles";
+const sharedStorage = globalThis.GS4Storage;
 const raceStatBonusModifiers = {
   Aelotoi: { str: -5, con: 0, dex: 5, agi: 10, dis: 5, aur: 0, log: 5, int: 5, wis: 0, inf: -5 },
   "Burghal Gnome": { str: -15, con: 10, dex: 10, agi: 10, dis: -5, aur: 5, log: 10, int: 5, wis: 0, inf: -5 },
@@ -115,16 +115,6 @@ function numberValue(input, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function loadProfiles() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-    if (Array.isArray(stored)) return stored;
-  } catch (error) {
-    return [];
-  }
-  return [];
-}
-
 function refreshProfileSelect(list) {
   profileSelect.innerHTML = "<option value=\"\">Select from Profile</option>";
   list.forEach((profile) => {
@@ -133,10 +123,6 @@ function refreshProfileSelect(list) {
     option.textContent = profile.name;
     profileSelect.appendChild(option);
   });
-}
-
-function findProfile(list, id) {
-  return list.find((profile) => profile.id === id);
 }
 
 function statToBonus(stat) {
@@ -171,7 +157,7 @@ function updateProfileLoadButtonState() {
 function reloadSelectedProfile() {
   const selected = profileSelect.value;
   if (!selected) return;
-  const profile = findProfile(profiles, selected);
+  const profile = sharedStorage.findProfile(profiles, selected);
   if (profile) applyProfile(profile);
 }
 
@@ -582,7 +568,7 @@ profileSelect.addEventListener("change", () => {
     compute();
     return;
   }
-  const profile = findProfile(profiles, selected);
+  const profile = sharedStorage.findProfile(profiles, selected);
   if (profile) applyProfile(profile);
 });
 
@@ -604,7 +590,7 @@ useEnhanced.addEventListener("change", () => {
     compute();
     return;
   }
-  const profile = findProfile(profiles, selected);
+  const profile = sharedStorage.findProfile(profiles, selected);
   if (profile) applyProfile(profile);
 });
 
@@ -658,10 +644,10 @@ if (runCalculatorTestsBtn) {
 }
 
 renderLegend();
-profiles = loadProfiles();
+profiles = sharedStorage.loadProfiles();
 refreshProfileSelect(profiles);
 window.addEventListener("focus", () => {
-  profiles = loadProfiles();
+  profiles = sharedStorage.loadProfiles();
   refreshProfileSelect(profiles);
   updateProfileLoadButtonState();
 });

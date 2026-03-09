@@ -19,8 +19,7 @@ const badgeProfileReloadButtons = Array.from(document.querySelectorAll(".badge-p
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
 const POWER_PER_UPGRADE = 1200;
-const PROFILE_KEY = "gs4.characterProfiles";
-const HEADER_SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
+const sharedStorage = globalThis.GS4Storage;
 
 const componentNames = ["Material", "Binding", "Device", "Motif", "Gem"];
 
@@ -249,20 +248,6 @@ function safeInt(value) {
   return Math.trunc(number);
 }
 
-function loadProfiles() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(PROFILE_KEY) || "[]");
-    if (Array.isArray(stored)) return stored;
-  } catch (error) {
-    return [];
-  }
-  return [];
-}
-
-function saveProfiles(profiles) {
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles));
-}
-
 function profileKey(profile, index) {
   if (profile && profile.id != null && profile.id !== "") return String(profile.id);
   const safeName = profile && profile.name ? String(profile.name).toLowerCase() : "profile";
@@ -271,7 +256,7 @@ function profileKey(profile, index) {
 
 function refreshProfileSelect(profiles) {
   if (!badgeProfileSelect) return;
-  const selected = badgeProfileSelect.value || localStorage.getItem(HEADER_SELECTED_PROFILE_KEY) || "";
+  const selected = badgeProfileSelect.value || localStorage.getItem(sharedStorage.SELECTED_PROFILE_KEY) || "";
   badgeProfileSelect.innerHTML = '<option value="">Select from Profile</option>';
   profiles.forEach((profile, index) => {
     const option = document.createElement("option");
@@ -396,7 +381,7 @@ function statesEqual(a, b) {
 
 function getSavedBadgeState() {
   if (!badgeProfileSelect || !badgeProfileSelect.value) return null;
-  const profiles = loadProfiles();
+  const profiles = sharedStorage.loadProfiles();
   const found = findProfileByKey(profiles, badgeProfileSelect.value);
   if (!found) return null;
   const parsed = parseBadgeStateObject(found.profile.defaults?.badge);
@@ -424,7 +409,7 @@ function updateProfileButtonState() {
     return;
   }
 
-  const profiles = loadProfiles();
+  const profiles = sharedStorage.loadProfiles();
   const found = findProfileByKey(profiles, key);
   if (!found) {
     badgeProfileSaveButtons.forEach((button) => {
@@ -810,7 +795,7 @@ if (badgeProfileLoad && badgeProfileSelect) {
   badgeProfileSelect.addEventListener("change", () => {
     const key = badgeProfileSelect.value;
     if (!key) return;
-    const profiles = loadProfiles();
+    const profiles = sharedStorage.loadProfiles();
     const found = findProfileByKey(profiles, key);
     if (!found) return;
     const { profile } = found;
@@ -833,7 +818,7 @@ function handleBadgeProfileSave() {
       updateProfileButtonState();
       return false;
     }
-    const profiles = loadProfiles();
+    const profiles = sharedStorage.loadProfiles();
     const found = findProfileByKey(profiles, key);
     if (!found) {
       setStateJsonStatus("Selected profile was not found.", true);
@@ -847,7 +832,7 @@ function handleBadgeProfileSave() {
     }
     profile.defaults.badge = currentStateSnapshot();
     profiles[index] = profile;
-    saveProfiles(profiles);
+    sharedStorage.saveProfiles(profiles);
     refreshProfileSelect(profiles);
     badgeProfileSelect.value = key;
     setStateJsonStatus(`Saved current badge state to profile: ${profile.name}`);
@@ -866,7 +851,7 @@ function handleBadgeProfileReload() {
     updateProfileButtonState();
     return false;
   }
-  const profiles = loadProfiles();
+  const profiles = sharedStorage.loadProfiles();
   const found = findProfileByKey(profiles, key);
   if (!found) {
     setStateJsonStatus("Selected profile was not found.", true);
@@ -909,9 +894,9 @@ if (badgeProfileSelect && badgeProfileReloadButtons.length > 0) {
   });
 }
 
-refreshProfileSelect(loadProfiles());
+refreshProfileSelect(sharedStorage.loadProfiles());
 if (badgeProfileSelect) {
-  const selected = localStorage.getItem(HEADER_SELECTED_PROFILE_KEY) || "";
+  const selected = localStorage.getItem(sharedStorage.SELECTED_PROFILE_KEY) || "";
   if (selected) {
     badgeProfileSelect.value = selected;
     if (badgeProfileSelect.value === selected) {
@@ -920,7 +905,7 @@ if (badgeProfileSelect) {
   }
 }
 window.addEventListener("focus", () => {
-  refreshProfileSelect(loadProfiles());
+  refreshProfileSelect(sharedStorage.loadProfiles());
   updateProfileButtonState();
 });
 render();
