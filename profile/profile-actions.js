@@ -486,6 +486,211 @@
     updateProfileActionState();
   }
 
+  function recalcFromLevel0({
+    domRefs,
+    stateAccess,
+    stateMutators,
+    helpers,
+    actions,
+  }) {
+    const {
+      infoImport,
+      importStatus,
+      profileName,
+      profileRace,
+      profileProfession,
+      profileLevel,
+    } = domRefs;
+    const { getCurrentLevel0Stats } = stateAccess;
+    const {
+      setCurrentLevel0Stats,
+      setCurrentBaseStats,
+    } = stateMutators;
+    const {
+      parseInfoStartBlock,
+      races,
+      professions,
+      stats,
+      clamp,
+      baseGrowthRates,
+      computeStatsFromLevel0,
+    } = helpers;
+    const { updateDerivedDisplays } = actions;
+
+    let currentLevel0Stats = getCurrentLevel0Stats();
+    if (!currentLevel0Stats) {
+      const parsedStart = parseInfoStartBlock(infoImport.value);
+      if (parsedStart && !parsedStart.error) {
+        currentLevel0Stats = parsedStart.level0Stats;
+        setCurrentLevel0Stats(currentLevel0Stats);
+        const parsedStartRace = String(parsedStart.race || "").trim();
+        const raceOption = parsedStartRace
+          ? races.find((race) => String(race.name || "").toLowerCase() === parsedStartRace.toLowerCase())
+          : null;
+        if (raceOption) profileRace.value = raceOption.key;
+        const parsedStartProfession = String(parsedStart.profession || "").trim();
+        const professionOption = parsedStartProfession
+          ? professions.find((prof) => String(prof || "").toLowerCase() === parsedStartProfession.toLowerCase())
+          : null;
+        if (professionOption) profileProfession.value = professionOption;
+        if (!profileName.value.trim() && parsedStart.name) profileName.value = parsedStart.name;
+      } else {
+        importStatus.textContent = "No level 0 stats found. Run INFO START and paste full output.";
+        importStatus.style.color = "#b42318";
+        return;
+      }
+    }
+
+    const level = clamp(Number(profileLevel.value), 0, 100);
+    const raceName = races.find((race) => race.key === profileRace.value)?.name || "Human";
+    const profession = profileProfession.value;
+    if (!baseGrowthRates[profession]) {
+      importStatus.textContent = "Select a profession to calculate stats from level 0.";
+      importStatus.style.color = "#b42318";
+      return;
+    }
+
+    const computed = computeStatsFromLevel0(currentLevel0Stats, level, raceName, profession);
+    if (!Object.keys(computed || {}).length) {
+      importStatus.textContent = "Could not compute stats. Check race/profession selection.";
+      importStatus.style.color = "#b42318";
+      return;
+    }
+
+    const nextBaseStats = {};
+    stats.forEach((stat) => {
+      nextBaseStats[stat.key] = computed?.[stat.key]?.base ?? 50;
+    });
+    setCurrentBaseStats(nextBaseStats);
+    updateDerivedDisplays();
+  }
+
+  function handleInfoStartParse({
+    domRefs,
+    stateAccess,
+    stateMutators,
+    helpers,
+    actions,
+  }) {
+    const {
+      infoImport,
+      importStatus,
+      profileName,
+      profileRace,
+      profileProfession,
+      profileLevel,
+      profileExperience,
+    } = domRefs;
+    const {
+      getCurrentLevel0Stats,
+      getCurrentSkills,
+    } = stateAccess;
+    const {
+      setSyncingLevelExperience,
+      setCurrentAscensionExperience,
+      setCurrentLevel0Stats,
+    } = stateMutators;
+    const {
+      parseInfoStartBlock,
+      parseExpBlock,
+      races,
+      professions,
+      stats,
+    } = helpers;
+    const { recalcFromLevel0, renderSkillsTable, initAdjustmentState, updateDerivedDisplays } = actions;
+
+    const parsedStart = parseInfoStartBlock(infoImport.value);
+    if (!parsedStart || parsedStart.error) {
+      const parsedExp = parseExpBlock(infoImport.value);
+      if (parsedExp) {
+        setSyncingLevelExperience(true);
+        profileExperience.value = String(parsedExp.experience);
+        profileLevel.value = String(parsedExp.level);
+        setSyncingLevelExperience(false);
+        setCurrentAscensionExperience(parsedExp.ascensionExperience);
+        if (getCurrentLevel0Stats()) recalcFromLevel0();
+        else renderSkillsTable(getCurrentSkills());
+        importStatus.textContent = `Parsed EXP block. Level ${parsedExp.level}, EXP ${parsedExp.experience}, Asc EXP ${parsedExp.ascensionExperience}.`;
+        importStatus.style.color = "";
+        return;
+      }
+      if (parsedStart?.error === "wrong_block_info") {
+        importStatus.textContent = "This looks like INFO output (with bonuses/...). Paste INFO START or plain level-0 stat lines only.";
+        importStatus.style.color = "#b42318";
+        return;
+      }
+      if (parsedStart?.error === "partial_level0") {
+        const missing = (parsedStart.missing || []).map((key) => stats.find((s) => s.key === key)?.abbr).filter(Boolean);
+        importStatus.textContent = `Level 0 stats are incomplete. Missing: ${missing.join(", ")}. Paste all 10 base stat lines.`;
+        importStatus.style.color = "#b42318";
+        return;
+      }
+      const preview = infoImport.value.trim().split(/\r?\n/).slice(0, 3).join(" / ");
+      importStatus.textContent = `Could not parse INFO START / level-0 stats. First lines: ${preview || "empty"}`;
+      importStatus.style.color = "#b42318";
+      return;
+    }
+
+    const who = parsedStart.name && parsedStart.race && parsedStart.profession
+      ? `${parsedStart.name} (${parsedStart.race} ${parsedStart.profession})`
+      : "level-0 stat block";
+    importStatus.textContent = `Parsed ${who}. Stats recalculated from level 0.`;
+    importStatus.style.color = "";
+    if (parsedStart.name) profileName.value = parsedStart.name;
+    const parsedStartRace = String(parsedStart.race || "").trim();
+    const raceOption = parsedStartRace
+      ? races.find((race) => String(race.name || "").toLowerCase() === parsedStartRace.toLowerCase())
+      : null;
+    if (raceOption) profileRace.value = raceOption.key;
+    const parsedStartProfession = String(parsedStart.profession || "").trim();
+    const professionOption = parsedStartProfession
+      ? professions.find((prof) => String(prof || "").toLowerCase() === parsedStartProfession.toLowerCase())
+      : null;
+    if (professionOption) profileProfession.value = professionOption;
+    setCurrentLevel0Stats(parsedStart.level0Stats);
+    initAdjustmentState();
+    recalcFromLevel0();
+    updateDerivedDisplays();
+  }
+
+  function applyAscList({
+    text,
+    showError = true,
+    domRefs,
+    stateMutators,
+    helpers,
+    actions,
+  }) {
+    const { ascImportStatus } = domRefs;
+    const { setCurrentAscensionAbilities } = stateMutators;
+    const { parseAscListBlock, normalizeAscensionAbilities } = helpers;
+    const { syncAscensionStateFromAbilities, updateDerivedDisplays } = actions;
+    const parsed = parseAscListBlock(text);
+    if (!parsed.length) {
+      if (showError) {
+        ascImportStatus.textContent = "Could not parse ASC LIST output.";
+        ascImportStatus.style.color = "#b42318";
+      } else {
+        ascImportStatus.textContent = "Paste ASC LIST to load current ascension ranks.";
+        ascImportStatus.style.color = "";
+      }
+      return;
+    }
+
+    setCurrentAscensionAbilities(normalizeAscensionAbilities(parsed.map((entry) => ({
+      name: entry.name,
+      mnemonic: entry.mnemonic,
+      cap: entry.cap,
+      category: entry.category || (entry.mnemonic === "trandest" ? "Elite" : "Common"),
+      subcategory: entry.subcategory,
+      ranks: entry.ranks,
+    }))));
+    syncAscensionStateFromAbilities();
+    updateDerivedDisplays();
+    ascImportStatus.textContent = `ASC LIST loaded: ${parsed.length} ability row(s).`;
+    ascImportStatus.style.color = "";
+  }
+
   function handleProfileSave({
     preserveUnsyncedFromExisting = false,
     domRefs,
@@ -603,6 +808,9 @@
     applySectionDefaultVisibility,
     reloadSelectedProfile,
     resetEditorForNewProfile,
+    recalcFromLevel0,
+    handleInfoStartParse,
+    applyAscList,
     applyProfile,
     handleProfileSave,
   };

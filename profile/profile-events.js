@@ -634,8 +634,6 @@
     skillsShowTrainedOnly,
     renderSkillsTable,
     getCurrentSkills,
-    runProfileSelfTests,
-    runProfileTestsBtn,
   }) {
     mainCalculator?.addEventListener("input", () => {
       if (!isApplyingProfile()) updateProfileActionState();
@@ -647,7 +645,6 @@
     skillsShowTrainedOnly?.addEventListener("change", () => {
       renderSkillsTable(getCurrentSkills());
     });
-    runProfileTestsBtn?.addEventListener("click", runProfileSelfTests);
   }
 
   function bindSelectionControls({
