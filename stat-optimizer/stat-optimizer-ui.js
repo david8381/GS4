@@ -1506,24 +1506,34 @@
     updateSajehnAvailability();
     updateResumeAvailability();
   });
-  startConstraintMinBody?.addEventListener("input", (event) => {
-    const input = event.target.closest("input[data-start-min]");
-    if (!input) return;
+  startConstraintMinBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
-    enforceStartConstraintPair("min", input.dataset.startMin);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
-  startConstraintMaxBody?.addEventListener("input", (event) => {
-    const input = event.target.closest("input[data-start-max]");
-    if (!input) return;
+  startConstraintMaxBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
-    enforceStartConstraintPair("max", input.dataset.startMax);
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
     updateSajehnAvailability();
+    updateResumeAvailability();
+  });
+  startConstraintMinBody?.addEventListener("change", (event) => {
+    const input = event.target.closest("input[data-start-min]");
+    if (!input) return;
+    enforceStartConstraintPair("min", input.dataset.startMin);
+    updateFinalFromCurrentMaxRow();
+    updateStartConstraintWarning();
+    updateResumeAvailability();
+  });
+  startConstraintMaxBody?.addEventListener("change", (event) => {
+    const input = event.target.closest("input[data-start-max]");
+    if (!input) return;
+    enforceStartConstraintPair("max", input.dataset.startMax);
+    updateFinalFromCurrentMaxRow();
+    updateStartConstraintWarning();
     updateResumeAvailability();
   });
   resultStatsHead.addEventListener("click", (event) => {
