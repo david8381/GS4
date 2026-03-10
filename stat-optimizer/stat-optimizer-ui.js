@@ -698,10 +698,15 @@
 
     runHistory.forEach((entry, index) => {
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
+      const build = getDisplayBuildForRun(entry, index);
+      const targetLevel = logic.toInt(build?.metrics?.level, 0);
       const th = document.createElement("th");
       th.innerHTML = `
         <div class="optimizer-run-head">
-          <span>${entry.label}</span>
+          <div>
+            <div>${entry.label}</div>
+            <div class="optimizer-totals-sub">Target L${targetLevel}</div>
+          </div>
           <div class="optimizer-run-actions">
             ${editing
               ? `<button type="button" class="btn ghost btn tiny optimizer-inline-done" data-run-index="${index}">Done</button>`
