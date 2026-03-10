@@ -78,7 +78,7 @@
         return;
       }
 
-      importStatus.textContent = "Imported quick-start blocks from gstools payload.";
+      importStatus.textContent = `Imported quick-start blocks and automatically updated profile${payloadCharacterName ? `: ${payloadCharacterName}` : ""}.`;
       importStatus.style.color = "";
       const nextPageByKey = {
         profile: "",

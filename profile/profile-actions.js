@@ -790,6 +790,9 @@
       profileRender.refreshProfileSelect({ profileSelect, profiles: nextProfiles });
       profileSelect.value = id;
       localStorageObject.setItem(selectedProfileKey, id);
+      window.dispatchEvent(new CustomEvent("gs4:profile-saved", {
+        detail: { profileId: id, profileName: record.name },
+      }));
       importStatus.textContent = `${isUpdate ? "Updated" : "Created"} profile: ${record.name}`;
 
       saveStage = "apply profile";
