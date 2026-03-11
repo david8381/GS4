@@ -784,6 +784,17 @@
           normalizeBadgeDefaults,
           normalizeEnhanciveEquipmentState,
         });
+        saveStage = "rebuild merged profile state";
+        applyProfile(record);
+        record = {
+          id,
+          ...buildCurrentProfileRecord(name),
+          race: racePayload,
+          profession: professionPayload,
+          level: levelPayload,
+          experience: expPayload,
+          level0Stats: parsedInfoStart?.level0Stats || getCurrentLevel0Stats(),
+        };
       }
 
       saveStage = "persist profile";

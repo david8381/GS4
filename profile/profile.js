@@ -931,10 +931,14 @@ function comparableProfile(record) {
 }
 
 function profilesEqual(a, b) {
-  return profileState.profilesEqual({ a: comparableProfile(a), b: comparableProfile(b) });
+  return profileState.profilesEqual({ a, b });
 }
 
 function updateProfileDiffHighlights(currentProfile, selectedProfile) {
+  if (currentProfile && typeof currentProfile === "object" && "currentProfile" in currentProfile && selectedProfile === undefined) {
+    selectedProfile = currentProfile.selectedProfile;
+    currentProfile = currentProfile.currentProfile;
+  }
   profileActions.updateProfileDiffHighlights({
     currentProfile,
     selectedProfile,
