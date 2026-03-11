@@ -269,6 +269,26 @@
     return vector;
   }
 
+  function buildObjectivePresetFromBias(mtpWeightPct) {
+    const clampedMtpPct = clamp(toInt(mtpWeightPct, 50), 0, 100);
+    const ptpWeight = (100 - clampedMtpPct) / 100;
+    const mtpWeight = clampedMtpPct / 100;
+    let priorities;
+    if (clampedMtpPct === 50) {
+      priorities = ["overall", "tp_blend", "ptp", "mtp"];
+    } else if (clampedMtpPct < 50) {
+      priorities = ["ptp", "tp_blend", "overall", "mtp"];
+    } else {
+      priorities = ["mtp", "tp_blend", "overall", "ptp"];
+    }
+    return {
+      id: "stats_weighted_tp",
+      priorities,
+      ptpWeight,
+      mtpWeight,
+    };
+  }
+
   function minimumDeficit(metrics, minimums) {
     if (!minimums) return 0;
     let deficit = 0;
@@ -1174,6 +1194,7 @@
     deriveExperienceTarget,
     computeFinalStatSummary,
     objectiveVector,
+    buildObjectivePresetFromBias,
     minimumDeficit,
     scoreVector,
     hasAnyMinimums,

@@ -18,6 +18,8 @@
   const targetLevelInput = document.getElementById("targetLevel");
   const tpBiasSlider = document.getElementById("tpBiasSlider");
   const tpBiasValue = document.getElementById("tpBiasValue");
+  const primeSummary = document.getElementById("primeSummary");
+  const statInfoGrid = document.getElementById("statInfoGrid");
 
   const solverModeSelect = document.getElementById("solverMode");
   const maxSecondsGroup = document.getElementById("maxSecondsGroup");
@@ -42,6 +44,7 @@
   const startConstraintMaxBody = document.getElementById("startConstraintMaxBody");
   const startConstraintWarning = document.getElementById("startConstraintWarning");
   const minFinalStatsBody = document.getElementById("minFinalStatsBody");
+  const finalConstraintHelper = document.getElementById("finalConstraintHelper");
   const resultSummary = document.getElementById("resultSummary");
   const resultCurrentLevelDelta = document.getElementById("resultCurrentLevelDelta");
   const resultStatsHead = document.getElementById("resultStatsHead");
@@ -92,6 +95,89 @@
     });
   }
 
+  function getStatTooltip(statKey) {
+    const profession = professionSelect?.value || "";
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    const stat = (data.stats || []).find((entry) => entry.key === statKey);
+    if (!stat) return "";
+    const general = config?.statGeneralInfo?.[stat.key]?.summary || "";
+    const professionReason = getProfessionStatReason(profession, stat.key).trim();
+    const growthRate = profileLogic?.getGrowthRate
+      ? profileLogic.getGrowthRate(data.baseGrowthRates, data.raceGrowthModifiers, raceName, profession, stat.key)
+      : null;
+    const parts = [
+      stat.label,
+      general ? `General: ${general}` : "",
+      professionReason ? `${profession}: ${professionReason}` : "",
+      Number.isFinite(growthRate) && growthRate > 0 ? `Growth Factor: ${growthRate}` : "",
+    ].filter(Boolean);
+    return parts.join("\n\n");
+  }
+
+  function renderStatAbbr(abbr, statKey = "") {
+    const tooltip = statKey ? getStatTooltip(statKey) : "";
+    const tooltipAttr = tooltip ? ` data-tooltip="${tooltip.replace(/"/g, "&quot;")}" tabindex="0"` : "";
+    return `<span class="optimizer-stat-abbr"${tooltipAttr}>${abbr}</span>`;
+  }
+
+  function renderPrimeSummary() {
+    if (!primeSummary) return;
+    const profession = professionSelect?.value || "";
+    const primeKeys = logic.getPrimeStatKeys(data, profession);
+    if (!primeKeys.length) {
+      primeSummary.innerHTML = '<span class="optimizer-prime-note">Prime requisites are unavailable for the selected profession.</span>';
+      return;
+    }
+    const labels = primeKeys
+      .map((key) => (data.stats || []).find((stat) => stat.key === key))
+      .filter(Boolean)
+      .map((stat) => renderStatAbbr(stat.abbr, stat.key))
+      .join(" ");
+    primeSummary.innerHTML = `<span class="optimizer-prime-note">Prime requisites are ${labels}.</span>`;
+  }
+
+  function getProfessionStatReason(profession, statKey) {
+    const explicit = config?.professionStatReasons?.[profession]?.[statKey];
+    const reasons = [];
+    if (explicit) reasons.push(explicit);
+    const primeSet = new Set(logic.getPrimeStatKeys(data, profession));
+    if (primeSet.has(statKey)) {
+      reasons.push("Prime requisite.");
+    }
+    const manaStats = new Set(config?.professionManaStats?.[profession] || []);
+    if (manaStats.has(statKey) && !reasons.some((reason) => reason.toLowerCase().includes("mana stat"))) {
+      reasons.push(`Mana stat for ${profession}.`);
+    }
+    return reasons.join(" ");
+  }
+
+  function renderStatInfoGrid() {
+    if (!statInfoGrid) return;
+    const profession = professionSelect?.value || "";
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    statInfoGrid.innerHTML = "";
+    (data.stats || []).forEach((stat) => {
+      const professionReason = getProfessionStatReason(profession, stat.key).trim();
+      const growthRate = profileLogic?.getGrowthRate
+        ? profileLogic.getGrowthRate(data.baseGrowthRates, data.raceGrowthModifiers, raceName, profession, stat.key)
+        : null;
+      const card = document.createElement("article");
+      card.className = "optimizer-stat-info-card";
+      card.innerHTML = `
+        <div class="optimizer-stat-info-head">
+          ${renderStatAbbr(stat.abbr, stat.key)}
+          <span class="optimizer-stat-info-label">${stat.label}</span>
+        </div>
+        <div class="optimizer-stat-info-body">
+          <div><strong>General:</strong> ${config?.statGeneralInfo?.[stat.key]?.summary || "No summary available."}</div>
+          ${professionReason ? `<div><strong>${profession || "Profession"}:</strong> ${professionReason}</div>` : ""}
+          ${Number.isFinite(growthRate) && growthRate > 0 ? `<div><strong>Growth Factor:</strong> ${growthRate}</div>` : ""}
+        </div>
+      `;
+      statInfoGrid.appendChild(card);
+    });
+  }
+
   function initializeStaticInputs() {
     fillSelect(raceSelect, data.races || []);
     fillSelect(professionSelect, (data.professions || []).map((name) => ({ key: name, name })));
@@ -105,7 +191,21 @@
 
     renderMinimumFinalStatsInputs();
     renderStartConstraintInputs();
+    renderPrimeSummary();
+    renderStatInfoGrid();
+    updateTargetLevelLabels();
     updateSolverModeUI();
+  }
+
+  function getTargetLevelValue() {
+    return logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100);
+  }
+
+  function updateTargetLevelLabels() {
+    const targetLevel = getTargetLevelValue();
+    if (finalConstraintHelper) {
+      finalConstraintHelper.textContent = `Minimum final stats required at target level (L${targetLevel}):`;
+    }
   }
 
   function updateTpBiasLabel() {
@@ -128,7 +228,7 @@
       if (finalConstraintLabels) {
         const labelCell = document.createElement("div");
         labelCell.className = "stat-constraint-cell stat-constraint-label-cell";
-        labelCell.textContent = stat.abbr;
+        labelCell.innerHTML = renderStatAbbr(stat.abbr, stat.key);
         finalConstraintLabels.appendChild(labelCell);
       }
       const cell = document.createElement("label");
@@ -212,7 +312,7 @@
 
       const labelCell = document.createElement("div");
       labelCell.className = "stat-constraint-cell stat-constraint-label-cell";
-      labelCell.textContent = stat.abbr;
+      labelCell.innerHTML = renderStatAbbr(stat.abbr, stat.key);
       startConstraintLabels.appendChild(labelCell);
 
       const minCell = document.createElement("label");
@@ -531,6 +631,8 @@
     if (profile.profession && (data.professions || []).includes(profile.profession)) {
       professionSelect.value = profile.profession;
     }
+    renderPrimeSummary();
+    renderStatInfoGrid();
   }
 
   function getSelectedProfile() {
@@ -723,7 +825,7 @@
     resultStatsHead.appendChild(groupRow);
 
     const subRow = document.createElement("tr");
-    runHistory.forEach((_, index) => {
+    runHistory.forEach((entry, index) => {
       const startTh = document.createElement("th");
       startTh.textContent = "Start";
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
@@ -731,7 +833,9 @@
       startTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(startTh);
       const targetTh = document.createElement("th");
-      targetTh.textContent = "Target";
+      const build = getDisplayBuildForRun(entry, index);
+      const targetLevel = logic.toInt(build?.metrics?.level, 0);
+      targetTh.textContent = `Target (L${targetLevel})`;
       targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(targetTh);
     });
@@ -742,7 +846,7 @@
       const key = stat.key;
       const row = document.createElement("tr");
       const statCell = document.createElement("td");
-      statCell.textContent = stat.abbr;
+      statCell.innerHTML = renderStatAbbr(stat.abbr, stat.key);
       row.appendChild(statCell);
 
       runHistory.forEach((entry, index) => {
@@ -944,7 +1048,12 @@
     const statusText = result.provenOptimal
       ? "Optimal (proven)."
       : (result.status === "best_found" ? "Best found (not guaranteed optimal)." : "Best found so far (not proven optimal).");
-    resultSummary.textContent = `${statusText} Latest run: Run ${runHistory.length}. Prime stats: ${(build.metrics.primeKeys || []).map((k) => k.toUpperCase()).join(", ") || "None"}.`;
+    const primeSummaryHtml = ((build.metrics.primeKeys || [])
+      .map((key) => (data.stats || []).find((stat) => stat.key === key))
+      .filter(Boolean)
+      .map((stat) => renderStatAbbr(stat.abbr, stat.key))
+      .join(" ")) || "None";
+    resultSummary.innerHTML = `${statusText} Latest run: Run ${runHistory.length}. Prime stats: ${primeSummaryHtml}.`;
 
     resultTotals.textContent = `Run ${runHistory.length} added. Start values are level-0 stats (prime bonuses already included).`;
     updateCurrentLevelTpDelta();
@@ -998,14 +1107,7 @@
     const selectedMode = solverModeSelect?.value || "constraint_free_auto";
     const mode = selectedMode === "exact" ? "exact" : "fast";
     const mtpWeightPct = logic.clamp(logic.toInt(tpBiasSlider?.value, 50), 0, 100);
-    const ptpWeight = (100 - mtpWeightPct) / 100;
-    const mtpWeight = mtpWeightPct / 100;
-    const objectivePreset = {
-      id: "stats_weighted_tp",
-      priorities: ["overall", "tp_blend", "ptp", "mtp"],
-      ptpWeight,
-      mtpWeight,
-    };
+    const objectivePreset = logic.buildObjectivePresetFromBias(mtpWeightPct);
 
     return {
       mode,
@@ -1462,6 +1564,8 @@
   applyFinalAllMinStatBtn?.addEventListener("click", applyFinalAllMinStat);
   copySuggestedRangeBtn?.addEventListener("click", copySuggestedRangeToBounds);
   professionSelect?.addEventListener("change", () => {
+    renderPrimeSummary();
+    renderStatInfoGrid();
     renderStartConstraintInputs();
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -1474,6 +1578,7 @@
     updateResumeAvailability();
   });
   targetLevelInput?.addEventListener("input", () => {
+    updateTargetLevelLabels();
     renderStartConstraintInputs();
     updateStartConstraintWarning();
     updateSajehnAvailability();

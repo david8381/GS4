@@ -59,10 +59,10 @@
                 <span id="tpBiasValue">50/50</span>
               </div>
             </div>
+            <div class="optimizer-prime-summary" id="primeSummary"></div>
           </div>
 
         </section>
-
         <section class="input-block">
           <h2>Solver</h2>
           <div class="solver-inline-grid">
@@ -109,6 +109,13 @@
         </section>
 
         <details class="collapsible-section input-block">
+          <summary>Stat Info</summary>
+          <div class="collapsible-body">
+            <div class="optimizer-stat-info-grid" id="statInfoGrid"></div>
+          </div>
+        </details>
+
+        <details class="collapsible-section input-block">
           <summary>Final Constraints - Set Target Level Requirements</summary>
           <div class="collapsible-body">
             <div class="input-group compact-field">
@@ -118,7 +125,7 @@
                 <button class="btn ghost btn tiny" id="applyFinalAllMinStat" type="button">Set ALL</button>
               </div>
             </div>
-            <div class="helper">Minimum final stats required at target level:</div>
+            <div class="helper" id="finalConstraintHelper">Minimum final stats required at target level (L100):</div>
             <div class="stat-constraint-row stat-constraint-row-head">
               <div class="stat-constraint-row-label"></div>
               <div class="optimizer-stat-min-grid stat-constraint-labels" id="finalConstraintLabels"></div>

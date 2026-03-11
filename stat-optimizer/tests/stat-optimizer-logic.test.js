@@ -121,3 +121,26 @@ test('solveExact can prove optimal on small bounded search', () => {
   assert.equal(result.status, 'optimal');
   assert.equal(logic.sumStats(result.build.startStats), CONSTRAINTS.totalPoints);
 });
+
+test('buildObjectivePresetFromBias keeps 50/50 overall-first and honors strong TP bias', () => {
+  assert.deepEqual(
+    logic.buildObjectivePresetFromBias(50).priorities,
+    ['overall', 'tp_blend', 'ptp', 'mtp']
+  );
+  assert.deepEqual(
+    logic.buildObjectivePresetFromBias(0).priorities,
+    ['ptp', 'tp_blend', 'overall', 'mtp']
+  );
+  assert.deepEqual(
+    logic.buildObjectivePresetFromBias(25).priorities,
+    ['ptp', 'tp_blend', 'overall', 'mtp']
+  );
+  assert.deepEqual(
+    logic.buildObjectivePresetFromBias(75).priorities,
+    ['mtp', 'tp_blend', 'overall', 'ptp']
+  );
+  assert.deepEqual(
+    logic.buildObjectivePresetFromBias(100).priorities,
+    ['mtp', 'tp_blend', 'overall', 'ptp']
+  );
+});
