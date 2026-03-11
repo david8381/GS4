@@ -901,12 +901,12 @@
     totalsRow.appendChild(totalsLabel);
     runHistory.forEach((entry, index) => {
       const build = getDisplayBuildForRun(entry, index);
-      const totalCell = document.createElement("td");
-      totalCell.colSpan = 2;
-      if (editing) totalCell.dataset.inlineTotals = "true";
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
       const failed = entry.status === "failed_constraints";
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
+      const totalCell = document.createElement("td");
+      totalCell.colSpan = 2;
+      if (editing) totalCell.dataset.inlineTotals = "true";
       totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       totalCell.innerHTML = `
         <div>PTP ${build.metrics.ptp} / MTP ${build.metrics.mtp}</div>
@@ -1052,6 +1052,25 @@
       nextLevel0Stats[key] = Math.trunc(parsed);
     }
 
+    inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
+    const preview = buildPreviewFromDraft(nextLevel0Stats);
+    if (preview) {
+      const editingRowTargets = resultStatsBody?.querySelectorAll("td[data-inline-target-stat]") || [];
+      editingRowTargets.forEach((cell) => {
+        const key = cell.dataset.inlineTargetStat;
+        if (!key) return;
+        cell.textContent = String(preview.metrics.finalStats[key]);
+      });
+      const totalsCell = resultStatsBody?.querySelector("td[data-inline-totals='true']");
+      if (totalsCell) {
+        totalsCell.innerHTML = `
+          <div>PTP ${preview.metrics.ptp} / MTP ${preview.metrics.mtp}</div>
+          <div class="optimizer-totals-sub">Start PTP ${preview.metrics.startPtp} / Start MTP ${preview.metrics.startMtp}</div>
+          <div class="optimizer-totals-sub">Total Stats ${preview.metrics.overall}</div>
+        `;
+      }
+    }
+
     const params = buildSolveParams();
     const startStats = toBaseStartFromPrimeIncluded(nextLevel0Stats);
     const evaluated = logic.evaluateBuild({
@@ -1065,21 +1084,6 @@
       return false;
     }
 
-    inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
-    const editingRowTargets = resultStatsBody?.querySelectorAll("td[data-inline-target-stat]") || [];
-    editingRowTargets.forEach((cell) => {
-      const key = cell.dataset.inlineTargetStat;
-      if (!key) return;
-      cell.textContent = String(evaluated.metrics.finalStats[key]);
-    });
-    const totalsCell = resultStatsBody?.querySelector("td[data-inline-totals='true']");
-    if (totalsCell) {
-      totalsCell.innerHTML = `
-        <div>PTP ${evaluated.metrics.ptp} / MTP ${evaluated.metrics.mtp}</div>
-        <div class="optimizer-totals-sub">Start PTP ${evaluated.metrics.startPtp} / Start MTP ${evaluated.metrics.startMtp}</div>
-        <div class="optimizer-totals-sub">Total Stats ${evaluated.metrics.overall}</div>
-      `;
-    }
     setInlineEditStatus("Inline edit is valid.", "ok");
     return true;
   }
