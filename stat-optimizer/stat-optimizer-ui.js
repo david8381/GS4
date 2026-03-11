@@ -16,6 +16,7 @@
   const raceSelect = document.getElementById("race");
   const professionSelect = document.getElementById("profession");
   const targetLevelInput = document.getElementById("targetLevel");
+  const alsoShowLevelInput = document.getElementById("alsoShowLevel");
   const tpBiasSlider = document.getElementById("tpBiasSlider");
   const tpBiasValue = document.getElementById("tpBiasValue");
   const primeSummary = document.getElementById("primeSummary");
@@ -284,6 +285,7 @@
     if (solverModeSelect) solverModeSelect.value = defaults.mode || "exact";
     if (maxSecondsInput) maxSecondsInput.value = String(defaults.maxSeconds);
     targetLevelInput.value = "100";
+    if (alsoShowLevelInput) alsoShowLevelInput.value = "100";
     if (tpBiasSlider) tpBiasSlider.value = "50";
     updateTpBiasLabel();
 
@@ -297,6 +299,10 @@
 
   function getTargetLevelValue() {
     return logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100);
+  }
+
+  function getAlsoShowLevelValue() {
+    return logic.clamp(logic.toInt(alsoShowLevelInput?.value, 100), 0, 100);
   }
 
   function updateTargetLevelLabels() {
@@ -908,7 +914,8 @@
     resultStatsHead.innerHTML = "";
     resultStatsBody.innerHTML = "";
     if (runHistory.length === 0) return;
-    const showLevel100Column = logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100) !== 100;
+    const alsoShowLevel = getAlsoShowLevelValue();
+    const showAlsoShowColumn = alsoShowLevel !== getTargetLevelValue();
 
     const groupRow = document.createElement("tr");
     const statHead = document.createElement("th");
@@ -936,7 +943,7 @@
           </div>
         </div>
       `;
-      th.colSpan = showLevel100Column ? 3 : 2;
+      th.colSpan = showAlsoShowColumn ? 3 : 2;
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
       th.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       groupRow.appendChild(th);
@@ -958,11 +965,11 @@
       targetTh.textContent = `Target (L${targetLevel})`;
       targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(targetTh);
-      if (showLevel100Column) {
-        const level100Th = document.createElement("th");
-        level100Th.textContent = "L100";
-        level100Th.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
-        subRow.appendChild(level100Th);
+      if (showAlsoShowColumn) {
+        const alsoShowTh = document.createElement("th");
+        alsoShowTh.textContent = `L${alsoShowLevel}`;
+        alsoShowTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+        subRow.appendChild(alsoShowTh);
       }
     });
     resultStatsHead.appendChild(subRow);
@@ -977,8 +984,8 @@
 
       runHistory.forEach((entry, index) => {
         const build = getDisplayBuildForRun(entry, index);
-        const level100Stats = showLevel100Column
-          ? buildFinalStatsAtLevel(build.level0Stats, 100)
+        const alsoShowStats = showAlsoShowColumn
+          ? buildFinalStatsAtLevel(build.level0Stats, alsoShowLevel)
           : null;
         const editing = inlineEditState.active && inlineEditState.runIndex === index;
         const failed = entry.status === "failed_constraints";
@@ -1001,11 +1008,11 @@
         targetCell.textContent = String(build.metrics.finalStats[key]);
         targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(targetCell);
-        if (showLevel100Column) {
-          const level100Cell = document.createElement("td");
-          level100Cell.textContent = String(level100Stats?.[key] ?? build.metrics.finalStats[key]);
-          level100Cell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
-          row.appendChild(level100Cell);
+        if (showAlsoShowColumn) {
+          const alsoShowCell = document.createElement("td");
+          alsoShowCell.textContent = String(alsoShowStats?.[key] ?? build.metrics.finalStats[key]);
+          alsoShowCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+          row.appendChild(alsoShowCell);
         }
       });
       resultStatsBody.appendChild(row);
@@ -1022,7 +1029,7 @@
       const failed = entry.status === "failed_constraints";
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
       const totalCell = document.createElement("td");
-      totalCell.colSpan = showLevel100Column ? 3 : 2;
+      totalCell.colSpan = showAlsoShowColumn ? 3 : 2;
       if (editing) totalCell.dataset.inlineTotals = "true";
       totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       totalCell.innerHTML = `
@@ -1831,6 +1838,10 @@
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
+    renderResultTable();
+  });
+  alsoShowLevelInput?.addEventListener("input", () => {
+    renderResultTable();
   });
   tpBiasSlider?.addEventListener("input", () => {
     updateTpBiasLabel();
