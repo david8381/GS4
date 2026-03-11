@@ -666,7 +666,7 @@
       return;
     }
     if (hasAnyActiveConstraints()) {
-      constraintFreeWarning.textContent = "Warning: constraints are filled out but will not be utilized in Constraint-Free Auto Solver.";
+      constraintFreeWarning.textContent = "Note: Constraint-Free Auto ignores the constraint fields below. Use Solve w/ Constraints to apply them.";
     } else {
       constraintFreeWarning.textContent = "";
     }

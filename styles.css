@@ -1477,8 +1477,9 @@ body[data-page="stat-optimizer"] .optimizer-current-delta:empty {
 
 body[data-page="stat-optimizer"] .optimizer-solver-warning {
   margin-top: 8px;
-  color: #b42318;
-  font-weight: 600;
+  color: #6b5d48;
+  font-weight: 500;
+  font-style: italic;
 }
 
 body[data-page="stat-optimizer"] .optimizer-solver-warning:empty {
