@@ -160,8 +160,8 @@
     const maxTop = window.innerHeight - tooltipRect.height - margin;
     top = Math.min(Math.max(margin, top), Math.max(margin, maxTop));
 
-    tooltip.style.left = `${left + window.scrollX}px`;
-    tooltip.style.top = `${top + window.scrollY}px`;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
   }
 
   function showFloatingTooltip(target, pointerEvent = null) {
@@ -211,10 +211,6 @@
       if (!event.target.closest(".optimizer-stat-abbr[data-tooltip]")) return;
       hideFloatingTooltip();
     });
-
-    window.addEventListener("scroll", () => {
-      if (floatingTooltipTarget) positionFloatingTooltip(floatingTooltipTarget);
-    }, { passive: true });
 
     window.addEventListener("resize", () => {
       if (floatingTooltipTarget) positionFloatingTooltip(floatingTooltipTarget);
