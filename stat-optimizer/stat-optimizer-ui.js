@@ -1317,7 +1317,7 @@
           ? `Best attempt available. ${reason}`
           : reason
       );
-      if (result?.build) {
+      if (result?.build?.meetsMinimums) {
         runningSolverState.bestResult = result;
         runningSolverState.bestResult.status = "failed_constraints";
       } else if (runningSolverState.bestResult?.build) {
@@ -1326,12 +1326,13 @@
       finalizeIterativeSolve(`${reason} (${elapsedNow}s)`, "error");
       return;
     }
+    const validBuild = result?.build?.meetsMinimums ? result.build : null;
     const improved = Boolean(
-      result?.build && (!runningSolverState.bestResult?.build
-        || logic.compareVectors(result.build.vector, runningSolverState.bestResult.build.vector) > 0)
+      validBuild && (!runningSolverState.bestResult?.build
+        || logic.compareVectors(validBuild.vector, runningSolverState.bestResult.build.vector) > 0)
     );
     if (improved) {
-      runningSolverState.bestResult = result;
+      runningSolverState.bestResult = { ...result, build: validBuild };
       runningSolverState.noImproveStreak = 0;
     } else if (!runningSolverState.bestResult && result?.build) {
       runningSolverState.bestResult = result;
@@ -1544,7 +1545,7 @@
 
     if (!runningSolverState.constraint_free_autoOptimizing) {
       const line1 = `${baseLine} (search)`;
-      if (result?.build) {
+      if (result?.build?.meetsMinimums) {
         runningSolverState.bestResult = result;
         runningSolverState.noImproveStreak = 0;
         runningSolverState.constraint_free_autoOptimizing = true;
@@ -1560,26 +1561,27 @@
       }
 
       runningSolverState.constraint_free_autoLastDiagnostic = result?.diagnostic || result?.message || "No feasible build.";
-      setSolverProgressLines(line1, "No solution at this max final.", runningSolverState.constraint_free_autoLastDiagnostic);
+      setSolverProgressLines(line1, "No solution at this minimum-final-stat target.", runningSolverState.constraint_free_autoLastDiagnostic);
       runningSolverState.constraint_free_autoCurrentMax -= 1;
       setTimeout(runSajehnStep, 0);
       return;
     }
 
     runningSolverState.constraint_free_autoOptimizeIterations += 1;
+    const validBuild = result?.build?.meetsMinimums ? result.build : null;
     const improved = Boolean(
-      result?.build && (!runningSolverState.bestResult?.build
-        || logic.compareVectors(result.build.vector, runningSolverState.bestResult.build.vector) > 0)
+      validBuild && (!runningSolverState.bestResult?.build
+        || logic.compareVectors(validBuild.vector, runningSolverState.bestResult.build.vector) > 0)
     );
     if (improved) {
-      runningSolverState.bestResult = result;
+      runningSolverState.bestResult = { ...result, build: validBuild };
       runningSolverState.noImproveStreak = 0;
     } else {
       runningSolverState.noImproveStreak += 1;
     }
 
-    if (result?.build) {
-      const best = runningSolverState.bestResult?.build?.metrics || result.build.metrics;
+    if (validBuild) {
+      const best = runningSolverState.bestResult?.build?.metrics || validBuild.metrics;
       const line1 = `${baseLine} (optimize ${runningSolverState.constraint_free_autoOptimizeIterations}, no-improve ${runningSolverState.noImproveStreak}/3${improved ? ", improved" : ""})`;
       const line2 = `Total stats ${best.overall}, PTP ${best.ptp}, MTP ${best.mtp}`;
       const line3 = `STR ${best.finalStats.str} CON ${best.finalStats.con} DEX ${best.finalStats.dex} AGI ${best.finalStats.agi} DIS ${best.finalStats.dis} AUR ${best.finalStats.aur} LOG ${best.finalStats.log} INT ${best.finalStats.int} WIS ${best.finalStats.wis} INF ${best.finalStats.inf}`;
@@ -1588,7 +1590,7 @@
       runningSolverState.constraint_free_autoLastDiagnostic = result?.diagnostic || result?.message || "No feasible build.";
       setSolverProgressLines(
         `${baseLine} (optimize ${runningSolverState.constraint_free_autoOptimizeIterations}, no-improve ${runningSolverState.noImproveStreak}/3)`,
-        "No improvement on this iteration.",
+        validBuild ? "No improvement on this iteration." : "No feasible improvement on this iteration.",
         runningSolverState.constraint_free_autoLastDiagnostic
       );
     }
