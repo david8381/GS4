@@ -35,9 +35,11 @@
   const finalAllMinStatInput = document.getElementById("finalAllMinStat");
   const applyFinalAllMinStatBtn = document.getElementById("applyFinalAllMinStat");
   const clearMinFinalStatsBtn = document.getElementById("clearMinFinalStats");
+  const copySuggestedRangeBtn = document.getElementById("copySuggestedRange");
   const startConstraintLabels = document.getElementById("startConstraintLabels");
   const finalConstraintLabels = document.getElementById("finalConstraintLabels");
   const startConstraintMinBody = document.getElementById("startConstraintMinBody");
+  const startConstraintSuggested = document.getElementById("startConstraintSuggested");
   const startConstraintFinalFromMin = document.getElementById("startConstraintFinalFromMin");
   const startConstraintFinalFromMax = document.getElementById("startConstraintFinalFromMax");
   const startConstraintMaxBody = document.getElementById("startConstraintMaxBody");
@@ -285,7 +287,7 @@
     if (tpBiasSlider) tpBiasSlider.value = "50";
     updateTpBiasLabel();
 
-    renderMinimumFinalStatsInputs();
+    renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderStartConstraintInputs({ resetToDefaults: true });
     renderPrimeSummary();
     renderStatInfoGrid();
@@ -314,7 +316,8 @@
     tpBiasValue.textContent = `${ptpWeight}/${mtpWeight}`;
   }
 
-  function renderMinimumFinalStatsInputs() {
+  function renderMinimumFinalStatsInputs(options = {}) {
+    const resetToDefaults = Boolean(options.resetToDefaults);
     if (!minFinalStatsBody) return;
     if (finalConstraintLabels) finalConstraintLabels.innerHTML = "";
     const existing = {};
@@ -332,8 +335,10 @@
       }
       const cell = document.createElement("label");
       cell.className = "optimizer-min-stat";
+      const defaultValue = getLevel0FloorByKey(stat.key);
+      const value = resetToDefaults ? String(defaultValue) : (existing[stat.key] || String(defaultValue));
       cell.innerHTML = `
-        <input id="min-final-${stat.key}" type="number" min="0" max="100" step="1" value="${existing[stat.key] || ""}" data-min-final="${stat.key}" />
+        <input id="min-final-${stat.key}" type="number" min="0" max="100" step="1" value="${value}" data-min-final="${stat.key}" />
       `;
       minFinalStatsBody.appendChild(cell);
     });
@@ -369,6 +374,22 @@
     return raw ? logic.clamp(logic.toInt(raw, 100), 0, 100) : 100;
   }
 
+  function computeSuggestedRanges() {
+    const ranges = {};
+    (data.stats || []).forEach((stat) => {
+      const minSuggested = getLevel0FloorByKey(stat.key);
+      const maxSuggested = Math.max(
+        minSuggested,
+        computeSuggestedStartForTarget(stat.key, 100, minSuggested)
+      );
+      ranges[stat.key] = {
+        minSuggested,
+        maxSuggested,
+      };
+    });
+    return ranges;
+  }
+
   function renderStartConstraintInputs(options = {}) {
     const resetToDefaults = Boolean(options.resetToDefaults);
     if (!startConstraintLabels || !startConstraintMinBody || !startConstraintMaxBody) return;
@@ -383,15 +404,14 @@
 
     startConstraintLabels.innerHTML = "";
     startConstraintMinBody.innerHTML = "";
+    if (startConstraintSuggested) startConstraintSuggested.innerHTML = "";
     if (startConstraintFinalFromMin) startConstraintFinalFromMin.innerHTML = "";
     if (startConstraintFinalFromMax) startConstraintFinalFromMax.innerHTML = "";
     startConstraintMaxBody.innerHTML = "";
+    const suggestedRanges = computeSuggestedRanges();
     (data.stats || []).forEach((stat) => {
       const minDefault = getLevel0FloorByKey(stat.key);
-      const maxDefault = Math.max(
-        minDefault,
-        computeSuggestedStartForTarget(stat.key, 100, minDefault)
-      );
+      const maxDefault = 100;
       const minValue = resetToDefaults ? String(minDefault) : (existingMin[stat.key] || String(minDefault));
       const maxValue = resetToDefaults ? String(maxDefault) : (existingMax[stat.key] || String(maxDefault));
 
@@ -406,6 +426,13 @@
         <input id="start-min-${stat.key}" type="number" min="0" max="100" step="1" value="${minValue}" data-start-min="${stat.key}" />
       `;
       startConstraintMinBody.appendChild(minCell);
+
+      if (startConstraintSuggested) {
+        const suggestedCell = document.createElement("div");
+        suggestedCell.className = "stat-constraint-cell";
+        suggestedCell.textContent = `${suggestedRanges[stat.key]?.minSuggested ?? minDefault}-${suggestedRanges[stat.key]?.maxSuggested ?? 100}`;
+        startConstraintSuggested.appendChild(suggestedCell);
+      }
 
       const maxCell = document.createElement("label");
       maxCell.className = "optimizer-min-stat";
@@ -472,18 +499,9 @@
   }
 
   function clearMinimumFinalStats() {
-    minFinalStatsBody?.querySelectorAll("input[data-min-final]").forEach((input) => {
-      input.value = "";
-    });
-    startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
-      input.value = "";
-    });
-    startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
-      input.value = "";
-    });
-    if (finalAllMinStatInput) finalAllMinStatInput.value = "";
+    renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderStartConstraintInputs({ resetToDefaults: true });
-    updateFinalFromCurrentBoundsRows();
+    if (finalAllMinStatInput) finalAllMinStatInput.value = "";
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
@@ -512,6 +530,21 @@
       inputs[0].dispatchEvent(new Event("input", { bubbles: true }));
     }
     renderStartConstraintInputs({ resetToDefaults: true });
+    updateStartConstraintWarning();
+    updateResumeAvailability();
+  }
+
+  function copySuggestedRangeToBounds() {
+    const ranges = computeSuggestedRanges();
+    startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
+      const key = input.dataset.startMin;
+      input.value = String(ranges[key]?.minSuggested ?? getLevel0FloorByKey(key));
+    });
+    startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
+      const key = input.dataset.startMax;
+      input.value = String(ranges[key]?.maxSuggested ?? 100);
+    });
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateResumeAvailability();
   }
@@ -685,6 +718,7 @@
     applyProfile(profile);
     upsertProfileBaselineRun(profile);
     if (addProfileRunBtn) addProfileRunBtn.disabled = false;
+    renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderStartConstraintInputs({ resetToDefaults: true });
     updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
@@ -1741,7 +1775,9 @@
   });
   clearMinFinalStatsBtn?.addEventListener("click", clearMinimumFinalStats);
   applyFinalAllMinStatBtn?.addEventListener("click", applyFinalAllMinStat);
+  copySuggestedRangeBtn?.addEventListener("click", copySuggestedRangeToBounds);
   professionSelect?.addEventListener("change", () => {
+    renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderPrimeSummary();
     renderStatInfoGrid();
     renderStartConstraintInputs({ resetToDefaults: true });
@@ -1750,6 +1786,7 @@
     updateResumeAvailability();
   });
   raceSelect?.addEventListener("change", () => {
+    renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -1757,7 +1794,7 @@
   });
   targetLevelInput?.addEventListener("input", () => {
     updateTargetLevelLabels();
-    renderStartConstraintInputs({ resetToDefaults: true });
+    renderStartConstraintInputs({ resetToDefaults: false });
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
