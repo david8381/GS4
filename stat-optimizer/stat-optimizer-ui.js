@@ -1009,7 +1009,10 @@
         row.appendChild(startCell);
         comparisonLevels.forEach((level) => {
           const levelCell = document.createElement("td");
-          if (editing && level === targetLevelValue) levelCell.dataset.inlineTargetStat = key;
+          if (editing) {
+            levelCell.dataset.inlineStatKey = key;
+            levelCell.dataset.inlineStatLevel = String(level);
+          }
           const statsAtLevel = statsByLevel.get(level);
           levelCell.textContent = String(statsAtLevel?.[key] ?? build.metrics.finalStats[key]);
           levelCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
@@ -1221,11 +1224,22 @@
     inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
     const preview = buildPreviewFromDraft(nextLevel0Stats);
     if (preview) {
-      const editingRowTargets = resultStatsBody?.querySelectorAll("td[data-inline-target-stat]") || [];
+      const comparisonLevels = Array.from(new Set([getTargetLevelValue(), ...getAlsoShowLevels()]))
+        .sort((left, right) => left - right);
+      const statsByLevel = new Map(
+        comparisonLevels.map((level) => [
+          level,
+          level === getTargetLevelValue()
+            ? preview.metrics.finalStats
+            : buildFinalStatsAtLevel(nextLevel0Stats, level),
+        ])
+      );
+      const editingRowTargets = resultStatsBody?.querySelectorAll("td[data-inline-stat-key][data-inline-stat-level]") || [];
       editingRowTargets.forEach((cell) => {
-        const key = cell.dataset.inlineTargetStat;
+        const key = cell.dataset.inlineStatKey;
+        const level = logic.toInt(cell.dataset.inlineStatLevel, getTargetLevelValue());
         if (!key) return;
-        cell.textContent = String(preview.metrics.finalStats[key]);
+        cell.textContent = String(statsByLevel.get(level)?.[key] ?? preview.metrics.finalStats[key]);
       });
       const totalsCell = resultStatsBody?.querySelector("td[data-inline-totals='true']");
       if (totalsCell) {
