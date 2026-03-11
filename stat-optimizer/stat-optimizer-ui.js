@@ -1044,8 +1044,8 @@
     resultStatsBody.appendChild(totalsRow);
   }
 
-  function buildPreviewFromDraft(draftLevel0Stats) {
-    if (!draftLevel0Stats) return null;
+  function buildMetricsFromLevel0Stats(level0Stats) {
+    if (!level0Stats) return null;
     const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
     const profession = professionSelect?.value || "";
     if (!profession) return null;
@@ -1055,7 +1055,7 @@
 
     const computedAtTarget = profileLogic.computeStatsFromLevel0({
       stats: data.stats,
-      level0Stats: draftLevel0Stats,
+      level0Stats,
       level: effectiveLevel,
       raceName,
       profession,
@@ -1069,9 +1069,9 @@
       experience: targetExperience,
       raceName,
       profession,
-      level0Stats: draftLevel0Stats,
+      level0Stats,
     });
-    const startTp = logic.trainingPointsPerLevelForStats(draftLevel0Stats, profession, data?.professionPrimeReqs);
+    const startTp = logic.trainingPointsPerLevelForStats(level0Stats, profession, data?.professionPrimeReqs);
 
     return {
       metrics: {
@@ -1081,12 +1081,16 @@
         startMtp: startTp.mtpPerLevel,
         overall: finalStats.total,
         finalStats,
-        level0Stats: draftLevel0Stats,
+        level0Stats,
         level: effectiveLevel,
         experience: targetExperience,
       },
-      level0Stats: draftLevel0Stats,
+      level0Stats,
     };
+  }
+
+  function buildPreviewFromDraft(draftLevel0Stats) {
+    return buildMetricsFromLevel0Stats(draftLevel0Stats);
   }
 
   function buildFinalStatsAtLevel(level0Stats, level) {
@@ -1107,9 +1111,12 @@
   }
 
   function getDisplayBuildForRun(entry, index) {
-    if (!(inlineEditState.active && inlineEditState.runIndex === index)) return entry.build;
-    const preview = buildPreviewFromDraft(inlineEditState.draftLevel0Stats);
-    return preview || entry.build;
+    if (inlineEditState.active && inlineEditState.runIndex === index) {
+      const preview = buildPreviewFromDraft(inlineEditState.draftLevel0Stats);
+      return preview || entry.build;
+    }
+    const recomputed = buildMetricsFromLevel0Stats(entry.build?.level0Stats);
+    return recomputed || entry.build;
   }
 
   function setInlineEditStatus(message, tone = "") {
