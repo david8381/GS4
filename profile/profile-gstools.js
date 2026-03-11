@@ -31,7 +31,19 @@
     importStatus,
   }) {
     const rawHash = String(windowObject.location.hash || "").replace(/^#/, "");
-    if (!rawHash) return;
+    if (!rawHash) {
+      try {
+        const pendingNotice = String(windowObject.sessionStorage?.getItem("gs4toolsImportNotice") || "");
+        if (pendingNotice && importStatus) {
+          importStatus.textContent = pendingNotice;
+          importStatus.style.color = "";
+          windowObject.sessionStorage.removeItem("gs4toolsImportNotice");
+        }
+      } catch (error) {
+        // Ignore sessionStorage failures and leave the default status text alone.
+      }
+      return;
+    }
 
     let encoded = "";
     let nextTarget = "";
@@ -85,7 +97,8 @@
         return;
       }
 
-      importStatus.textContent = `Imported quick-start blocks and automatically updated profile${payloadCharacterName ? `: ${payloadCharacterName}` : ""}.`;
+      const successMessage = `Imported quick-start blocks and automatically updated profile${payloadCharacterName ? `: ${payloadCharacterName}` : ""}.`;
+      importStatus.textContent = successMessage;
       importStatus.style.color = "";
       const nextPageByKey = {
         profile: "",
@@ -105,7 +118,12 @@
         return;
       }
       const cleanUrl = `${windowObject.location.pathname}${windowObject.location.search}`;
-      windowObject.history.replaceState(null, "", cleanUrl);
+      try {
+        windowObject.sessionStorage?.setItem("gs4toolsImportNotice", successMessage);
+      } catch (error) {
+        // Ignore sessionStorage failures and fall back to the current page state.
+      }
+      windowObject.location.replace(cleanUrl);
     } catch (error) {
       console.error("gstools hash import failed", error);
       importStatus.textContent = `Could not import gstools payload from URL hash: ${error?.message || "unknown error"}.`;
