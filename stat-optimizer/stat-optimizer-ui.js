@@ -571,14 +571,6 @@
     }
   }
 
-  function autoSelectConstraintSolverIfNeeded() {
-    if (!solverModeSelect) return;
-    if (solverModeSelect.value !== "constraint_free_auto") return;
-    if (!hasAnyActiveConstraints()) return;
-    solverModeSelect.value = "exact";
-    updateSolverModeUI();
-  }
-
   function hasAnyActiveConstraints() {
     const hasMinFinal = Array.from(minFinalStatsBody?.querySelectorAll("input[data-min-final]") || [])
       .some((input) => String(input.value || "").trim() !== "" && Math.max(0, logic.toInt(input.value, 0)) > 0);
@@ -1388,7 +1380,6 @@
   function runSolver(options = {}) {
     const resume = Boolean(options.resume);
     solverProgress.textContent = "";
-    autoSelectConstraintSolverIfNeeded();
     const params = buildSolveParams();
     if (!resume && params.selectedMode === "constraint_free_auto") {
       runSajehnAlgorithm();
