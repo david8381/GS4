@@ -109,9 +109,9 @@
               <div class="stat-constraint-row-label">Max</div>
               <div class="optimizer-stat-min-grid" id="startConstraintMaxBody"></div>
             </div>
-            <div class="stat-constraint-row stat-constraint-row-suggested">
-              <div class="stat-constraint-row-label">Suggested range</div>
-              <div class="optimizer-stat-min-grid stat-constraint-suggested" id="startConstraintSuggested"></div>
+            <div class="stat-constraint-row">
+              <div class="stat-constraint-row-label">Final @ Min</div>
+              <div class="optimizer-stat-min-grid stat-constraint-suggested" id="startConstraintFinalFromMin"></div>
             </div>
             <div class="stat-constraint-row">
               <div class="stat-constraint-row-label">Final @ Max</div>
@@ -119,14 +119,12 @@
             </div>
             <div class="inline-actions">
               <button class="btn ghost btn tiny" id="clearMinFinalStats" type="button">Clear</button>
-              <button class="btn ghost btn tiny" id="copySuggestedRange" type="button">Copy Suggested Initial Range</button>
             </div>
             <div class="helper" id="startConstraintWarning"></div>
             <ul class="helper stat-constraint-footnote">
               <li>Min: required minimum level-0 start stat.</li>
               <li>Max: cap on level-0 starting stat.</li>
-              <li>Suggested range: floor to max start needed to satisfy current Min final target at the selected level.</li>
-              <li>Use suggested range as a starting point, then tweak to satisfy total allocation.</li>
+              <li>Final @ Min / Final @ Max: resulting target-level stat if you start at the entered bound.</li>
             </ul>
           </div>
         </details>
@@ -195,7 +193,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.2.17"></script>
-    <script src="../site.js?v=0.2.17"></script>
+    <script src="../shared.js?v=0.2.18"></script>
+    <script src="../site.js?v=0.2.18"></script>
   </body>
 </html>

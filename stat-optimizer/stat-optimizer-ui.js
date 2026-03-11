@@ -35,11 +35,10 @@
   const finalAllMinStatInput = document.getElementById("finalAllMinStat");
   const applyFinalAllMinStatBtn = document.getElementById("applyFinalAllMinStat");
   const clearMinFinalStatsBtn = document.getElementById("clearMinFinalStats");
-  const copySuggestedRangeBtn = document.getElementById("copySuggestedRange");
   const startConstraintLabels = document.getElementById("startConstraintLabels");
   const finalConstraintLabels = document.getElementById("finalConstraintLabels");
   const startConstraintMinBody = document.getElementById("startConstraintMinBody");
-  const startConstraintSuggested = document.getElementById("startConstraintSuggested");
+  const startConstraintFinalFromMin = document.getElementById("startConstraintFinalFromMin");
   const startConstraintFinalFromMax = document.getElementById("startConstraintFinalFromMax");
   const startConstraintMaxBody = document.getElementById("startConstraintMaxBody");
   const startConstraintWarning = document.getElementById("startConstraintWarning");
@@ -370,26 +369,8 @@
     return raw ? logic.clamp(logic.toInt(raw, 100), 0, 100) : 100;
   }
 
-  function computeSuggestedRanges() {
-    const primeSet = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
-    const ranges = {};
-    (data.stats || []).forEach((stat) => {
-      const minFloor = primeSet.has(stat.key) ? 30 : 20;
-      const minTarget = getMinFinalTargetByKey(stat.key);
-      const minSuggestedRaw = computeSuggestedStartForTarget(stat.key, minTarget, minFloor);
-      const minSuggested = Math.max(minFloor, minSuggestedRaw);
-      const maxSuggestedRaw = computeSuggestedStartForTarget(stat.key, 100, minFloor);
-      const maxSuggested = Math.max(minSuggested, maxSuggestedRaw);
-      ranges[stat.key] = {
-        minSuggested,
-        maxSuggested,
-      };
-    });
-    return ranges;
-  }
-
   function renderStartConstraintInputs() {
-    if (!startConstraintLabels || !startConstraintMinBody || !startConstraintSuggested || !startConstraintMaxBody) return;
+    if (!startConstraintLabels || !startConstraintMinBody || !startConstraintMaxBody) return;
     const existingMin = {};
     const existingMax = {};
     startConstraintMinBody.querySelectorAll("input[data-start-min]").forEach((input) => {
@@ -401,15 +382,10 @@
 
     startConstraintLabels.innerHTML = "";
     startConstraintMinBody.innerHTML = "";
-    startConstraintSuggested.innerHTML = "";
+    if (startConstraintFinalFromMin) startConstraintFinalFromMin.innerHTML = "";
     if (startConstraintFinalFromMax) startConstraintFinalFromMax.innerHTML = "";
     startConstraintMaxBody.innerHTML = "";
-
-    const suggestedRanges = computeSuggestedRanges();
     (data.stats || []).forEach((stat) => {
-      const minSuggested = suggestedRanges[stat.key]?.minSuggested ?? getLevel0FloorByKey(stat.key);
-      const suggestedMax = suggestedRanges[stat.key]?.maxSuggested ?? 100;
-
       const labelCell = document.createElement("div");
       labelCell.className = "stat-constraint-cell stat-constraint-label-cell";
       labelCell.innerHTML = renderStatAbbr(stat.abbr, stat.key);
@@ -422,11 +398,6 @@
       `;
       startConstraintMinBody.appendChild(minCell);
 
-      const suggestedCell = document.createElement("div");
-      suggestedCell.className = "stat-constraint-cell";
-      suggestedCell.textContent = `${minSuggested}-${suggestedMax}`;
-      startConstraintSuggested.appendChild(suggestedCell);
-
       const maxCell = document.createElement("label");
       maxCell.className = "optimizer-min-stat";
       maxCell.innerHTML = `
@@ -434,7 +405,7 @@
       `;
       startConstraintMaxBody.appendChild(maxCell);
     });
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
   }
 
   function finalStatFromLevel0(statKey, level0Value) {
@@ -454,38 +425,30 @@
     return logic.toInt(computed?.[statKey]?.base, level0Value);
   }
 
-  function updateFinalFromCurrentMaxRow() {
-    if (!startConstraintFinalFromMax) return;
-    startConstraintFinalFromMax.innerHTML = "";
-    const suggested = computeSuggestedRanges();
+  function updateFinalFromCurrentBoundsRows() {
+    if (startConstraintFinalFromMin) startConstraintFinalFromMin.innerHTML = "";
+    if (startConstraintFinalFromMax) startConstraintFinalFromMax.innerHTML = "";
     (data.stats || []).forEach((stat) => {
       const key = stat.key;
+      const minInput = startConstraintMinBody?.querySelector(`input[data-start-min="${key}"]`);
       const maxInput = startConstraintMaxBody?.querySelector(`input[data-start-max="${key}"]`);
+      const minRaw = String(minInput?.value || "").trim();
       const maxRaw = String(maxInput?.value || "").trim();
-      const level0Max = maxRaw ? logic.clamp(logic.toInt(maxRaw, 100), 0, 100) : (suggested[key]?.maxSuggested ?? 100);
-      const finalValue = finalStatFromLevel0(key, level0Max);
-      const cell = document.createElement("div");
-      cell.className = "stat-constraint-cell";
-      cell.textContent = String(finalValue);
-      startConstraintFinalFromMax.appendChild(cell);
+      const level0Min = minRaw ? logic.clamp(logic.toInt(minRaw, getLevel0FloorByKey(key)), 0, 100) : getLevel0FloorByKey(key);
+      const level0Max = maxRaw ? logic.clamp(logic.toInt(maxRaw, 100), 0, 100) : 100;
+      if (startConstraintFinalFromMin) {
+        const minCell = document.createElement("div");
+        minCell.className = "stat-constraint-cell";
+        minCell.textContent = String(finalStatFromLevel0(key, level0Min));
+        startConstraintFinalFromMin.appendChild(minCell);
+      }
+      if (startConstraintFinalFromMax) {
+        const maxCell = document.createElement("div");
+        maxCell.className = "stat-constraint-cell";
+        maxCell.textContent = String(finalStatFromLevel0(key, level0Max));
+        startConstraintFinalFromMax.appendChild(maxCell);
+      }
     });
-  }
-
-  function copySuggestedRangeToBounds() {
-    const ranges = computeSuggestedRanges();
-    startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
-      const key = input.dataset.startMin;
-      const value = ranges[key]?.minSuggested ?? getLevel0FloorByKey(key);
-      input.value = String(value);
-    });
-    startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
-      const key = input.dataset.startMax;
-      const value = ranges[key]?.maxSuggested ?? 100;
-      input.value = String(value);
-    });
-    updateFinalFromCurrentMaxRow();
-    updateStartConstraintWarning();
-    updateResumeAvailability();
   }
 
   function toBaseStartFromPrimeIncluded(level0Stats) {
@@ -511,7 +474,7 @@
     });
     if (finalAllMinStatInput) finalAllMinStatInput.value = "";
     renderStartConstraintInputs();
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
@@ -1520,18 +1483,6 @@
     });
   }
 
-  function applySuggestedRangesToStartBounds() {
-    const suggested = computeSuggestedRanges();
-    startConstraintMinBody?.querySelectorAll("input[data-start-min]").forEach((input) => {
-      const key = input.dataset.startMin;
-      input.value = String(suggested[key]?.minSuggested ?? getLevel0FloorByKey(key));
-    });
-    startConstraintMaxBody?.querySelectorAll("input[data-start-max]").forEach((input) => {
-      const key = input.dataset.startMax;
-      input.value = String(suggested[key]?.maxSuggested ?? 100);
-    });
-  }
-
   function buildConstraintFreeBounds(finalMin) {
     const minStartStats = {};
     const maxStartStats = {};
@@ -1781,7 +1732,6 @@
   });
   clearMinFinalStatsBtn?.addEventListener("click", clearMinimumFinalStats);
   applyFinalAllMinStatBtn?.addEventListener("click", applyFinalAllMinStat);
-  copySuggestedRangeBtn?.addEventListener("click", copySuggestedRangeToBounds);
   professionSelect?.addEventListener("change", () => {
     renderPrimeSummary();
     renderStatInfoGrid();
@@ -1825,21 +1775,21 @@
   minFinalStatsBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
     renderStartConstraintInputs();
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
   startConstraintMinBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
   startConstraintMaxBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
@@ -1848,7 +1798,7 @@
     const input = event.target.closest("input[data-start-min]");
     if (!input) return;
     enforceStartConstraintPair("min", input.dataset.startMin);
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateResumeAvailability();
   });
@@ -1856,7 +1806,7 @@
     const input = event.target.closest("input[data-start-max]");
     if (!input) return;
     enforceStartConstraintPair("max", input.dataset.startMax);
-    updateFinalFromCurrentMaxRow();
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateResumeAvailability();
   });
@@ -1902,7 +1852,7 @@
     if (!profile) return;
     appendProfileRun(profile);
   });
-  updateFinalFromCurrentMaxRow();
+  updateFinalFromCurrentBoundsRows();
   updateStartConstraintWarning();
   initializeProfileSelect();
   applySelectedProfileFromPicker();
