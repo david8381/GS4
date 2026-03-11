@@ -719,6 +719,22 @@
     updateCurrentLevelTpDelta();
   }
 
+  function appendProfileRun(profile) {
+    if (!profile || !profile.level0Stats || typeof profile.level0Stats !== "object") return;
+    const normalizedStart = normalizeLevel0StatsForRun(profile.level0Stats);
+    const preview = buildPreviewFromDraft(normalizedStart);
+    if (!preview) return;
+
+    runHistory.push({
+      label: `${profile.name || "Profile"} @ L${getTargetLevelValue()}`,
+      build: preview,
+      status: "profile",
+      sourceKind: "profile_snapshot",
+    });
+    renderResultTable();
+    updateCurrentLevelTpDelta();
+  }
+
   function updateCurrentLevelTpDelta() {
     if (!resultCurrentLevelDelta) return;
     const selectedProfile = getSelectedProfile();
@@ -1318,7 +1334,15 @@
       && Number.isFinite(runningSolverState.maxElapsedSeconds)
       && runningSolverState.maxElapsedSeconds > 0
       && elapsedSeconds >= runningSolverState.maxElapsedSeconds) {
-      finalizeIterativeSolve(`Done in ${elapsed}s. Reached max seconds (${runningSolverState.maxElapsedSeconds}).`, "ok");
+      if (runningSolverState.bestResult?.build && !runningSolverState.bestResult.build.meetsMinimums) {
+        runningSolverState.bestResult.status = "failed_constraints";
+        finalizeIterativeSolve(
+          `Unable to Find Solution, try more time or relax constraints. Done in ${elapsed}s. Reached max seconds (${runningSolverState.maxElapsedSeconds}).`,
+          "error"
+        );
+      } else {
+        finalizeIterativeSolve(`Done in ${elapsed}s. Reached max seconds (${runningSolverState.maxElapsedSeconds}).`, "ok");
+      }
       return;
     }
 
@@ -1701,7 +1725,7 @@
   addProfileRunBtn?.addEventListener("click", () => {
     const profile = getSelectedProfile();
     if (!profile) return;
-    upsertProfileBaselineRun(profile);
+    appendProfileRun(profile);
   });
   updateFinalFromCurrentMaxRow();
   updateStartConstraintWarning();
