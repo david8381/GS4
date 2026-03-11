@@ -121,7 +121,10 @@
 
     if (selected) {
       const hasChanges = !profilesEqual(currentComparable, selectedComparable);
-      updateProfileDiffHighlights(currentComparable, selectedComparable);
+      updateProfileDiffHighlights({
+        currentProfile: currentComparable,
+        selectedProfile: selectedComparable,
+      });
       if (hasChanges) {
         profileApply.classList.add("attention");
         reloadProfileButtons.forEach((button) => button.classList.add("attention"));
