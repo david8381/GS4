@@ -169,3 +169,14 @@ test('buildObjectivePresetFromBias keeps 50/50 overall-first and honors strong T
     ['mtp', 'tp_blend', 'overall', 'ptp']
   );
 });
+
+test('buildConstraintFreeObjectivePresetFromBias prioritizes balanced final stats first', () => {
+  assert.deepEqual(
+    logic.buildConstraintFreeObjectivePresetFromBias(50).priorities,
+    ['final_lex', 'overall', 'tp_blend', 'ptp', 'mtp']
+  );
+  assert.deepEqual(
+    logic.buildConstraintFreeObjectivePresetFromBias(0).priorities,
+    ['final_lex', 'ptp', 'tp_blend', 'overall', 'mtp']
+  );
+});

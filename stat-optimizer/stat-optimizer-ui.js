@@ -1513,6 +1513,9 @@
     const baseParams = buildSolveParams();
     baseParams.mode = "fast";
     baseParams.maxSeconds = 2;
+    baseParams.objectivePreset = logic.buildConstraintFreeObjectivePresetFromBias(
+      logic.clamp(logic.toInt(tpBiasSlider?.value, 50), 0, 100)
+    );
 
     runningSolverState.mode = "constraint_free_auto";
     runningSolverState.modeLabel = "Constraint-Free Auto";

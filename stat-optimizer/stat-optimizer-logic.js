@@ -256,7 +256,11 @@
     const priorities = objectivePreset?.priorities || ["ptp", "mtp", "overall"];
     const vector = [];
     priorities.forEach((priority) => {
-      if (priority === "ptp") vector.push(toInt(metrics?.ptp, 0));
+      if (priority === "final_lex") {
+        const finals = STAT_KEYS.map((key) => toInt(metrics?.finalStats?.[key], 0)).sort((a, b) => a - b);
+        vector.push(...finals);
+      }
+      else if (priority === "ptp") vector.push(toInt(metrics?.ptp, 0));
       else if (priority === "mtp") vector.push(toInt(metrics?.mtp, 0));
       else if (priority === "overall") vector.push(toInt(metrics?.overall, 0));
       else if (priority === "balanced") vector.push(toInt(metrics?.ptp, 0) + toInt(metrics?.mtp, 0) + toInt(metrics?.overall, 0));
@@ -286,6 +290,15 @@
       priorities,
       ptpWeight,
       mtpWeight,
+    };
+  }
+
+  function buildConstraintFreeObjectivePresetFromBias(mtpWeightPct) {
+    const base = buildObjectivePresetFromBias(mtpWeightPct);
+    return {
+      ...base,
+      id: "constraint_free_balanced_stats",
+      priorities: ["final_lex", ...base.priorities],
     };
   }
 
@@ -1218,6 +1231,7 @@
     computeFinalStatSummary,
     objectiveVector,
     buildObjectivePresetFromBias,
+    buildConstraintFreeObjectivePresetFromBias,
     minimumDeficit,
     scoreVector,
     hasAnyMinimums,
