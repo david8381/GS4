@@ -1091,17 +1091,17 @@ body[data-page="stat-optimizer"] .input-row select {
 
 body[data-page="stat-optimizer"] .optimizer-level-row .input-row {
   display: grid;
-  grid-template-columns: 72px max-content minmax(120px, 1fr);
+  grid-template-columns: 56px max-content minmax(180px, 1fr);
   gap: 8px;
   align-items: center;
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
-  width: 72px;
+  width: 56px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row #alsoShowLevel {
-  min-width: 120px;
+  min-width: 180px;
   width: 100%;
 }
 
