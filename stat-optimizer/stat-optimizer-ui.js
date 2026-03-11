@@ -286,7 +286,7 @@
     updateTpBiasLabel();
 
     renderMinimumFinalStatsInputs();
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     renderPrimeSummary();
     renderStatInfoGrid();
     updateTargetLevelLabels();
@@ -369,7 +369,8 @@
     return raw ? logic.clamp(logic.toInt(raw, 100), 0, 100) : 100;
   }
 
-  function renderStartConstraintInputs() {
+  function renderStartConstraintInputs(options = {}) {
+    const resetToDefaults = Boolean(options.resetToDefaults);
     if (!startConstraintLabels || !startConstraintMinBody || !startConstraintMaxBody) return;
     const existingMin = {};
     const existingMax = {};
@@ -386,6 +387,14 @@
     if (startConstraintFinalFromMax) startConstraintFinalFromMax.innerHTML = "";
     startConstraintMaxBody.innerHTML = "";
     (data.stats || []).forEach((stat) => {
+      const minDefault = getLevel0FloorByKey(stat.key);
+      const maxDefault = Math.max(
+        minDefault,
+        computeSuggestedStartForTarget(stat.key, 100, minDefault)
+      );
+      const minValue = resetToDefaults ? String(minDefault) : (existingMin[stat.key] || String(minDefault));
+      const maxValue = resetToDefaults ? String(maxDefault) : (existingMax[stat.key] || String(maxDefault));
+
       const labelCell = document.createElement("div");
       labelCell.className = "stat-constraint-cell stat-constraint-label-cell";
       labelCell.innerHTML = renderStatAbbr(stat.abbr, stat.key);
@@ -394,14 +403,14 @@
       const minCell = document.createElement("label");
       minCell.className = "optimizer-min-stat";
       minCell.innerHTML = `
-        <input id="start-min-${stat.key}" type="number" min="0" max="100" step="1" value="${existingMin[stat.key] || ""}" data-start-min="${stat.key}" />
+        <input id="start-min-${stat.key}" type="number" min="0" max="100" step="1" value="${minValue}" data-start-min="${stat.key}" />
       `;
       startConstraintMinBody.appendChild(minCell);
 
       const maxCell = document.createElement("label");
       maxCell.className = "optimizer-min-stat";
       maxCell.innerHTML = `
-        <input id="start-max-${stat.key}" type="number" min="0" max="100" step="1" value="${existingMax[stat.key] || ""}" data-start-max="${stat.key}" />
+        <input id="start-max-${stat.key}" type="number" min="0" max="100" step="1" value="${maxValue}" data-start-max="${stat.key}" />
       `;
       startConstraintMaxBody.appendChild(maxCell);
     });
@@ -473,7 +482,7 @@
       input.value = "";
     });
     if (finalAllMinStatInput) finalAllMinStatInput.value = "";
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -502,7 +511,7 @@
     if (inputs[0]) {
       inputs[0].dispatchEvent(new Event("input", { bubbles: true }));
     }
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateResumeAvailability();
   }
@@ -676,8 +685,8 @@
     applyProfile(profile);
     upsertProfileBaselineRun(profile);
     if (addProfileRunBtn) addProfileRunBtn.disabled = false;
-    renderStartConstraintInputs();
-    updateFinalFromCurrentMaxRow();
+    renderStartConstraintInputs({ resetToDefaults: true });
+    updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
     updateResumeAvailability();
   }
@@ -1735,20 +1744,20 @@
   professionSelect?.addEventListener("change", () => {
     renderPrimeSummary();
     renderStatInfoGrid();
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
   raceSelect?.addEventListener("change", () => {
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
   });
   targetLevelInput?.addEventListener("input", () => {
     updateTargetLevelLabels();
-    renderStartConstraintInputs();
+    renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
     updateResumeAvailability();
