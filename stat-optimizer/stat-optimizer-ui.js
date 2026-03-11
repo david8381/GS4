@@ -58,6 +58,7 @@
     active: false,
     runIndex: -1,
     draftLevel0Stats: null,
+    draftRawValues: null,
     message: "",
     tone: "",
   };
@@ -117,7 +118,7 @@
 
   function renderStatAbbr(abbr, statKey = "") {
     const tooltip = statKey ? getStatTooltip(statKey) : "";
-    const tooltipAttr = tooltip ? ` data-tooltip="${tooltip.replace(/"/g, "&quot;")}" tabindex="0"` : "";
+    const tooltipAttr = tooltip ? ` data-tooltip="${tooltip.replace(/"/g, "&quot;")}"` : "";
     return `<span class="optimizer-stat-abbr"${tooltipAttr}>${abbr}</span>`;
   }
 
@@ -873,7 +874,11 @@
         const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
         const startCell = document.createElement("td");
         if (editing) {
-          const draftValue = logic.toInt(inlineEditState.draftLevel0Stats?.[key], logic.toInt(build.level0Stats[key], 0));
+          const draftValue = String(
+            inlineEditState.draftRawValues?.[key]
+              ?? inlineEditState.draftLevel0Stats?.[key]
+              ?? logic.toInt(build.level0Stats[key], 0)
+          );
           startCell.innerHTML = `<input type="number" min="1" max="100" step="1" value="${draftValue}" data-inline-edit="${key}" />`;
         } else {
           startCell.textContent = String(build.level0Stats[key]);
@@ -982,7 +987,10 @@
     inlineEditState.active = true;
     inlineEditState.runIndex = runHistory.length - 1;
     inlineEditState.draftLevel0Stats = { ...source.build.level0Stats };
-    setInlineEditStatus("Editing copied run inline. Changes apply when values are valid.", "");
+    inlineEditState.draftRawValues = Object.fromEntries(
+      Object.entries(source.build.level0Stats).map(([key, value]) => [key, String(value)])
+    );
+    setInlineEditStatus("Editing copied run inline. Click Done to apply.", "");
     renderResultTable();
     const firstInput = resultStatsBody?.querySelector("input[data-inline-edit]");
     firstInput?.focus();
@@ -1007,40 +1015,69 @@
     inlineEditState.active = true;
     inlineEditState.runIndex = runHistory.length - 1;
     inlineEditState.draftLevel0Stats = { ...seed };
-    setInlineEditStatus("Editing manual run inline. Changes apply when values are valid.", "");
+    inlineEditState.draftRawValues = Object.fromEntries(
+      Object.entries(seed).map(([key, value]) => [key, String(value)])
+    );
+    setInlineEditStatus("Editing manual run inline. Click Done to apply.", "");
     renderResultTable();
     const firstInput = resultStatsBody?.querySelector("input[data-inline-edit]");
     firstInput?.focus();
   }
 
-  function applyInlineEditInput(statKey, rawValue) {
+  function updateInlineEditDraft(statKey, rawValue) {
     if (!inlineEditState.active || inlineEditState.runIndex < 0) return;
-    if (!Object.prototype.hasOwnProperty.call(inlineEditState.draftLevel0Stats || {}, statKey)) return;
-    const value = logic.clamp(logic.toInt(rawValue, 0), 1, 100);
-    inlineEditState.draftLevel0Stats[statKey] = value;
+    if (!Object.prototype.hasOwnProperty.call(inlineEditState.draftRawValues || {}, statKey)) return;
+    inlineEditState.draftRawValues[statKey] = String(rawValue ?? "");
+    setInlineEditStatus("Draft updated. Click Done to apply.", "");
+  }
 
+  function applyInlineDraftToRun() {
+    if (!inlineEditState.active || inlineEditState.runIndex < 0) return false;
+    const rawValues = inlineEditState.draftRawValues || {};
+    const nextLevel0Stats = {};
+    for (const stat of (data.stats || [])) {
+      const key = stat.key;
+      const raw = String(rawValues[key] ?? "").trim();
+      if (raw === "") {
+        setInlineEditStatus(`Enter a value for ${stat.abbr}.`, "error");
+        return false;
+      }
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) {
+        setInlineEditStatus(`${stat.abbr} must be a number.`, "error");
+        return false;
+      }
+      nextLevel0Stats[key] = Math.trunc(parsed);
+    }
     const params = buildSolveParams();
-    const startStats = toBaseStartFromPrimeIncluded(inlineEditState.draftLevel0Stats);
+    const startStats = toBaseStartFromPrimeIncluded(nextLevel0Stats);
     const evaluated = logic.evaluateBuild({
       ...params,
       startStats,
     });
 
     if (evaluated.ok) {
+      inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
+      inlineEditState.draftRawValues = Object.fromEntries(
+        Object.entries(nextLevel0Stats).map(([key, value]) => [key, String(value)])
+      );
       runHistory[inlineEditState.runIndex].build = evaluated;
       setInlineEditStatus("Inline edit is valid.", "ok");
+      return true;
     } else {
       const reasons = evaluated.validation?.errors?.join(" ") || evaluated.reason || "Inline edit is invalid.";
       setInlineEditStatus(reasons, "error");
+      return false;
     }
-    renderResultTable();
   }
 
   function finishInlineEdit() {
     if (!inlineEditState.active) return;
+    if (!applyInlineDraftToRun()) return;
     inlineEditState.active = false;
     inlineEditState.runIndex = -1;
     inlineEditState.draftLevel0Stats = null;
+    inlineEditState.draftRawValues = null;
     setInlineEditStatus("Done adjusting run.", "ok");
     renderResultTable();
     updateCurrentLevelTpDelta();
@@ -1435,7 +1472,7 @@
 
     const baseParams = buildSolveParams();
     baseParams.mode = "fast";
-    baseParams.maxSeconds = 0.25;
+    baseParams.maxSeconds = 2;
 
     runningSolverState.mode = "constraint_free_auto";
     runningSolverState.modeLabel = "Constraint-Free Auto";
@@ -1710,7 +1747,15 @@
     const input = event.target.closest("input[data-inline-edit]");
     if (!input) return;
     const key = input.dataset.inlineEdit;
-    applyInlineEditInput(key, input.value);
+    updateInlineEditDraft(key, input.value);
+  });
+  resultStatsBody.addEventListener("keydown", (event) => {
+    const input = event.target.closest("input[data-inline-edit]");
+    if (!input) return;
+    if (event.key === "Enter") {
+      event.preventDefault();
+      finishInlineEdit();
+    }
   });
   addManualRunBtn?.addEventListener("click", startInlineEditNewRun);
   addProfileRunBtn?.addEventListener("click", () => {
