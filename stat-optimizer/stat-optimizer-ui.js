@@ -1513,7 +1513,7 @@
 
     const finalMin = runningSolverState.constraint_free_autoCurrentMax;
     if (finalMin < 0) {
-      setStatus("Constraint-Free Auto Solver could not find a feasible build from Min final 100 down to 0.", "error");
+      setStatus("Constraint-Free Auto Solver could not find a feasible build from minimum final stat 100 down to 0.", "error");
       setSolverProgressLines(
         "Constraint-Free Auto Solver complete",
         `Attempts: ${runningSolverState.constraint_free_autoAttempts}`,
@@ -1529,7 +1529,7 @@
     const internalBounds = buildConstraintFreeBounds(finalMin);
 
     const elapsed = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
-    const baseLine = `Constraint-Free Auto Solver: max final ${finalMin}, attempt ${runningSolverState.constraint_free_autoAttempts}, elapsed ${elapsed}s`;
+    const baseLine = `Constraint-Free Auto Solver: minimum final stat ${finalMin}, attempt ${runningSolverState.constraint_free_autoAttempts}, elapsed ${elapsed}s`;
 
     const params = { ...runningSolverState.paramsBase };
     if (runningSolverState.bestResult?.build?.startStats) {
@@ -1553,7 +1553,7 @@
         setSolverProgressLines(
           line1,
           `Feasible found. Total stats ${best.overall}, PTP ${best.ptp}, MTP ${best.mtp}`,
-          "Optimizing this max final until 3 no-improve iterations."
+          "Optimizing this minimum-final-stat target until 3 no-improve iterations."
         );
         setTimeout(runSajehnStep, 0);
         return;
@@ -1595,7 +1595,7 @@
 
     if (runningSolverState.noImproveStreak >= 3) {
       finalizeIterativeSolve(
-        `Constraint-Free Auto Solver optimized max final ${finalMin} in ${elapsed}s (stopped after 3 no-improve iterations).`,
+        `Constraint-Free Auto Solver optimized minimum final stat ${finalMin} in ${elapsed}s (stopped after 3 no-improve iterations).`,
         "ok"
       );
       return;
