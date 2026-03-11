@@ -908,6 +908,7 @@
     resultStatsHead.innerHTML = "";
     resultStatsBody.innerHTML = "";
     if (runHistory.length === 0) return;
+    const showLevel100Column = logic.clamp(logic.toInt(targetLevelInput?.value, 0), 0, 100) !== 100;
 
     const groupRow = document.createElement("tr");
     const statHead = document.createElement("th");
@@ -935,7 +936,7 @@
           </div>
         </div>
       `;
-      th.colSpan = 2;
+      th.colSpan = showLevel100Column ? 3 : 2;
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
       th.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       groupRow.appendChild(th);
@@ -957,6 +958,12 @@
       targetTh.textContent = `Target (L${targetLevel})`;
       targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(targetTh);
+      if (showLevel100Column) {
+        const level100Th = document.createElement("th");
+        level100Th.textContent = "L100";
+        level100Th.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+        subRow.appendChild(level100Th);
+      }
     });
     resultStatsHead.appendChild(subRow);
 
@@ -970,10 +977,13 @@
 
       runHistory.forEach((entry, index) => {
         const build = getDisplayBuildForRun(entry, index);
+        const level100Stats = showLevel100Column
+          ? buildFinalStatsAtLevel(build.level0Stats, 100)
+          : null;
         const editing = inlineEditState.active && inlineEditState.runIndex === index;
         const failed = entry.status === "failed_constraints";
         const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
-      const startCell = document.createElement("td");
+        const startCell = document.createElement("td");
         if (editing) {
           const draftValue = String(
             inlineEditState.draftRawValues?.[key]
@@ -991,6 +1001,12 @@
         targetCell.textContent = String(build.metrics.finalStats[key]);
         targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(targetCell);
+        if (showLevel100Column) {
+          const level100Cell = document.createElement("td");
+          level100Cell.textContent = String(level100Stats?.[key] ?? build.metrics.finalStats[key]);
+          level100Cell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+          row.appendChild(level100Cell);
+        }
       });
       resultStatsBody.appendChild(row);
     });
@@ -1006,7 +1022,7 @@
       const failed = entry.status === "failed_constraints";
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
       const totalCell = document.createElement("td");
-      totalCell.colSpan = 2;
+      totalCell.colSpan = showLevel100Column ? 3 : 2;
       if (editing) totalCell.dataset.inlineTotals = "true";
       totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       totalCell.innerHTML = `
@@ -1062,6 +1078,23 @@
       },
       level0Stats: draftLevel0Stats,
     };
+  }
+
+  function buildFinalStatsAtLevel(level0Stats, level) {
+    if (!level0Stats) return null;
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    const profession = professionSelect?.value || "";
+    if (!profession) return null;
+    const computed = profileLogic.computeStatsFromLevel0({
+      stats: data.stats,
+      level0Stats,
+      level: logic.clamp(logic.toInt(level, 0), 0, 100),
+      raceName,
+      profession,
+      baseGrowthRates: data.baseGrowthRates,
+      raceGrowthModifiers: data.raceGrowthModifiers,
+    });
+    return logic.computeFinalStatSummary(computed);
   }
 
   function getDisplayBuildForRun(entry, index) {
