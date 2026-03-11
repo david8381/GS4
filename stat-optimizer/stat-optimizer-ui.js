@@ -303,7 +303,7 @@
 
   function getAlsoShowLevels() {
     const raw = String(alsoShowLevelInput?.value || "").trim();
-    if (!raw) return [100];
+    if (!raw) return [];
     const levels = raw
       .split(",")
       .map((part) => part.trim())

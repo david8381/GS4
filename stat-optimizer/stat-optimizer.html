@@ -48,10 +48,12 @@
               <label for="targetLevel">Target level</label>
               <div class="input-row">
                 <input id="targetLevel" type="number" min="0" max="100" step="1" value="100" />
-                <span class="inline-helper-label">Also show</span>
-                <input id="alsoShowLevel" type="text" inputmode="numeric" value="100" />
+                <div class="optimizer-also-show-group">
+                  <label class="inline-helper-label" for="alsoShowLevel">Also show</label>
+                  <input id="alsoShowLevel" type="text" inputmode="numeric" value="100" />
+                  <div class="helper">Accepts comma-separated list (e.g. 20,100)</div>
+                </div>
               </div>
-              <div class="helper">Accepts comma-separated list.</div>
             </div>
             <div class="input-group compact-field">
               <label for="tpBiasSlider">TP Objective Bias</label>
@@ -202,7 +204,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.2.30"></script>
-    <script src="../site.js?v=0.2.30"></script>
+    <script src="../shared.js?v=0.2.31"></script>
+    <script src="../site.js?v=0.2.31"></script>
   </body>
 </html>

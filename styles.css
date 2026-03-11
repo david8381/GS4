@@ -1091,24 +1091,35 @@ body[data-page="stat-optimizer"] .input-row select {
 
 body[data-page="stat-optimizer"] .optimizer-level-row .input-row {
   display: grid;
-  grid-template-columns: 56px max-content minmax(180px, 1fr);
+  grid-template-columns: 46px minmax(220px, 1fr);
   gap: 8px;
-  align-items: center;
+  align-items: start;
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
-  width: 56px;
+  width: 46px;
 }
 
-body[data-page="stat-optimizer"] .optimizer-level-row #alsoShowLevel {
-  min-width: 180px;
+body[data-page="stat-optimizer"] .optimizer-also-show-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  min-width: 220px;
+}
+
+body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
   width: 100%;
 }
 
 body[data-page="stat-optimizer"] .inline-helper-label {
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.88rem;
+  color: inherit;
   white-space: nowrap;
+  margin: 0;
+}
+
+body[data-page="stat-optimizer"] .optimizer-also-show-group .helper {
+  text-align: center;
 }
 
 body[data-page="stat-optimizer"] .input-row input[type="range"] {
