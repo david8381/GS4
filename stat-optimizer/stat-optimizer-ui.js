@@ -52,6 +52,7 @@
   const resultTotals = document.getElementById("resultTotals");
   const resultEditStatus = document.getElementById("resultEditStatus");
   const addManualRunBtn = document.getElementById("addManualRun");
+  const addProfileRunBtn = document.getElementById("addProfileRun");
   const runHistory = [];
   const inlineEditState = {
     active: false,
@@ -205,6 +206,9 @@
     const targetLevel = getTargetLevelValue();
     if (finalConstraintHelper) {
       finalConstraintHelper.textContent = `Minimum final stats required at target level (L${targetLevel}):`;
+    }
+    if (addProfileRunBtn) {
+      addProfileRunBtn.textContent = `Add Profile @ L${targetLevel}`;
     }
   }
 
@@ -607,17 +611,20 @@
     const selected = profileSelect?.value || "";
     if (!selected) {
       upsertProfileBaselineRun(null);
+      if (addProfileRunBtn) addProfileRunBtn.disabled = true;
       return;
     }
     const profiles = loadProfiles();
     const profile = profiles.find((entry) => entry.id === selected);
     if (!profile) {
       upsertProfileBaselineRun(null);
+      if (addProfileRunBtn) addProfileRunBtn.disabled = true;
       return;
     }
 
     applyProfile(profile);
     upsertProfileBaselineRun(profile);
+    if (addProfileRunBtn) addProfileRunBtn.disabled = false;
     renderStartConstraintInputs();
     updateFinalFromCurrentMaxRow();
     updateStartConstraintWarning();
@@ -690,7 +697,7 @@
     }
 
     const baselineEntry = {
-      label: `${profile.name || "Profile"} (INFO START)`,
+      label: `${profile.name || "Profile"} @ L${getTargetLevelValue()}`,
       build: preview,
       status: "profile",
       sourceKind: "profile_baseline",
@@ -800,6 +807,7 @@
 
     runHistory.forEach((entry, index) => {
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
+      const failed = entry.status === "failed_constraints";
       const build = getDisplayBuildForRun(entry, index);
       const targetLevel = logic.toInt(build?.metrics?.level, 0);
       const th = document.createElement("th");
@@ -819,24 +827,25 @@
       `;
       th.colSpan = 2;
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
-      th.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+      th.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       groupRow.appendChild(th);
     });
     resultStatsHead.appendChild(groupRow);
 
     const subRow = document.createElement("tr");
     runHistory.forEach((entry, index) => {
+      const failed = entry.status === "failed_constraints";
       const startTh = document.createElement("th");
       startTh.textContent = "Start";
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
-      startTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+      startTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(startTh);
       const targetTh = document.createElement("th");
       const build = getDisplayBuildForRun(entry, index);
       const targetLevel = logic.toInt(build?.metrics?.level, 0);
       targetTh.textContent = `Target (L${targetLevel})`;
-      targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+      targetTh.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       subRow.appendChild(targetTh);
     });
     resultStatsHead.appendChild(subRow);
@@ -852,6 +861,7 @@
       runHistory.forEach((entry, index) => {
         const build = getDisplayBuildForRun(entry, index);
         const editing = inlineEditState.active && inlineEditState.runIndex === index;
+        const failed = entry.status === "failed_constraints";
         const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
         const startCell = document.createElement("td");
         if (editing) {
@@ -860,11 +870,11 @@
         } else {
           startCell.textContent = String(build.level0Stats[key]);
         }
-        startCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+        startCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(startCell);
         const targetCell = document.createElement("td");
         targetCell.textContent = String(build.metrics.finalStats[key]);
-        targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+        targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(targetCell);
       });
       resultStatsBody.appendChild(row);
@@ -880,8 +890,9 @@
       const totalCell = document.createElement("td");
       totalCell.colSpan = 2;
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
+      const failed = entry.status === "failed_constraints";
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
-      totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
+      totalCell.className = `optimizer-run-band optimizer-run-band-${index % 4} optimizer-totals-cell${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
       totalCell.innerHTML = `
         <div>PTP ${build.metrics.ptp} / MTP ${build.metrics.mtp}</div>
         <div class="optimizer-totals-sub">Start PTP ${build.metrics.startPtp} / Start MTP ${build.metrics.startMtp}</div>
@@ -1047,15 +1058,22 @@
     const build = result.build;
     const statusText = result.provenOptimal
       ? "Optimal (proven)."
-      : (result.status === "best_found" ? "Best found (not guaranteed optimal)." : "Best found so far (not proven optimal).");
+      : (result.status === "failed_constraints"
+        ? "Unable to Find Solution, try more time or relax constraints."
+        : (result.status === "best_found" ? "Best found (not guaranteed optimal)." : "Best found so far (not proven optimal)."));
     const primeSummaryHtml = ((build.metrics.primeKeys || [])
       .map((key) => (data.stats || []).find((stat) => stat.key === key))
       .filter(Boolean)
       .map((stat) => renderStatAbbr(stat.abbr, stat.key))
       .join(" ")) || "None";
-    resultSummary.innerHTML = `${statusText} Latest run: Run ${runHistory.length}. Prime stats: ${primeSummaryHtml}.`;
+    const runDescriptor = result.status === "failed_constraints"
+      ? `Best attempt: Run ${runHistory.length}`
+      : `Latest run: Run ${runHistory.length}`;
+    resultSummary.innerHTML = `${statusText} ${runDescriptor}. Prime stats: ${primeSummaryHtml}.`;
 
-    resultTotals.textContent = `Run ${runHistory.length} added. Start values are level-0 stats (prime bonuses already included).`;
+    resultTotals.textContent = result.status === "failed_constraints"
+      ? `Best attempt added as Run ${runHistory.length}. Start values are level-0 stats (prime bonuses already included).`
+      : `Run ${runHistory.length} added. Start values are level-0 stats (prime bonuses already included).`;
     updateCurrentLevelTpDelta();
     if (!inlineEditState.active) setInlineEditStatus("");
   }
@@ -1244,13 +1262,16 @@
     const result = logic.solve(params);
     if (runningSolverState.mode === "exact" && !result?.build && result?.status === "infeasible") {
       const elapsedNow = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
-      const reason = result?.message || "No feasible build satisfies current constraints.";
+      const reason = "Unable to Find Solution, try more time or relax constraints.";
       setSolverProgressLines(
         `Solve w/ Constraints iteration ${runningSolverState.iteration}, elapsed ${elapsedNow}s`,
         "Total stats --, PTP --, MTP --",
         reason
       );
-      finalizeIterativeSolve(`No feasible build for current constraints (${elapsedNow}s). ${reason}`, "error");
+      if (runningSolverState.bestResult?.build) {
+        runningSolverState.bestResult.status = "failed_constraints";
+      }
+      finalizeIterativeSolve(`${reason} (${elapsedNow}s)`, "error");
       return;
     }
     const improved = Boolean(
@@ -1670,6 +1691,11 @@
     applyInlineEditInput(key, input.value);
   });
   addManualRunBtn?.addEventListener("click", startInlineEditNewRun);
+  addProfileRunBtn?.addEventListener("click", () => {
+    const profile = getSelectedProfile();
+    if (!profile) return;
+    upsertProfileBaselineRun(profile);
+  });
   updateFinalFromCurrentMaxRow();
   updateStartConstraintWarning();
   initializeProfileSelect();

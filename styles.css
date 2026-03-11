@@ -1388,6 +1388,15 @@ body[data-page="stat-optimizer"] .table-panel td:first-child {
   background: #f6f5ee;
 }
 
+body[data-page="stat-optimizer"] .optimizer-run-failed {
+  background: #fff1f2 !important;
+  border-color: #d92d20 !important;
+}
+
+body[data-page="stat-optimizer"] .optimizer-run-failed .optimizer-totals-sub {
+  color: #b42318;
+}
+
 .optimizer-totals-row td {
   font-weight: 700;
   border-top: 2px solid #d5ccbe;
