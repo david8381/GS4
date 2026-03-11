@@ -872,7 +872,7 @@
         const editing = inlineEditState.active && inlineEditState.runIndex === index;
         const failed = entry.status === "failed_constraints";
         const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
-        const startCell = document.createElement("td");
+      const startCell = document.createElement("td");
         if (editing) {
           const draftValue = String(
             inlineEditState.draftRawValues?.[key]
@@ -886,6 +886,7 @@
         startCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(startCell);
         const targetCell = document.createElement("td");
+        if (editing) targetCell.dataset.inlineTargetStat = key;
         targetCell.textContent = String(build.metrics.finalStats[key]);
         targetCell.className = `optimizer-run-band optimizer-run-band-${index % 4}${failed ? " optimizer-run-failed" : ""}${editing ? " optimizer-run-editing" : ""}${dimmed ? " optimizer-run-dim" : ""}`;
         row.appendChild(targetCell);
@@ -902,6 +903,7 @@
       const build = getDisplayBuildForRun(entry, index);
       const totalCell = document.createElement("td");
       totalCell.colSpan = 2;
+      if (editing) totalCell.dataset.inlineTotals = "true";
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
       const failed = entry.status === "failed_constraints";
       const dimmed = inlineEditState.active && inlineEditState.runIndex !== index;
@@ -1028,10 +1030,10 @@
     if (!inlineEditState.active || inlineEditState.runIndex < 0) return;
     if (!Object.prototype.hasOwnProperty.call(inlineEditState.draftRawValues || {}, statKey)) return;
     inlineEditState.draftRawValues[statKey] = String(rawValue ?? "");
-    setInlineEditStatus("Draft updated. Click Done to apply.", "");
+    refreshInlineEditPreview();
   }
 
-  function applyInlineDraftToRun() {
+  function refreshInlineEditPreview() {
     if (!inlineEditState.active || inlineEditState.runIndex < 0) return false;
     const rawValues = inlineEditState.draftRawValues || {};
     const nextLevel0Stats = {};
@@ -1049,6 +1051,7 @@
       }
       nextLevel0Stats[key] = Math.trunc(parsed);
     }
+
     const params = buildSolveParams();
     const startStats = toBaseStartFromPrimeIncluded(nextLevel0Stats);
     const evaluated = logic.evaluateBuild({
@@ -1056,19 +1059,45 @@
       startStats,
     });
 
-    if (evaluated.ok) {
-      inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
-      inlineEditState.draftRawValues = Object.fromEntries(
-        Object.entries(nextLevel0Stats).map(([key, value]) => [key, String(value)])
-      );
-      runHistory[inlineEditState.runIndex].build = evaluated;
-      setInlineEditStatus("Inline edit is valid.", "ok");
-      return true;
-    } else {
+    if (!evaluated.ok) {
       const reasons = evaluated.validation?.errors?.join(" ") || evaluated.reason || "Inline edit is invalid.";
       setInlineEditStatus(reasons, "error");
       return false;
     }
+
+    inlineEditState.draftLevel0Stats = { ...nextLevel0Stats };
+    const editingRowTargets = resultStatsBody?.querySelectorAll("td[data-inline-target-stat]") || [];
+    editingRowTargets.forEach((cell) => {
+      const key = cell.dataset.inlineTargetStat;
+      if (!key) return;
+      cell.textContent = String(evaluated.metrics.finalStats[key]);
+    });
+    const totalsCell = resultStatsBody?.querySelector("td[data-inline-totals='true']");
+    if (totalsCell) {
+      totalsCell.innerHTML = `
+        <div>PTP ${evaluated.metrics.ptp} / MTP ${evaluated.metrics.mtp}</div>
+        <div class="optimizer-totals-sub">Start PTP ${evaluated.metrics.startPtp} / Start MTP ${evaluated.metrics.startMtp}</div>
+        <div class="optimizer-totals-sub">Total Stats ${evaluated.metrics.overall}</div>
+      `;
+    }
+    setInlineEditStatus("Inline edit is valid.", "ok");
+    return true;
+  }
+
+  function applyInlineDraftToRun() {
+    if (!refreshInlineEditPreview()) return false;
+    const nextLevel0Stats = inlineEditState.draftLevel0Stats;
+    inlineEditState.draftRawValues = Object.fromEntries(
+      Object.entries(nextLevel0Stats).map(([key, value]) => [key, String(value)])
+    );
+    const params = buildSolveParams();
+    const startStats = toBaseStartFromPrimeIncluded(nextLevel0Stats);
+    const evaluated = logic.evaluateBuild({
+      ...params,
+      startStats,
+    });
+    runHistory[inlineEditState.runIndex].build = evaluated;
+    return true;
   }
 
   function finishInlineEdit() {
