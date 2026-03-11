@@ -54,6 +54,8 @@
   const addManualRunBtn = document.getElementById("addManualRun");
   const addProfileRunBtn = document.getElementById("addProfileRun");
   const runHistory = [];
+  let floatingTooltipEl = null;
+  let floatingTooltipTarget = null;
   const inlineEditState = {
     active: false,
     runIndex: -1,
@@ -120,6 +122,103 @@
     const tooltip = statKey ? getStatTooltip(statKey) : "";
     const tooltipAttr = tooltip ? ` data-tooltip="${tooltip.replace(/"/g, "&quot;")}"` : "";
     return `<span class="optimizer-stat-abbr"${tooltipAttr}>${abbr}</span>`;
+  }
+
+  function getFloatingTooltip() {
+    if (floatingTooltipEl) return floatingTooltipEl;
+    const tooltip = document.createElement("div");
+    tooltip.className = "optimizer-floating-tooltip";
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+    floatingTooltipEl = tooltip;
+    return tooltip;
+  }
+
+  function positionFloatingTooltip(target, pointerEvent = null) {
+    if (!target) return;
+    const tooltip = getFloatingTooltip();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const margin = 12;
+    let left;
+    let top;
+
+    if (pointerEvent && Number.isFinite(pointerEvent.clientX) && Number.isFinite(pointerEvent.clientY)) {
+      left = pointerEvent.clientX + 14;
+      top = pointerEvent.clientY - tooltipRect.height - 14;
+    } else {
+      left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+      top = targetRect.top - tooltipRect.height - 12;
+    }
+
+    const maxLeft = window.innerWidth - tooltipRect.width - margin;
+    left = Math.min(Math.max(margin, left), Math.max(margin, maxLeft));
+
+    if (top < margin) {
+      top = targetRect.bottom + 12;
+    }
+    const maxTop = window.innerHeight - tooltipRect.height - margin;
+    top = Math.min(Math.max(margin, top), Math.max(margin, maxTop));
+
+    tooltip.style.left = `${left + window.scrollX}px`;
+    tooltip.style.top = `${top + window.scrollY}px`;
+  }
+
+  function showFloatingTooltip(target, pointerEvent = null) {
+    const text = target?.dataset?.tooltip || "";
+    if (!text) return;
+    const tooltip = getFloatingTooltip();
+    floatingTooltipTarget = target;
+    tooltip.textContent = text;
+    tooltip.hidden = false;
+    positionFloatingTooltip(target, pointerEvent);
+  }
+
+  function hideFloatingTooltip() {
+    floatingTooltipTarget = null;
+    if (!floatingTooltipEl) return;
+    floatingTooltipEl.hidden = true;
+  }
+
+  function bindFloatingTooltips() {
+    document.addEventListener("mouseover", (event) => {
+      const target = event.target.closest(".optimizer-stat-abbr[data-tooltip]");
+      if (!target) return;
+      showFloatingTooltip(target, event);
+    });
+
+    document.addEventListener("mousemove", (event) => {
+      if (!floatingTooltipTarget) return;
+      if (!event.target.closest(".optimizer-stat-abbr[data-tooltip]")) return;
+      positionFloatingTooltip(floatingTooltipTarget, event);
+    });
+
+    document.addEventListener("mouseout", (event) => {
+      if (!floatingTooltipTarget) return;
+      const fromTarget = event.target.closest(".optimizer-stat-abbr[data-tooltip]");
+      if (!fromTarget || fromTarget !== floatingTooltipTarget) return;
+      if (event.relatedTarget?.closest?.(".optimizer-stat-abbr[data-tooltip]") === floatingTooltipTarget) return;
+      hideFloatingTooltip();
+    });
+
+    document.addEventListener("focusin", (event) => {
+      const target = event.target.closest(".optimizer-stat-abbr[data-tooltip]");
+      if (!target) return;
+      showFloatingTooltip(target);
+    });
+
+    document.addEventListener("focusout", (event) => {
+      if (!event.target.closest(".optimizer-stat-abbr[data-tooltip]")) return;
+      hideFloatingTooltip();
+    });
+
+    window.addEventListener("scroll", () => {
+      if (floatingTooltipTarget) positionFloatingTooltip(floatingTooltipTarget);
+    }, { passive: true });
+
+    window.addEventListener("resize", () => {
+      if (floatingTooltipTarget) positionFloatingTooltip(floatingTooltipTarget);
+    });
   }
 
   function renderPrimeSummary() {
@@ -1814,4 +1913,5 @@
   updateCurrentLevelTpDelta();
   updateSajehnAvailability();
   updateResumeAvailability();
+  bindFloatingTooltips();
 })();
