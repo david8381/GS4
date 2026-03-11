@@ -1302,21 +1302,27 @@
 
   function finalizeIterativeSolve(statusText, tone = "ok") {
     const best = runningSolverState.bestResult;
-    if (best?.build) {
-      best._label = `Run ${runHistory.length + 1}`;
-      renderResult(best);
-      const canResume = best.status === "timeout" || (best.status === "best_found" && !best.provenOptimal);
-      resumeContext = {
-        signature: createSolverSignature(runningSolverState.paramsBase),
-        canResume,
-        mode: runningSolverState.paramsBase?.mode || "fast",
-        bestStartStats: best?.build?.startStats ? { ...best.build.startStats } : null,
-        bestBuild: best?.build?.ok ? best.build : null,
-      };
-    }
-    setStatus(statusText, tone);
-    updateResumeAvailability();
     setSolverControlsForRun(false);
+    try {
+      if (best?.build) {
+        best._label = `Run ${runHistory.length + 1}`;
+        renderResult(best);
+        const canResume = best.status === "timeout" || (best.status === "best_found" && !best.provenOptimal);
+        resumeContext = {
+          signature: createSolverSignature(runningSolverState.paramsBase),
+          canResume,
+          mode: runningSolverState.paramsBase?.mode || "fast",
+          bestStartStats: best?.build?.startStats ? { ...best.build.startStats } : null,
+          bestBuild: best?.build?.ok ? best.build : null,
+        };
+      }
+      setStatus(statusText, tone);
+      updateResumeAvailability();
+    } catch (error) {
+      console.error(error);
+      setStatus(`Solver finished, but UI update failed: ${error?.message || error}`, "error");
+      updateResumeAvailability();
+    }
   }
 
   function runIterativeStep() {
