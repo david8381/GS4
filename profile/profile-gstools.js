@@ -59,13 +59,14 @@
       dispatchIfText(enhanciveTotalsImport, blocks.enhanciveTotals, true);
       dispatchIfText(enhanciveDetailsImport, blocks.enhanciveTotalsDetails, true);
 
-      if (!profileName.value.trim() && payloadCharacterName) {
+      if (payloadCharacterName) {
         profileName.value = payloadCharacterName;
       }
 
       let saveError = null;
+      let savedProfile = null;
       try {
-        handleProfileSave({ preserveUnsyncedFromExisting: true });
+        savedProfile = handleProfileSave({ preserveUnsyncedFromExisting: true });
       } catch (error) {
         saveError = error;
         console.error("gstools hash import auto-save failed", error);
@@ -74,6 +75,12 @@
       if (saveError) {
         const stackLine = String(saveError.stack || "").split("\n")[1]?.trim() || "";
         importStatus.textContent = `Imported quick-start blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}${stackLine ? ` (${stackLine})` : ""}.`;
+        importStatus.style.color = "#b42318";
+        return;
+      }
+
+      if (!savedProfile) {
+        importStatus.textContent = `Imported quick-start blocks from gstools payload, but could not save profile: enter a profile name.`;
         importStatus.style.color = "#b42318";
         return;
       }

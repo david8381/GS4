@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spell Sets + Combat Modifiers</title>
+    <title>Spell Effect Calculator</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,117 +12,250 @@
       rel="stylesheet"
     />
   </head>
-  <body data-page="spells" data-page-scripts="data/spells.js,spells.js">
+  <body data-page="spells" data-page-scripts="data/gs4-data.js,data/spells.js,data/societies/col.js,data/societies/voln.js,data/societies/sunfist.js,spells-logic.js,spells-ui.js,spells.js">
     <div class="page">
       <div data-header></div>
 
       <main class="calculator">
         <section class="calc-intro">
           <p class="eyebrow">Spell Planning</p>
-          <h1>Spell Sets + Combat Modifiers</h1>
+          <h1>Spell Effect Calculator</h1>
           <p>
-            Build named spell sets for a character profile. Select a set to preview spell-driven changes to DS, TD,
-            CS, AS, Bolt DS, and Bolt AS.
+            Select active spells as outside or self-cast and see the cumulative DS, AS, TD, and CS changes. When a
+            selected self-cast spell has modeled scaling, the factor panel shows the profile-based value and a what-if
+            override.
           </p>
         </section>
 
-        <section class="calc-panel">
-          <div class="input-block">
-            <div class="header-bridge" aria-hidden="true">
-              <select id="profileSelectCalc">
-                <option value="">Select from Profile</option>
-              </select>
-              <button id="profileLoadCalc" type="button">Load</button>
-            </div>
+        <details class="collapsible-section" open id="spellCharacterProfileSection">
+          <summary>Character Profile</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <div class="header-bridge" aria-hidden="true">
+                  <select id="profileSelectCalc">
+                    <option value="">Select from Profile</option>
+                  </select>
+                  <button id="profileLoadCalc" type="button">Load</button>
+                </div>
 
-            <div class="input-group">
-              <label for="profileSelectCalc">Character Profile</label>
-              <div class="input-row">
-                <button class="btn" id="profileReloadCalc" type="button">Reload from Profile</button>
+                <div class="input-group compact-field">
+                  <label for="profileSelectCalc">Character Profile</label>
+                  <div class="input-row">
+                    <button class="btn" id="profileReloadCalc" type="button">Reload from Profile</button>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="spellProfileProfession">Profession</label>
+                  <div class="input-row">
+                    <select id="spellProfileProfession">
+                      <option value="">Select Profession</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="spellProfileLevel">Level</label>
+                  <div class="input-row">
+                    <input id="spellProfileLevel" type="number" min="0" max="100" step="1" value="0" />
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="spellProfileSociety">Society</label>
+                  <div class="input-row">
+                    <select id="spellProfileSociety">
+                      <option value="">None</option>
+                      <option value="col">Council of Light</option>
+                      <option value="voln">Order of Voln</option>
+                      <option value="sunfist">Guardians of Sunfist</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="spellProfileSocietyRank">Society Rank</label>
+                  <div class="input-row">
+                    <input id="spellProfileSocietyRank" type="number" min="0" max="26" step="1" value="0" />
+                  </div>
+                </div>
+
+                <div class="input-group inline-actions">
+                  <button class="btn ghost" id="spellSelectionClear" type="button">Clear All Selections</button>
+                </div>
+                <div class="helper" id="spellProfileStatus">Select a profile to use profile-based spell rank factors.</div>
               </div>
-            </div>
 
-            <div class="input-group">
-              <label for="spellSetSelect">Spell Set</label>
-              <div class="input-row">
-                <select id="spellSetSelect">
-                  <option value="">None</option>
-                </select>
+              <div class="summary-block">
+                <div class="summary-card">
+                  <div class="summary-title">Active Spells</div>
+                  <div class="summary-value" id="activeSpellCount">0</div>
+                  <div class="summary-sub">Outside + self-cast selections</div>
+                </div>
+                <div class="summary-card">
+                  <div class="summary-title">Self-Cast</div>
+                  <div class="summary-value" id="selfCastCount">0</div>
+                  <div class="summary-sub">Selections using self-cast scaling when modeled</div>
+                </div>
+                <div class="summary-card">
+                  <div class="summary-title">Modeled Scaling</div>
+                  <div class="summary-value" id="scalingCoverage">0</div>
+                  <div class="summary-sub">Self-cast spells with explicit factor rules</div>
+                </div>
               </div>
-            </div>
-
-            <div class="input-group">
-              <label for="spellSetName">Set Name</label>
-              <div class="input-row">
-                <input id="spellSetName" type="text" placeholder="e.g. Self Cast Only" />
-              </div>
-            </div>
-
-            <div class="input-group inline-actions">
-              <button class="btn" id="spellSetCreate" type="button">Create Set</button>
-              <button class="btn" id="spellSetSave" type="button">Update Set</button>
-              <button class="btn ghost" id="spellSetDelete" type="button">Delete Set</button>
-            </div>
-            <div class="helper" id="spellSetStatus">Select a profile to manage spell sets.</div>
+            </section>
           </div>
+        </details>
 
-          <div class="summary-block">
-            <div class="summary-card">
-              <div class="summary-title">Selected Set</div>
-              <div class="summary-value" id="selectedSpellSetName">None</div>
-              <div class="summary-sub" id="selectedSpellSetCount">0 spells</div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-title">Known Modifier Coverage</div>
-              <div class="summary-value" id="knownCoverageValue">0 / 0</div>
-              <div class="summary-sub" id="knownCoverageSub">Known / Total spell effects</div>
-            </div>
+        <details class="collapsible-section" open id="spellHelperSection">
+          <summary>Quick Select</summary>
+          <div class="collapsible-body">
+            <section class="table-panel" id="spellHelperPanel">
+              <div class="helper">Use these helpers to apply common spell-selection presets without changing the underlying spell data.</div>
+              <div class="spell-helper-actions" id="spellHelperActions">
+                <button class="btn ghost" type="button" data-helper-action="known_spells">Spells Character Knows</button>
+                <button class="btn ghost" type="button" data-helper-action="profession_circle">Profession Circle</button>
+                <button class="btn ghost" type="button" data-helper-action="profession_knows">Profession Knows</button>
+                <button class="btn ghost" type="button" data-helper-action="add_society">Add Society</button>
+                <button class="btn ghost" type="button" data-helper-action="invoker">Invoker</button>
+                <button class="btn ghost" type="button" data-helper-action="advanced_spellup_pills">Advanced Spellup Pills</button>
+                <button class="btn ghost" type="button" data-helper-action="dreavening">Dreavening</button>
+                <button class="btn ghost" type="button" data-helper-action="clear">Clear Helper Selections</button>
+              </div>
+              <div class="helper" id="spellHelperStatus">No helper preset applied.</div>
+            </section>
           </div>
-        </section>
+        </details>
 
-        <section class="table-panel">
-          <h2>Add Spell To Set</h2>
+        <details class="collapsible-section" id="profileInputSection">
+          <summary>Profile Inputs</summary>
+          <div class="collapsible-body">
+            <section class="table-panel" id="profileInputPanel">
+              <div class="helper" id="profileInputStatus">Profile-based spell ranks and lores load here when a profile is selected. You can override them in What-If.</div>
+              <div class="spell-input-groups">
+            <section class="spell-input-group-card">
+              <h3>Core</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                  </tr>
+                </thead>
+                <tbody id="profileInputCoreTable"></tbody>
+              </table>
+            </section>
+            <section class="spell-input-group-card">
+              <h3>Spell Ranks</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                  </tr>
+                </thead>
+                <tbody id="profileInputSpellRanksTable"></tbody>
+              </table>
+            </section>
+            <section class="spell-input-group-card">
+              <h3>Lores</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Factor</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                  </tr>
+                </thead>
+                <tbody id="profileInputLoreTable"></tbody>
+              </table>
+            </section>
+          </div>
+            </section>
+          </div>
+        </details>
+
+        <details class="collapsible-section" open id="spellSelectionSection">
+          <summary>Spell Selection</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <div id="spellSelectionTable"></div>
+            </section>
+          </div>
+        </details>
+
+        <details class="collapsible-section" open id="societySelectionSection">
+          <summary>Society Selection</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
           <div class="input-group">
-            <div class="input-row">
-              <select id="spellSelect"></select>
-              <label class="checkbox-row">
-                <input id="spellSelfCast" type="checkbox" />
-                Self-cast
-              </label>
-              <button class="btn" id="spellAdd" type="button">Add Spell</button>
+            <label>Active Society</label>
+            <div class="spell-mode-toggle" id="societySelectionToggle" role="group" aria-label="Active society">
+              <button type="button" class="btn tiny ghost is-active" data-society-key="">None</button>
+              <button type="button" class="btn tiny ghost" data-society-key="col">CoL</button>
+              <button type="button" class="btn tiny ghost" data-society-key="voln">Voln</button>
+              <button type="button" class="btn tiny ghost" data-society-key="sunfist">GoS</button>
             </div>
           </div>
-        </section>
+          <div class="spell-society-meta" id="societyMetaPanel" hidden>
+            <div class="input-group compact-field">
+              <label for="societyRankCurrent">Current Rank</label>
+              <div class="input-row">
+                <input id="societyRankCurrent" type="number" min="0" max="26" step="1" value="0" />
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="societyRankWhatIf">What-If Rank</label>
+              <div class="input-row">
+                <input id="societyRankWhatIf" type="number" min="0" max="26" step="1" value="0" />
+              </div>
+            </div>
+          </div>
+          <div class="helper" id="societySelectionStatus">Select a society to include combat-relevant society abilities.</div>
+          <div id="societySelectionTable"></div>
+            </section>
+          </div>
+        </details>
 
-        <section class="table-panel">
-          <h2>Set Spells</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Spell</th>
-                <th>Circle</th>
-                <th>Self-Cast</th>
-                <th>Effect</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="spellSetTable"></tbody>
-          </table>
-        </section>
+        <details class="collapsible-section" open id="spellTotalsSection">
+          <summary>Cumulative Combat Modifiers</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                  </tr>
+                </thead>
+                <tbody id="spellEffectTable"></tbody>
+              </table>
+              <div class="helper" id="spellEffectStatus">Current and What-If totals currently reflect fixed spell modifiers only.</div>
+            </section>
+          </div>
+        </details>
 
-        <section class="table-panel">
-          <h2>Spell-Driven Combat Modifiers</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Delta From Spell Set</th>
-              </tr>
-            </thead>
-            <tbody id="spellEffectTable"></tbody>
-          </table>
-          <div class="helper" id="spellEffectStatus">Preview currently includes known fixed or formula-derived buffs from the selected set.</div>
-        </section>
+        <details class="collapsible-section">
+          <summary>Other Modifiers</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                  </tr>
+                </thead>
+                <tbody id="spellOtherEffectTable"></tbody>
+              </table>
+            </section>
+          </div>
+        </details>
 
         <details class="collapsible-section">
           <summary>References</summary>
@@ -130,7 +263,11 @@
             <section class="notes">
               <ul>
                 <li><a href="https://gswiki.play.net/Buff_spells" target="_blank" rel="noopener noreferrer">GSWiki: Buff Spells</a></li>
-                <li><a href="https://gswiki.play.net/Defensive_strength" target="_blank" rel="noopener noreferrer">GSWiki: Defensive Strength</a></li>
+                <li><a href="https://gswiki.play.net/Council_of_Light" target="_blank" rel="noopener noreferrer">GSWiki: Council of Light</a></li>
+                <li><a href="https://gswiki.play.net/Order_of_Voln" target="_blank" rel="noopener noreferrer">GSWiki: Order of Voln</a></li>
+                <li><a href="https://gswiki.play.net/Favor" target="_blank" rel="noopener noreferrer">GSWiki: Favor</a></li>
+                <li><a href="https://gswiki.play.net/Guardians_of_Sunfist" target="_blank" rel="noopener noreferrer">GSWiki: Guardians of Sunfist</a></li>
+                <li><a href="https://gswiki.play.net/Target_Defense" target="_blank" rel="noopener noreferrer">GSWiki: Target Defense</a></li>
               </ul>
             </section>
           </div>
@@ -140,7 +277,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.1"></script>
-    <script src="site.js?v=0.2.1"></script>
+    <script src="shared.js?v=0.2.2"></script>
+    <script src="site.js?v=0.2.2"></script>
   </body>
 </html>

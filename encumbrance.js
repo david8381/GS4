@@ -596,6 +596,17 @@ updateResults();
 let profiles = sharedStorage.loadProfiles();
 refreshProfileSelect(profiles);
 
+const initiallySelectedProfileId = localStorage.getItem(sharedStorage.SELECTED_PROFILE_KEY) || "";
+if (initiallySelectedProfileId) {
+  const initialProfile = sharedStorage.findProfile(profiles, initiallySelectedProfileId);
+  if (initialProfile) {
+    profileSelect.value = initiallySelectedProfileId;
+    applyProfile(initialProfile, { syncFuture: true });
+  } else {
+    localStorage.removeItem(sharedStorage.SELECTED_PROFILE_KEY);
+  }
+}
+
 [raceSelect, strInput, conInput, strDeltaInput, conDeltaInput, gearWeightInput, silversInput, armorAsgSelect,
   armorAsgFutureSelect, gearDeltaInput, silversDeltaInput, armorWeightInput, armorWeightDeltaInput,
   useCustomArmorBaseInput, armorBaseWeightInput, armorBaseWeightDeltaInput, accessoryWeightInput, accessoryWeightDeltaInput,
