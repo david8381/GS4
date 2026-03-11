@@ -756,6 +756,7 @@
     };
 
     let best = null;
+    let bestAttempt = null;
     const deterministicBounded = findFeasibleStartInBounds(localConstraints, minimums, profession, data);
     if (deterministicBounded) {
       const deterministic = hillClimb({
@@ -765,6 +766,9 @@
         maxIterations: shortBudget ? effectiveIterations : Math.max(effectiveIterations, 900),
         deadlineMs: startTime + limitMs,
       });
+      if (deterministic.ok) {
+        if (!bestAttempt || compareVectors(deterministic.vector, bestAttempt.vector) > 0) bestAttempt = deterministic;
+      }
       if (deterministic.ok && (!hasAnyMinimums(minimums) || deterministic.meetsMinimums)) {
         best = deterministic;
       }
@@ -786,6 +790,9 @@
         maxIterations: shortBudget ? effectiveIterations : Math.max(effectiveIterations, 900),
         deadlineMs: startTime + limitMs,
       });
+      if (bounded.ok) {
+        if (!bestAttempt || compareVectors(bounded.vector, bestAttempt.vector) > 0) bestAttempt = bounded;
+      }
       if (bounded.ok && (!hasAnyMinimums(minimums) || bounded.meetsMinimums)) {
         best = bounded;
       }
@@ -805,6 +812,9 @@
         maxIterations: effectiveIterations,
         deadlineMs: startTime + limitMs,
       });
+      if (seeded.ok) {
+        if (!bestAttempt || compareVectors(seeded.vector, bestAttempt.vector) > 0) bestAttempt = seeded;
+      }
       if (seeded.ok && (!hasAnyMinimums(minimums) || seeded.meetsMinimums)) {
         best = seeded;
       }
@@ -825,6 +835,7 @@
         deadlineMs: startTime + limitMs,
       });
       if (!local.ok) continue;
+      if (!bestAttempt || compareVectors(local.vector, bestAttempt.vector) > 0) bestAttempt = local;
       if (hasAnyMinimums(minimums) && !local.meetsMinimums) continue;
       if (!best || compareVectors(local.vector, best.vector) > 0) best = local;
       if (local.timedOut) {
@@ -843,6 +854,7 @@
       return {
         status: timedOut ? "timeout" : "infeasible",
         provenOptimal: false,
+        build: bestAttempt || null,
         message: timedOut
           ? "Fast solver timed out before finding a feasible build."
           : diagnosis.feasible
@@ -1029,6 +1041,7 @@
     const estimatedLeaves = estimatedLeavesRaw > 2000000000 ? null : estimatedLeavesRaw;
 
     let best = null;
+    let bestAttempt = null;
     let nodes = 0;
     let leaves = 0;
     let timedOut = false;
@@ -1041,6 +1054,7 @@
 
     if (params?.initialBestBuild?.ok) {
       best = params.initialBestBuild;
+      bestAttempt = params.initialBestBuild;
     } else if (params?.seedStartStats) {
       const seeded = evaluateBuild({
         data,
@@ -1054,6 +1068,9 @@
         minimums,
         objectivePreset,
       });
+      if (seeded?.ok) {
+        bestAttempt = seeded;
+      }
       if (seeded?.ok && seeded?.meetsMinimums) {
         best = seeded;
       }
@@ -1065,7 +1082,8 @@
       fastIterations: Math.min(900, toInt(params?.fastIterations, 2500)),
     });
     if (warmStart?.build?.ok) {
-      best = warmStart.build;
+      bestAttempt = warmStart.build;
+      if (warmStart.build.meetsMinimums) best = warmStart.build;
     }
 
     function recurse(index, remaining, partial, above70, above90) {
@@ -1107,7 +1125,11 @@
           minimums,
           objectivePreset,
         });
-        if (!result.ok || !result.meetsMinimums) return;
+        if (!result.ok) return;
+        if (!bestAttempt || compareVectors(result.vector, bestAttempt.vector) > 0) {
+          bestAttempt = result;
+        }
+        if (!result.meetsMinimums) return;
         if (!best || compareVectors(result.vector, best.vector) > 0) {
           best = result;
         }
@@ -1146,6 +1168,7 @@
       return {
         status: timedOut ? "timeout" : "infeasible",
         provenOptimal: false,
+        build: bestAttempt || null,
         message: timedOut
           ? "Exact solver timed out before finding a feasible build."
           : "No feasible build satisfies all constraints.",

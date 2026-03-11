@@ -122,6 +122,31 @@ test('solveExact can prove optimal on small bounded search', () => {
   assert.equal(logic.sumStats(result.build.startStats), CONSTRAINTS.totalPoints);
 });
 
+test('solveExact returns best attempt build when constraints are infeasible', () => {
+  const result = logic.solveExact({
+    data: DATA,
+    constraints: CONSTRAINTS,
+    raceName: 'Human',
+    profession: 'Wizard',
+    targetLevel: 20,
+    targetExperience: -1,
+    minimums: {
+      minFinalStats: {
+        str: 100, con: 100, dex: 100, agi: 100, dis: 100,
+        aur: 100, log: 100, int: 100, wis: 100, inf: 100,
+      },
+    },
+    objectivePreset: OBJECTIVE,
+    maxSeconds: 1,
+  });
+
+  assert.equal(result.status, 'infeasible');
+  assert.equal(result.provenOptimal, false);
+  assert.equal(result.build?.ok, true);
+  assert.equal(result.build?.meetsMinimums, false);
+  assert.equal(logic.sumStats(result.build.startStats), CONSTRAINTS.totalPoints);
+});
+
 test('buildObjectivePresetFromBias keeps 50/50 overall-first and honors strong TP bias', () => {
   assert.deepEqual(
     logic.buildObjectivePresetFromBias(50).priorities,

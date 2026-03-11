@@ -1260,15 +1260,22 @@
       runningSolverState.bestResult
     );
     const result = logic.solve(params);
-    if (runningSolverState.mode === "exact" && !result?.build && result?.status === "infeasible") {
+    if (runningSolverState.mode === "exact" && result?.status === "infeasible") {
       const elapsedNow = ((performance.now() - runningSolverState.startedAtMs) / 1000).toFixed(2);
       const reason = "Unable to Find Solution, try more time or relax constraints.";
       setSolverProgressLines(
         `Solve w/ Constraints iteration ${runningSolverState.iteration}, elapsed ${elapsedNow}s`,
-        "Total stats --, PTP --, MTP --",
-        reason
+        result?.build?.metrics
+          ? `Total stats ${result.build.metrics.overall}, PTP ${result.build.metrics.ptp}, MTP ${result.build.metrics.mtp}`
+          : "Total stats --, PTP --, MTP --",
+        result?.build?.metrics
+          ? `Best attempt available. ${reason}`
+          : reason
       );
-      if (runningSolverState.bestResult?.build) {
+      if (result?.build) {
+        runningSolverState.bestResult = result;
+        runningSolverState.bestResult.status = "failed_constraints";
+      } else if (runningSolverState.bestResult?.build) {
         runningSolverState.bestResult.status = "failed_constraints";
       }
       finalizeIterativeSolve(`${reason} (${elapsedNow}s)`, "error");
