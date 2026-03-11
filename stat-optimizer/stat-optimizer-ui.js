@@ -804,10 +804,11 @@
     }
 
     const baselineEntry = {
-      label: `${profile.name || "Profile"} @ L${getTargetLevelValue()}`,
+      label: profile.name || "Profile",
       build: preview,
       status: "profile",
       sourceKind: "profile_baseline",
+      createdTargetLevel: getTargetLevelValue(),
     };
     const existingIndex = runHistory.findIndex((entry) => entry.sourceKind === "profile_baseline");
     if (existingIndex >= 0) {
@@ -833,10 +834,11 @@
     if (!preview) return;
 
     runHistory.push({
-      label: `${profile.name || "Profile"} @ L${getTargetLevelValue()}`,
+      label: profile.name || "Profile",
       build: preview,
       status: "profile",
       sourceKind: "profile_snapshot",
+      createdTargetLevel: getTargetLevelValue(),
     });
     renderResultTable();
     updateCurrentLevelTpDelta();
@@ -934,14 +936,11 @@
     runHistory.forEach((entry, index) => {
       const editing = inlineEditState.active && inlineEditState.runIndex === index;
       const failed = entry.status === "failed_constraints";
-      const build = getDisplayBuildForRun(entry, index);
-      const targetLevel = logic.toInt(build?.metrics?.level, 0);
       const th = document.createElement("th");
       th.innerHTML = `
         <div class="optimizer-run-head">
           <div>
             <div>${entry.label}</div>
-            <div class="optimizer-totals-sub">Target L${targetLevel}</div>
           </div>
           <div class="optimizer-run-actions">
             ${editing
@@ -1093,6 +1092,20 @@
     return buildMetricsFromLevel0Stats(draftLevel0Stats);
   }
 
+  function getNextManualRunLabel() {
+    const manualCount = runHistory.filter((entry) => entry.sourceKind === "manual").length + 1;
+    return manualCount === 1 ? "Manual" : `Manual ${manualCount}`;
+  }
+
+  function getNextConstrainedRunLabel() {
+    const runNumber = runHistory.filter((entry) => entry.sourceKind === "constraints").length + 1;
+    return `Run ${runNumber} @ L${getTargetLevelValue()}`;
+  }
+
+  function getNextAutoRunLabel() {
+    return `Auto @ L${getTargetLevelValue()}`;
+  }
+
   function buildFinalStatsAtLevel(level0Stats, level) {
     if (!level0Stats) return null;
     const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
@@ -1135,6 +1148,8 @@
       label: copyLabel,
       build: source.build,
       status: "manual",
+      sourceKind: "manual",
+      createdTargetLevel: source.createdTargetLevel ?? getTargetLevelValue(),
     });
     inlineEditState.active = true;
     inlineEditState.runIndex = runHistory.length - 1;
@@ -1159,10 +1174,11 @@
       return;
     }
     runHistory.push({
-      label: `Run ${runHistory.length + 1} (manual)`,
+      label: getNextManualRunLabel(),
       build: preview,
       status: "manual",
       sourceKind: "manual",
+      createdTargetLevel: getTargetLevelValue(),
     });
     inlineEditState.active = true;
     inlineEditState.runIndex = runHistory.length - 1;
@@ -1274,12 +1290,16 @@
       return;
     }
 
-    const nextDefaultLabel = `Run ${runHistory.length + 1}`;
+    const nextDefaultLabel = (result.sourceKind || (result.status === "failed_constraints" ? "constraints" : "auto")) === "constraints"
+      ? getNextConstrainedRunLabel()
+      : getNextAutoRunLabel();
     const label = result._label || nextDefaultLabel;
     runHistory.push({
       label,
       build: result.build,
       status: result.provenOptimal ? "optimal" : result.status,
+      sourceKind: result.sourceKind || (result.status === "failed_constraints" ? "constraints" : "auto"),
+      createdTargetLevel: result.createdTargetLevel ?? getTargetLevelValue(),
     });
     renderResultTable();
 
@@ -1459,7 +1479,9 @@
     setSolverControlsForRun(false);
     try {
       if (best?.build) {
-        best._label = `Run ${runHistory.length + 1}`;
+        best.sourceKind = runningSolverState.mode === "exact" ? "constraints" : "auto";
+        best.createdTargetLevel = getTargetLevelValue();
+        best._label = best.sourceKind === "constraints" ? getNextConstrainedRunLabel() : getNextAutoRunLabel();
         renderResult(best);
         const canResume = best.status === "timeout" || (best.status === "best_found" && !best.provenOptimal);
         resumeContext = {
