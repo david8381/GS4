@@ -1091,32 +1091,35 @@ body[data-page="stat-optimizer"] .input-row select {
 
 body[data-page="stat-optimizer"] .optimizer-level-row .input-row {
   display: grid;
-  grid-template-columns: 62px minmax(260px, 1fr);
+  grid-template-columns: 72px minmax(280px, 1fr);
   gap: 8px;
   align-items: start;
 }
 
-body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
-  width: 62px;
-}
-
-body[data-page="stat-optimizer"] .optimizer-also-show-group {
+body[data-page="stat-optimizer"] .optimizer-level-field {
   display: grid;
   grid-template-columns: 1fr;
   gap: 3px;
-  min-width: 260px;
 }
 
-body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
-  width: 100%;
-}
-
-body[data-page="stat-optimizer"] .inline-helper-label {
-  font-size: 0.88rem;
+body[data-page="stat-optimizer"] .optimizer-level-field > label {
+  font-size: 0.92rem;
   color: inherit;
   white-space: nowrap;
   margin: 0;
   line-height: 1.1;
+}
+
+body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
+  width: 72px;
+}
+
+body[data-page="stat-optimizer"] .optimizer-also-show-group {
+  min-width: 280px;
+}
+
+body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
+  width: 100%;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group .helper {
