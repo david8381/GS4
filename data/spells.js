@@ -103,6 +103,10 @@
       label: "Telepathy Lore ranks",
       profileSource: { type: "skill_ranks", skillName: "Mental Lore - Telepathy" },
     },
+    mental_lore_transformation_ranks: {
+      label: "Transformation Lore ranks",
+      profileSource: { type: "skill_ranks", skillName: "Mental Lore - Transformation" },
+    },
   };
 
 
@@ -258,7 +262,7 @@
     spell({ id: 606, circle: "Ranger", name: "Phoen's Strength", effect_text: "+10 strength bonus (AS comes from strength bonus)", modifiers: { strength_bonus: 10 } }),
     spell({ id: 608, circle: "Ranger", name: "Camouflage", effect_text: "+30 AS while hidden, +18 spiritual CS", modifiers: { as_physical: 30, as_bolt: 30, cs_spiritual: 18 } }),
     spell({ id: 612, circle: "Ranger", name: "Breeze", effect_text: "Roundtime flare utility" }),
-    spell({ id: 613, circle: "Ranger", name: "Self Control", effect_text: "+20 DS, +20 spiritual TD", modifiers: { non_bolt_ds: 20, bolt_ds: 20, td_spiritual: 20 } }),
+    spell({ id: 613, circle: "Ranger", name: "Self Control", effect_text: "+20 DS (melee), +20 spiritual TD", modifiers: { non_bolt_ds: 20, td_spiritual: 20 } }),
     spell({ id: 617, circle: "Ranger", name: "Sneaking", effect_text: "Stalking/hiding movement style" }),
     spell({ id: 618, circle: "Ranger", name: "Mobility", effect_text: "+20 dodge ranks", cast_scope: "self_or_target", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Ranger Base ranks above 18 add phantom Dodge ranks for rangers, capped by level and 100 ranks. Ranger-only CML support is future calculator work."] }),
     spell({ id: 620, circle: "Ranger", name: "Resist Nature", effect_text: "Element resistance utility", cast_scope: "self_or_group" }),
@@ -269,7 +273,7 @@
     // Sorcerer Base
     spell({ id: 704, circle: "Sorcerer", name: "Phase", effect_text: "SMR defense utility", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
     spell({ id: 712, circle: "Sorcerer", name: "Cloak of Shadows", effect_text: "+25 DS, +20 TD", cast_scope: "self_only", modifiers: { non_bolt_ds: 25, bolt_ds: 25, td_spiritual: 20, td_elemental: 20, td_mental: 20 }, scaling_notes: ["Sorcerer Base ranks add +1 DS per rank above 12, capped by level, and +1 TD per 10 ranks above 12, capped by level."] }),
-    spell({ id: 715, circle: "Sorcerer", name: "Curse (Star)", effect_text: "+10 bolt AS after cursed targets die", cast_scope: "self_only", modifiers: { as_bolt: 10 }, notes: ["Star is a curse mode of 715, not spell 703."] }),
+    spell({ id: 715, circle: "Sorcerer", name: "Curse (Star)", effect_text: "+10 bolt AS after cursed targets die", cast_scope: "self_only", modifiers: { as_bolt: 10 }, notes: ["Star is a curse mode of 715, not spell 703."], scaling_notes: ["Sorcerer Base ranks above 15 add +1 bolt AS per 3 ranks, capped by level. The AS bonus only applies after the cursed target dies."] }),
     spell({ id: 716, circle: "Sorcerer", name: "Pestilence", effect_text: "+25% chance to disease attacker", cast_scope: "self_only" }),
     spell({ id: 735, circle: "Sorcerer", name: "Ensorcell", effect_text: "Life channeling flares", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_offense"] }),
 
@@ -277,7 +281,7 @@
     spell({ id: 902, circle: "Wizard", name: "Minor Elemental Edge", effect_text: "+10 enhancive skill bonus to weapon", calculator_relevant: true, calculator_tags: ["weapon_support"] }),
     spell({ id: 905, circle: "Wizard", name: "Prismatic Guard", effect_text: "+5 DS, +20 bolt DS", cast_scope: "self_only", modifiers: { non_bolt_ds: 5, bolt_ds: 20 }, scaling_notes: ["Wizard Base ranks add +1 DS per 4 ranks above 5. Earth Lore adds extra DS by seed 5 summation."] }),
     spell({ id: 909, circle: "Wizard", name: "Tremors", effect_text: "Charge/STOMP utility" }),
-    spell({ id: 911, circle: "Wizard", name: "Mass Blur", effect_text: "+20 dodge ranks", cast_scope: "self_or_group", modifiers: { dodge_ranks: 20 } }),
+    spell({ id: 911, circle: "Wizard", name: "Mass Blur", effect_text: "+20 dodge ranks", cast_scope: "self_or_group", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Air Lore adds +1 Dodge rank by seed 1 summation to the caster only."] }),
     spell({ id: 913, circle: "Wizard", name: "Melgorehn's Aura", effect_text: "+10 DS, +20 elemental TD", cast_scope: "self_only", modifiers: { non_bolt_ds: 10, bolt_ds: 10, td_elemental: 20 }, scaling_notes: ["Wizard Base ranks above 13 add flat DS and elemental TD."] }),
     spell({ id: 919, circle: "Wizard", name: "Wizard's Shield", effect_text: "+50 DS, 60s, not stackable", cast_scope: "self_only", stack_mode: "not_stackable", modifiers: { non_bolt_ds: 50 } }),
 
@@ -300,7 +304,7 @@
     spell({ id: 1202, circle: "Minor Mental", name: "Iron Skin", effect_text: "Armor-like defense", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
     spell({ id: 1204, circle: "Minor Mental", name: "Foresight", effect_text: "+10 DS", cast_scope: "self_or_target", modifiers: { non_bolt_ds: 10 } }),
     spell({ id: 1208, circle: "Minor Mental", name: "Mindward", effect_text: "+20 mental TD", cast_scope: "self_or_target", modifiers: { td_mental: 20 } }),
-    spell({ id: 1209, circle: "Minor Mental", name: "Dragonclaw", effect_text: "+10 UAF", cast_scope: "self_only", modifiers: { uaf: 10 } }),
+    spell({ id: 1209, circle: "Minor Mental", name: "Dragonclaw", effect_text: "+10 UAF", cast_scope: "self_only", modifiers: { uaf: 10 }, scaling_notes: ["Transformation Lore adds +1 UAF by seed 1 summation."] }),
     spell({ id: 1213, circle: "Minor Mental", name: "Mind over Body", effect_text: "Stamina-cost utility, focus spell", cast_scope: "self_or_group", stack_mode: "focus_not_stackable" }),
     spell({ id: 1214, circle: "Minor Mental", name: "Brace", effect_text: "Parry enhancement", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
     spell({ id: 1215, circle: "Minor Mental", name: "Blink", effect_text: "Second chance vs physical/bolt attacks", cast_scope: "self_limited", calculator_relevant: true, calculator_tags: ["special_defense"] }),
@@ -640,8 +644,8 @@
           threshold: 13,
           divisor: 2,
           cap_factor: "level",
-          modifierKeys: ["non_bolt_ds", "bolt_ds"],
-          note: "+1 DS (all) per 2 Ranger ranks above 13, capped by level",
+          modifierKeys: ["non_bolt_ds"],
+          note: "+1 melee DS per 2 Ranger ranks above 13, capped by level",
         },
         {
           type: "seed_sum",
@@ -724,6 +728,20 @@
           maxExtra: 8,
           modifierKeys: ["td_spiritual", "td_elemental", "td_mental"],
           note: "+1 TD per 10 Sorcerer ranks above 12, capped by level",
+        },
+      ],
+    },
+    715: {
+      factors: ["sorcerer_spell_ranks"],
+      rules: [
+        {
+          type: "ranks_above_threshold",
+          factor: "sorcerer_spell_ranks",
+          threshold: 15,
+          divisor: 3,
+          cap_factor: "level",
+          modifierKeys: ["as_bolt"],
+          note: "+1 bolt AS per 3 Sorcerer ranks above 15, capped by level (applies after cursed target dies)",
         },
       ],
     },
@@ -875,6 +893,18 @@
         },
       ],
     },
+    911: {
+      factors: ["elemental_lore_air_ranks"],
+      rules: [
+        {
+          type: "seed_sum",
+          factor: "elemental_lore_air_ranks",
+          seed: 1,
+          modifierKeys: ["dodge_ranks"],
+          note: "Air Lore adds +1 Dodge rank by seed 1 summation to the caster only",
+        },
+      ],
+    },
     1109: {
       factors: ["empath_spell_ranks"],
       rules: [
@@ -900,6 +930,19 @@
           maxExtra: 20,
           modifierKeys: ["td_mental"],
           note: "+1 mental TD per 2 Minor Mental ranks above 8, max +40 self total",
+        },
+      ],
+    },
+    1209: {
+      factors: ["mental_lore_transformation_ranks"],
+      rules: [
+        {
+          type: "seed_sum",
+          factor: "mental_lore_transformation_ranks",
+          seed: 1,
+          maxExtra: 24,
+          modifierKeys: ["uaf"],
+          note: "Transformation Lore adds +1 UAF by seed 1 summation",
         },
       ],
     },

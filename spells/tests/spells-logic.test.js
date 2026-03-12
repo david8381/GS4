@@ -367,6 +367,18 @@ test("1711 Mystic Focus level scaling uses max(10, 30 - level)", () => {
   assert.equal(highTotals.cs_bard, 10);
 });
 
+test("1209 Dragonclaw gains self-cast UAF from Transformation Lore", () => {
+  const dragonclaw = spellsData.buff_spells.find((spell) => spell.id === 1209);
+  const totals = logic.calculateSpellModifiers(
+    dragonclaw,
+    "self",
+    { mental_lore_transformation_ranks: 10 },
+    spellsData
+  );
+
+  assert.equal(totals.uaf, 14);
+});
+
 test("1007 Kai's Triumph Song gains AS from bard ranks and telepathy lore", () => {
   const triumph = spellsData.buff_spells.find((spell) => spell.id === 1007);
   const totals = logic.calculateSpellModifiers(
@@ -396,6 +408,18 @@ test("712 Cloak of Shadows scales DS and TD from Sorcerer ranks", () => {
   assert.equal(totals.td_mental, 26);
 });
 
+test("715 Curse (Star) gains bolt AS from Sorcerer ranks", () => {
+  const curse = spellsData.buff_spells.find((spell) => spell.id === 715);
+  const totals = logic.calculateSpellModifiers(
+    curse,
+    "self",
+    { level: 80, sorcerer_spell_ranks: 75 },
+    spellsData
+  );
+
+  assert.equal(totals.as_bolt, 30);
+});
+
 test("1019 Song of Mirrors gains dodge ranks from Bard ranks", () => {
   const mirrors = spellsData.buff_spells.find((spell) => spell.id === 1019);
   const totals = logic.calculateSpellModifiers(
@@ -418,6 +442,25 @@ test("1035 Song of Tonis gains threshold-based dodge from Air Lore", () => {
   );
 
   assert.equal(totals.dodge_ranks, 26);
+});
+
+test("911 Mass Blur gains self-cast dodge from Air Lore", () => {
+  const blur = spellsData.buff_spells.find((spell) => spell.id === 911);
+  const selfTotals = logic.calculateSpellModifiers(
+    blur,
+    "self",
+    { elemental_lore_air_ranks: 10 },
+    spellsData
+  );
+  const outsideTotals = logic.calculateSpellModifiers(
+    blur,
+    "outside",
+    { elemental_lore_air_ranks: 10 },
+    spellsData
+  );
+
+  assert.equal(selfTotals.dodge_ranks, 24);
+  assert.equal(outsideTotals.dodge_ranks, 20);
 });
 
 test("1119 Strength of Will scales both DS and spiritual TD from Empath ranks", () => {
@@ -611,7 +654,7 @@ test("613 Self Control uses spiritual TD only and scales DS/TD correctly", () =>
   );
 
   assert.equal(totals.non_bolt_ds, 30);
-  assert.equal(totals.bolt_ds, 30);
+  assert.equal(totals.bolt_ds, 0);
   assert.equal(totals.td_spiritual, 22);
   assert.equal(totals.td_elemental, 0);
   assert.equal(totals.td_mental, 0);
