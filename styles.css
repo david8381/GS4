@@ -1097,21 +1097,17 @@ body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
   width: 84px;
 }
 
-body[data-page="stat-optimizer"] .optimizer-also-show-group {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
-}
-
-body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
+body[data-page="stat-optimizer"] #alsoShowLevel {
   width: 100%;
-  max-width: 340px;
+  max-width: 240px;
 }
 
-body[data-page="stat-optimizer"] .optimizer-also-show-group .helper {
-  text-align: center;
+body[data-page="stat-optimizer"] .optimizer-level-helper {
+  text-align: left;
   line-height: 1.2;
-  max-width: 340px;
+  max-width: none;
+  margin-left: 8px;
+  align-self: center;
 }
 
 body[data-page="stat-optimizer"] .input-row input[type="range"] {
