@@ -242,6 +242,7 @@ test("307 Benediction adds generic scaling and extra bolt AS at higher cleric ra
 
   assert.equal(totals.as_physical, 15);
   assert.equal(totals.non_bolt_ds, 15);
+  assert.equal(totals.bolt_ds, 15);
   assert.equal(totals.as_bolt, 41);
 });
 
@@ -269,7 +270,9 @@ test("313 Prayer gains DS only once cleric ranks are high enough", () => {
   assert.equal(lowTotals.non_bolt_ds, 0);
   assert.equal(lowTotals.td_spiritual, 10);
   assert.equal(thresholdTotals.non_bolt_ds, 10);
+  assert.equal(thresholdTotals.bolt_ds, 10);
   assert.equal(highTotals.non_bolt_ds, 25);
+  assert.equal(highTotals.bolt_ds, 25);
 });
 
 test("310 Warding Sphere scales by one per cleric rank above 10", () => {
@@ -282,10 +285,11 @@ test("310 Warding Sphere scales by one per cleric rank above 10", () => {
   );
 
   assert.equal(totals.non_bolt_ds, 20);
+  assert.equal(totals.bolt_ds, 20);
   assert.equal(totals.td_spiritual, 20);
 });
 
-test("509 Strength gains self-cast AS from Earth Lore seed summation", () => {
+test("509 Strength gains self-cast strength bonus from Earth Lore seed summation", () => {
   const strength = spellsData.buff_spells.find((spell) => spell.id === 509);
   const selfTotals = logic.calculateSpellModifiers(
     strength,
@@ -300,9 +304,9 @@ test("509 Strength gains self-cast AS from Earth Lore seed summation", () => {
     spellsData
   );
 
-  assert.equal(selfTotals.as_physical, 18);
-  assert.equal(selfTotals.strength_bonus, 15);
-  assert.equal(outsideTotals.as_physical, 15);
+  assert.equal(selfTotals.as_physical, 0);
+  assert.equal(selfTotals.strength_bonus, 18);
+  assert.equal(outsideTotals.strength_bonus, 15);
 });
 
 test("513 Elemental Focus scales bolt AS by two-rank steps above 13", () => {
@@ -373,6 +377,7 @@ test("1007 Kai's Triumph Song gains AS from bard ranks and telepathy lore", () =
   );
 
   assert.equal(totals.as_physical, 22);
+  assert.equal(totals.as_bolt, 22);
 });
 
 test("712 Cloak of Shadows scales DS and TD from Sorcerer ranks", () => {
@@ -385,6 +390,7 @@ test("712 Cloak of Shadows scales DS and TD from Sorcerer ranks", () => {
   );
 
   assert.equal(totals.non_bolt_ds, 93);
+  assert.equal(totals.bolt_ds, 93);
   assert.equal(totals.td_spiritual, 26);
   assert.equal(totals.td_elemental, 26);
   assert.equal(totals.td_mental, 26);
@@ -424,6 +430,7 @@ test("1119 Strength of Will scales both DS and spiritual TD from Empath ranks", 
   );
 
   assert.equal(totals.non_bolt_ds, 25);
+  assert.equal(totals.bolt_ds, 25);
   assert.equal(totals.td_spiritual, 25);
 });
 
@@ -437,7 +444,9 @@ test("1130 Intensity scales AS and DS from Empath ranks", () => {
   );
 
   assert.equal(totals.as_physical, 45);
+  assert.equal(totals.as_bolt, 45);
   assert.equal(totals.non_bolt_ds, 45);
+  assert.equal(totals.bolt_ds, 45);
 });
 
 test("1601 Mantle of Faith gains self-cast DS and TD from Blessings Lore", () => {
@@ -456,8 +465,10 @@ test("1601 Mantle of Faith gains self-cast DS and TD from Blessings Lore", () =>
   );
 
   assert.equal(selfTotals.non_bolt_ds, 8);
+  assert.equal(selfTotals.bolt_ds, 8);
   assert.equal(selfTotals.td_spiritual, 8);
   assert.equal(outsideTotals.non_bolt_ds, 5);
+  assert.equal(outsideTotals.bolt_ds, 5);
   assert.equal(outsideTotals.td_spiritual, 5);
 });
 
@@ -471,6 +482,7 @@ test("1610 Higher Vision gains DS from Paladin ranks and Religion Lore", () => {
   );
 
   assert.equal(totals.non_bolt_ds, 32);
+  assert.equal(totals.bolt_ds, 32);
 });
 
 test("1617 Zealot gains AS from Religion Lore", () => {
@@ -507,6 +519,7 @@ test("503 Thurfel's Ward gains DS from Major Elemental ranks", () => {
   );
 
   assert.equal(totals.non_bolt_ds, 30);
+  assert.equal(totals.bolt_ds, 30);
 });
 
 test("507 Elemental Deflection gains DS from Major Elemental ranks", () => {
@@ -519,17 +532,133 @@ test("507 Elemental Deflection gains DS from Major Elemental ranks", () => {
   );
 
   assert.equal(totals.non_bolt_ds, 38);
+  assert.equal(totals.bolt_ds, 38);
 });
 
-test("905 Prismatic Guard gains physical DS from Wizard ranks", () => {
+test("905 Prismatic Guard gains DS from Wizard ranks and Earth Lore", () => {
   const guard = spellsData.buff_spells.find((spell) => spell.id === 905);
   const totals = logic.calculateSpellModifiers(
     guard,
     "self",
-    { wizard_spell_ranks: 45 },
+    { wizard_spell_ranks: 45, elemental_lore_earth_ranks: 11 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 17);
+  assert.equal(totals.bolt_ds, 32);
+});
+
+test("120 Lesser Shroud gains DS all from Minor Spiritual ranks above 20", () => {
+  const shroud = spellsData.buff_spells.find((spell) => spell.id === 120);
+  const totals = logic.calculateSpellModifiers(
+    shroud,
+    "self",
+    { level: 80, minor_spiritual_ranks: 40 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 25);
+  assert.equal(totals.bolt_ds, 25);
+  assert.equal(totals.td_spiritual, 20);
+});
+
+test("202 Spirit Shield gains DS all from Major Spiritual ranks above 2", () => {
+  const shield = spellsData.buff_spells.find((spell) => spell.id === 202);
+  const totals = logic.calculateSpellModifiers(
+    shield,
+    "self",
+    { level: 80, major_spiritual_ranks: 20 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 16);
+  assert.equal(totals.bolt_ds, 16);
+});
+
+test("215 Heroism gains physical and bolt AS from Blessings Lore", () => {
+  const heroism = spellsData.buff_spells.find((spell) => spell.id === 215);
+  const totals = logic.calculateSpellModifiers(
+    heroism,
+    "self",
+    { spiritual_lore_blessings_ranks: 50 },
+    spellsData
+  );
+
+  assert.equal(totals.as_physical, 30);
+  assert.equal(totals.as_bolt, 30);
+});
+
+test("303 Prayer of Protection gains DS all from Cleric ranks above 3", () => {
+  const protection = spellsData.buff_spells.find((spell) => spell.id === 303);
+  const totals = logic.calculateSpellModifiers(
+    protection,
+    "self",
+    { level: 80, cleric_spell_ranks: 23 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 20);
+  assert.equal(totals.bolt_ds, 20);
+});
+
+test("613 Self Control uses spiritual TD only and scales DS/TD correctly", () => {
+  const selfControl = spellsData.buff_spells.find((spell) => spell.id === 613);
+  const totals = logic.calculateSpellModifiers(
+    selfControl,
+    "self",
+    { level: 80, ranger_spell_ranks: 33, spiritual_lore_blessings_ranks: 11 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 30);
+  assert.equal(totals.bolt_ds, 30);
+  assert.equal(totals.td_spiritual, 22);
+  assert.equal(totals.td_elemental, 0);
+  assert.equal(totals.td_mental, 0);
+});
+
+test("625 Nature's Touch starts scaling above 27 Ranger ranks", () => {
+  const touch = spellsData.buff_spells.find((spell) => spell.id === 625);
+  const below = logic.calculateSpellModifiers(
+    touch,
+    "self",
+    { ranger_spell_ranks: 27 },
+    spellsData
+  );
+  const above = logic.calculateSpellModifiers(
+    touch,
+    "self",
+    { ranger_spell_ranks: 29 },
+    spellsData
+  );
+
+  assert.equal(below.td_spiritual, 1);
+  assert.equal(above.td_spiritual, 2);
+});
+
+test("1010 Song of Valor gains DS all from Bard ranks above 10", () => {
+  const valor = spellsData.buff_spells.find((spell) => spell.id === 1010);
+  const totals = logic.calculateSpellModifiers(
+    valor,
+    "self",
+    { level: 80, bard_spell_ranks: 20 },
     spellsData
   );
 
   assert.equal(totals.non_bolt_ds, 15);
-  assert.equal(totals.bolt_ds, 20);
+  assert.equal(totals.bolt_ds, 15);
+  assert.equal(totals.td_elemental, 15);
+});
+
+test("1609 Divine Shield gains melee DS from Paladin ranks above 18", () => {
+  const divineShield = spellsData.buff_spells.find((spell) => spell.id === 1609);
+  const totals = logic.calculateSpellModifiers(
+    divineShield,
+    "self",
+    { paladin_spell_ranks: 43 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 20);
+  assert.equal(totals.bolt_ds, 0);
 });
