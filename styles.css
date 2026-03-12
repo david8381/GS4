@@ -1091,20 +1091,20 @@ body[data-page="stat-optimizer"] .input-row select {
 
 body[data-page="stat-optimizer"] .optimizer-level-row .input-row {
   display: grid;
-  grid-template-columns: 46px minmax(220px, 1fr);
+  grid-template-columns: 62px minmax(260px, 1fr);
   gap: 8px;
   align-items: start;
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
-  width: 46px;
+  width: 62px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2px;
-  min-width: 220px;
+  gap: 3px;
+  min-width: 260px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
@@ -1116,15 +1116,18 @@ body[data-page="stat-optimizer"] .inline-helper-label {
   color: inherit;
   white-space: nowrap;
   margin: 0;
+  line-height: 1.1;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group .helper {
   text-align: center;
+  line-height: 1.2;
 }
 
 body[data-page="stat-optimizer"] .input-row input[type="range"] {
-  width: 180px;
-  margin: 0 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 
 body[data-page="stat-optimizer"] #tpBiasLeft,
@@ -1148,6 +1151,13 @@ body[data-page="stat-optimizer"] .compact-field label {
 
 body[data-page="stat-optimizer"] .compact-field .input-row {
   margin-top: 0;
+}
+
+body[data-page="stat-optimizer"] .optimizer-bias-row .input-row {
+  display: grid;
+  grid-template-columns: max-content minmax(160px, 1fr) max-content max-content;
+  gap: 8px;
+  align-items: center;
 }
 
 body[data-page="stat-optimizer"] .solver-inline-grid {
