@@ -1090,41 +1090,28 @@ body[data-page="stat-optimizer"] .input-row select {
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row .input-row {
-  display: grid;
-  grid-template-columns: 72px minmax(280px, 1fr);
-  gap: 8px;
-  align-items: start;
-}
-
-body[data-page="stat-optimizer"] .optimizer-level-field {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 3px;
-}
-
-body[data-page="stat-optimizer"] .optimizer-level-field > label {
-  font-size: 0.92rem;
-  color: inherit;
-  white-space: nowrap;
-  margin: 0;
-  line-height: 1.1;
+  display: block;
 }
 
 body[data-page="stat-optimizer"] .optimizer-level-row #targetLevel {
-  width: 72px;
+  width: 84px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group {
-  min-width: 280px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group #alsoShowLevel {
   width: 100%;
+  max-width: 340px;
 }
 
 body[data-page="stat-optimizer"] .optimizer-also-show-group .helper {
   text-align: center;
   line-height: 1.2;
+  max-width: 340px;
 }
 
 body[data-page="stat-optimizer"] .input-row input[type="range"] {
@@ -1143,7 +1130,7 @@ body[data-page="stat-optimizer"] #tpBiasValue {
 
 body[data-page="stat-optimizer"] .compact-field {
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-columns: 170px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }

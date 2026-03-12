@@ -45,17 +45,16 @@
               </div>
             </div>
             <div class="input-group compact-field optimizer-level-row">
-              <label>Levels</label>
+              <label for="targetLevel">Target level</label>
               <div class="input-row">
-                <div class="optimizer-level-field">
-                  <label for="targetLevel">Target level</label>
-                  <input id="targetLevel" type="number" min="0" max="100" step="1" value="100" />
-                </div>
-                <div class="optimizer-level-field optimizer-also-show-group">
-                  <label for="alsoShowLevel">Also show</label>
-                  <input id="alsoShowLevel" type="text" inputmode="numeric" value="100" />
-                  <div class="helper">Accepts comma-separated list (e.g. 20,100)</div>
-                </div>
+                <input id="targetLevel" type="number" min="0" max="100" step="1" value="100" />
+              </div>
+            </div>
+            <div class="input-group compact-field optimizer-level-row">
+              <label for="alsoShowLevel">Also show</label>
+              <div class="input-row optimizer-also-show-group">
+                <input id="alsoShowLevel" type="text" inputmode="numeric" value="100" />
+                <div class="helper">Accepts comma-separated list (e.g. 20,100)</div>
               </div>
             </div>
             <div class="input-group compact-field optimizer-bias-row">
