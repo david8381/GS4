@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.2.0'
+SCRIPT_VERSION = '0.2.1'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -126,6 +126,7 @@ def compact_payload_for_url(payload)
       infoStart: sanitize_block_for_hash(blocks[:infoStart]),
       skills: sanitize_block_for_hash(blocks[:skills]),
       exp: sanitize_block_for_hash(blocks[:exp]),
+      society: sanitize_block_for_hash(blocks[:society]),
       ascList: sanitize_block_for_hash(blocks[:ascList]),
       ascMilestones: sanitize_block_for_hash(blocks[:ascMilestones]),
       enhanciveList: sanitize_block_for_hash(blocks[:enhanciveList]),
@@ -280,6 +281,14 @@ def collect_blocks
     timeout_seconds: 20
   )
 
+  say 'collecting SOCIETY...'
+  society = capture_block(
+    command: 'society',
+    start_pattern: /member of any society|Council of Light|Order of Voln|Guardians of Sunfist|currently at (?:Step|Rank)\s+\d+\s+of\s+\d+/i,
+    timeout_seconds: 15,
+    require_prompt: true
+  )
+
   say 'collecting ASC LIST...'
   asc_list = capture_block(
     command: 'asc list',
@@ -326,6 +335,7 @@ def collect_blocks
       infoStart: info_start,
       skills: skills,
       exp: exp,
+      society: society,
       ascList: asc_list,
       ascMilestones: asc_milestones,
       enhanciveList: enhancive_list,
@@ -360,6 +370,7 @@ def summarize_payload(payload)
   say "infoStart: #{present_block?(payload, :infoStart) ? 'yes' : 'no'}"
   say "skills: #{present_block?(payload, :skills) ? 'yes' : 'no'}"
   say "exp: #{present_block?(payload, :exp) ? 'yes' : 'no'}"
+  say "society: #{present_block?(payload, :society) ? 'yes' : 'no'}"
   say "ascList: #{present_block?(payload, :ascList) ? 'yes' : 'no'}"
   say "ascMilestones: #{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}"
   say "enhanciveList: #{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}"
@@ -569,7 +580,7 @@ when 'load'
     say 'raw capture:'
     say "  path: #{data_path}"
     say "  last collected: #{payload[:collectedAt] || file_timestamp(data_path)}"
-    say "  blocks: infoStart=#{present_block?(payload, :infoStart) ? 'yes' : 'no'}, skills=#{present_block?(payload, :skills) ? 'yes' : 'no'}, exp=#{present_block?(payload, :exp) ? 'yes' : 'no'}, ascList=#{present_block?(payload, :ascList) ? 'yes' : 'no'}, ascMilestones=#{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}, enhList=#{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}, enhTotals=#{present_block?(payload, :enhanciveTotals) ? 'yes' : 'no'}, enhDetails=#{present_block?(payload, :enhanciveTotalsDetails) ? 'yes' : 'no'}"
+    say "  blocks: infoStart=#{present_block?(payload, :infoStart) ? 'yes' : 'no'}, skills=#{present_block?(payload, :skills) ? 'yes' : 'no'}, exp=#{present_block?(payload, :exp) ? 'yes' : 'no'}, society=#{present_block?(payload, :society) ? 'yes' : 'no'}, ascList=#{present_block?(payload, :ascList) ? 'yes' : 'no'}, ascMilestones=#{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}, enhList=#{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}, enhTotals=#{present_block?(payload, :enhanciveTotals) ? 'yes' : 'no'}, enhDetails=#{present_block?(payload, :enhanciveTotalsDetails) ? 'yes' : 'no'}"
   end
 when 'show'
   say "raw capture: #{data_path}"

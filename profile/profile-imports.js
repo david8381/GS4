@@ -199,6 +199,29 @@
       return clamp(reached, 0, 10);
     }
 
+    function parseSocietyBlock(text) {
+      const source = stripMarkupTags(String(text || ""));
+      if (!source.trim()) return null;
+      if (/not currently a member of any society/i.test(source)) {
+        return { society: null, rank: 0 };
+      }
+
+      const society =
+        (/Council of Light/i.test(source) && "col")
+        || (/Order of Voln/i.test(source) && "voln")
+        || (/Guardians of Sunfist/i.test(source) && "sunfist")
+        || null;
+
+      if (!society) return null;
+
+      const rankMatch = source.match(/(?:Step|Rank)\s+(\d+)\s+of\s+\d+/i);
+      if (!rankMatch) return null;
+      return {
+        society,
+        rank: Math.max(0, Math.trunc(Number(rankMatch[1]) || 0)),
+      };
+    }
+
     return {
       stripMarkupTags,
       parseInfoBlock,
@@ -209,6 +232,7 @@
       levelFromExperience,
       parseExpBlock,
       parseAscMilestonesBlock,
+      parseSocietyBlock,
     };
   }
 

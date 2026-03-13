@@ -32,6 +32,7 @@
 
     return {
       ...record,
+      society: record?.society?.key ? record.society : (existing?.society || { key: null, rank: 0 }),
       ascension: existing.ascension || record.ascension,
       enhancive: existing.enhancive || record.enhancive,
       equipment: {
@@ -147,6 +148,10 @@
       name: String(record?.name || "").trim(),
       race: String(record?.race || "Human"),
       profession: String(record?.profession || ""),
+      society: {
+        key: String(record?.society?.key || "").trim().toLowerCase() || null,
+        rank: Math.max(0, Math.trunc(Number(record?.society?.rank) || 0)),
+      },
       level: clamp(Number(record?.level), 0, 100),
       experience: Math.max(0, Math.trunc(Number(record?.experience) || experienceForLevel(record?.level))),
       ascensionExperience: Math.max(0, Math.trunc(Number(record?.ascensionExperience) || 0)),

@@ -210,3 +210,39 @@ Sajehn, your Ascension Milestones are as follows:
 
   assert.equal(parsed, 4);
 });
+
+test("parseSocietyBlock parses Voln step", () => {
+  const parsed = parsers.parseSocietyBlock(`
+You are a Master of the Order of Voln.
+You are currently at Step 14 of 26.
+  `);
+  assert.deepEqual(parsed, { society: "voln", rank: 14 });
+});
+
+test("parseSocietyBlock parses CoL rank", () => {
+  const parsed = parsers.parseSocietyBlock(`
+You are a member of the Council of Light.
+You are currently at Rank 12 of 20.
+  `);
+  assert.deepEqual(parsed, { society: "col", rank: 12 });
+});
+
+test("parseSocietyBlock parses Sunfist rank", () => {
+  const parsed = parsers.parseSocietyBlock(`
+You are a member of the Guardians of Sunfist.
+You are currently at Rank 8 of 20.
+  `);
+  assert.deepEqual(parsed, { society: "sunfist", rank: 8 });
+});
+
+test("parseSocietyBlock parses no society", () => {
+  const parsed = parsers.parseSocietyBlock(`
+You are not currently a member of any society.
+  `);
+  assert.deepEqual(parsed, { society: null, rank: 0 });
+});
+
+test("parseSocietyBlock returns null for unparseable text", () => {
+  const parsed = parsers.parseSocietyBlock(`not society text`);
+  assert.equal(parsed, null);
+});

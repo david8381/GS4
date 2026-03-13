@@ -21,6 +21,7 @@
     infoImport,
     skillsImport,
     expImport,
+    societyImport,
     ascImport,
     ascMilestonesImport,
     enhanciveListImport,
@@ -65,6 +66,7 @@
       dispatchIfText(infoImport, blocks.infoStart);
       dispatchIfText(skillsImport, blocks.skills);
       dispatchIfText(expImport, blocks.exp);
+      dispatchIfText(societyImport, blocks.society);
       dispatchIfText(ascImport, blocks.ascList);
       dispatchIfText(ascMilestonesImport, blocks.ascMilestones);
       dispatchIfText(enhanciveListImport, blocks.enhanciveList, true);

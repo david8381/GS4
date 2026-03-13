@@ -702,6 +702,9 @@
       const selectedId = profileSelect.value || "";
       if (!selectedId) {
         selectedProfile = null;
+        activeSocietyKey = "";
+        societyCurrentRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
+        societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
         renderProfileSummary();
         setStatus("Select a profile to use profile-based spell rank factors.");
         renderAll();
@@ -718,6 +721,18 @@
       factorOverrides = {};
       baseFactorOverrides = {};
       professionOverride = normalizeText(selectedProfile.profession);
+      const loadedSocietyKey = String(selectedProfile?.society?.key || "").trim().toLowerCase();
+      const loadedSocietyRank = Math.max(0, logic.asInteger(selectedProfile?.society?.rank, 0));
+      if (loadedSocietyKey && societyConfig[loadedSocietyKey]) {
+        activeSocietyKey = loadedSocietyKey;
+        const rankKey = societyConfig[loadedSocietyKey].rankKey;
+        societyCurrentRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0, [rankKey]: loadedSocietyRank };
+        societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0, [rankKey]: loadedSocietyRank };
+      } else {
+        activeSocietyKey = "";
+        societyCurrentRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
+        societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
+      }
       renderProfileSummary();
       setStatus(`Loaded profile: ${selectedProfile.name}`);
       renderAll();

@@ -29,6 +29,8 @@
       profileName,
       profileRace,
       profileProfession,
+      profileSociety,
+      profileSocietyRank,
       profileLevel,
       profileExperience,
       profileAscensionExperience,
@@ -52,6 +54,8 @@
     toggleDiffHighlight(profileName, currentProfile.name !== selectedProfile.name);
     toggleDiffHighlight(profileRace, currentProfile.race !== selectedProfile.race);
     toggleDiffHighlight(profileProfession, currentProfile.profession !== selectedProfile.profession);
+    toggleDiffHighlight(profileSociety, (currentProfile.society?.key || "") !== (selectedProfile.society?.key || ""));
+    toggleDiffHighlight(profileSocietyRank, Number(currentProfile.society?.rank || 0) !== Number(selectedProfile.society?.rank || 0));
     toggleDiffHighlight(profileLevel, currentProfile.level !== selectedProfile.level);
     toggleDiffHighlight(profileExperience, currentProfile.experience !== selectedProfile.experience);
     toggleDiffHighlight(profileAscensionExperience, currentProfile.ascensionExperience !== selectedProfile.ascensionExperience);
@@ -193,12 +197,15 @@
       profileName,
       profileRace,
       profileProfession,
+      profileSociety,
+      profileSocietyRank,
       profileLevel,
       profileExperience,
       profileAscensionExperience,
       profileAscensionMilestones,
       infoImport,
       expImport,
+      societyImport,
       skillsImport,
       ascImport,
       ascMilestonesImport,
@@ -207,6 +214,7 @@
       enhanciveDetailsImport,
       importStatus,
       expImportStatus,
+      societyImportStatus,
       ascImportStatus,
       ascMilestonesImportStatus,
       armorAsgSelect,
@@ -244,6 +252,8 @@
     profileName.value = "";
     profileRace.value = races.find((race) => race.name === "Human")?.key || races[0].key;
     profileProfession.value = "Wizard";
+    if (profileSociety) profileSociety.value = "";
+    if (profileSocietyRank) profileSocietyRank.value = "0";
     profileLevel.value = "0";
     profileExperience.value = "0";
     if (profileAscensionExperience) profileAscensionExperience.value = "0";
@@ -252,6 +262,7 @@
 
     infoImport.value = "";
     expImport.value = "";
+    if (societyImport) societyImport.value = "";
     skillsImport.value = "";
     ascImport.value = "";
     if (ascMilestonesImport) ascMilestonesImport.value = "";
@@ -262,6 +273,10 @@
     importStatus.style.color = "";
     expImportStatus.textContent = "Paste EXP to load level and experience.";
     expImportStatus.style.color = "";
+    if (societyImportStatus) {
+      societyImportStatus.textContent = "Paste SOCIETY to load society and rank.";
+      societyImportStatus.style.color = "";
+    }
     setSkillsImportUnmatchedKeys(new Set());
     setSkillsImportOffProfessionKeys(new Set());
     updateProfileActionState(); // keep top-bar state current while clearing fields
@@ -311,6 +326,8 @@
       profileName,
       profileRace,
       profileProfession,
+      profileSociety,
+      profileSocietyRank,
       profileLevel,
       profileExperience,
       profileAscensionExperience,
@@ -381,6 +398,8 @@
       : null;
     if (raceOption) profileRace.value = raceOption.key;
     if (profile.profession) profileProfession.value = profile.profession;
+    if (profileSociety) profileSociety.value = String(profile?.society?.key || "");
+    if (profileSocietyRank) profileSocietyRank.value = String(Math.max(0, Math.trunc(Number(profile?.society?.rank) || 0)));
     const normalizedExperience = Math.max(0, Math.trunc(Number(profile.experience) || experienceForLevel(profile.level ?? 0)));
     profileExperience.value = String(normalizedExperience);
     profileLevel.value = String(levelFromExperience(normalizedExperience));
@@ -502,6 +521,8 @@
       profileName,
       profileRace,
       profileProfession,
+      profileSociety,
+      profileSocietyRank,
       profileLevel,
     } = domRefs;
     const { getCurrentLevel0Stats } = stateAccess;
@@ -752,6 +773,10 @@
       const currentRecord = buildCurrentProfileRecord(name);
       const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
       const professionPayload = parsedInfoStart?.profession || profileProfession.value;
+      const societyPayload = {
+        key: String(profileSociety?.value || "").trim().toLowerCase() || null,
+        rank: Math.max(0, Math.trunc(Number(profileSocietyRank?.value) || 0)),
+      };
       const levelPayload = clamp(Number(profileLevel.value), 0, 100);
       const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
@@ -760,6 +785,7 @@
         ...currentRecord,
         race: racePayload,
         profession: professionPayload,
+        society: societyPayload,
         level: levelPayload,
         experience: expPayload,
         level0Stats: parsedInfoStart?.level0Stats || getCurrentLevel0Stats(),

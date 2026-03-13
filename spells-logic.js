@@ -62,6 +62,12 @@
       return asNumber(overrides[key], 0);
     }
     const source = factorDefinition.profileSource || {};
+    if (source.condition) {
+      const current = getByPath(profile, source.condition.field);
+      if (current !== source.condition.equals) {
+        return asNumber(factorDefinition.defaultValue, 0);
+      }
+    }
     if (source.type === "field") return asNumber(getByPath(profile, source.path), 0);
     if (source.type === "skill_ranks") return getSkillRanks(profile, source.skillName);
     return asNumber(factorDefinition.defaultValue, 0);
@@ -70,9 +76,24 @@
   function buildFactorDefinitions(spellsData) {
     return {
       ...(spellsData?.factor_definitions || {}),
-      col_rank: { key: "col_rank", label: "CoL Rank", defaultValue: 0 },
-      voln_step: { key: "voln_step", label: "Voln Step", defaultValue: 0 },
-      sunfist_rank: { key: "sunfist_rank", label: "GoS Rank", defaultValue: 0 },
+      col_rank: {
+        key: "col_rank",
+        label: "CoL Rank",
+        defaultValue: 0,
+        profileSource: { type: "field", path: "society.rank", condition: { field: "society.key", equals: "col" } },
+      },
+      voln_step: {
+        key: "voln_step",
+        label: "Voln Step",
+        defaultValue: 0,
+        profileSource: { type: "field", path: "society.rank", condition: { field: "society.key", equals: "voln" } },
+      },
+      sunfist_rank: {
+        key: "sunfist_rank",
+        label: "GoS Rank",
+        defaultValue: 0,
+        profileSource: { type: "field", path: "society.rank", condition: { field: "society.key", equals: "sunfist" } },
+      },
     };
   }
 
@@ -354,6 +375,7 @@
     asInteger,
     normalizeText,
     getSkillRanks,
+    buildFactorDefinitions,
     getFactorValue,
     resolveFactorValues,
     getCombatRelevantSocietyAbilities,

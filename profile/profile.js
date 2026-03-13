@@ -4,6 +4,8 @@ const profileSave = document.getElementById("profileSave");
 const profileName = document.getElementById("profileName");
 const profileRace = document.getElementById("profileRace");
 const profileProfession = document.getElementById("profileProfession");
+const profileSociety = document.getElementById("profileSociety");
+const profileSocietyRank = document.getElementById("profileSocietyRank");
 const profileLevel = document.getElementById("profileLevel");
 const profileExperience = document.getElementById("profileExperience");
 const profileAscensionExperience = document.getElementById("profileAscensionExperience");
@@ -11,6 +13,8 @@ const profileAscensionMilestones = document.getElementById("profileAscensionMile
 const atpEstimateStatus = document.getElementById("atpEstimateStatus");
 const infoImport = document.getElementById("infoImport");
 const expImport = document.getElementById("expImport");
+const societyImport = document.getElementById("societyImport");
+const societyImportStatus = document.getElementById("societyImportStatus");
 const expImportStatus = document.getElementById("expImportStatus");
 const importStatus = document.getElementById("importStatus");
 const statGrid = document.getElementById("statGrid");
@@ -285,6 +289,7 @@ const {
   levelFromExperience,
   parseExpBlock,
   parseAscMilestonesBlock,
+  parseSocietyBlock,
 } = importParsers;
 
 let currentSkills = skillCatalog.map((name) => ({ name, ranks: 0 }));
@@ -952,6 +957,8 @@ function buildCurrentProfileRecord(nameOverride = null) {
     name: nameOverride == null ? profileName.value : nameOverride,
     raceName: races.find((race) => race.key === profileRace.value)?.name || "Human",
     profession: profileProfession.value,
+    societyKey: profileSociety?.value || "",
+    societyRank: Number(profileSocietyRank?.value),
     level: Number(profileLevel.value),
     experience: Number(profileExperience.value),
     ascensionExperience: currentAscensionExperience,
@@ -991,6 +998,8 @@ const profileDomRefs = {
   profileName,
   profileRace,
   profileProfession,
+  profileSociety,
+  profileSocietyRank,
   profileLevel,
   profileExperience,
   profileAscensionExperience,
@@ -1004,6 +1013,7 @@ const profileDomRefs = {
   enhanciveSection,
   infoImport,
   expImport,
+  societyImport,
   skillsImport,
   ascImport,
   ascMilestonesImport,
@@ -1012,6 +1022,7 @@ const profileDomRefs = {
   enhanciveDetailsImport,
   importStatus,
   expImportStatus,
+  societyImportStatus,
   ascImportStatus,
   ascMilestonesImportStatus,
   armorAsgSelect,
@@ -1072,6 +1083,7 @@ const profileHelpers = {
   parseInfoStartBlock,
   parseInfoBlock,
   parseExpBlock,
+  parseSocietyBlock,
   parseAscListBlock,
   races,
   professions,
@@ -1223,6 +1235,15 @@ try {
     levelFromExperience,
   });
 
+  profileEvents.bindSocietyImportEvents({
+    societyImport,
+    parseSocietyBlock,
+    societyImportStatus,
+    profileSociety,
+    profileSocietyRank,
+    updateProfileActionState,
+  });
+
   profileEvents.bindSkillsImportEvents({
     skillsImport,
     parseSkillsBlock,
@@ -1264,6 +1285,8 @@ try {
     profileExperience,
     levelFromExperience,
     profileProfession,
+    profileSociety,
+    profileSocietyRank,
     updateSkillsImportFlags,
     updateSkillsStatusMessage,
     profileRaceSelect: profileRace,
@@ -1325,6 +1348,7 @@ try {
     infoImport,
     skillsImport,
     expImport,
+    societyImport,
     ascImport,
     ascMilestonesImport,
     enhanciveListImport,

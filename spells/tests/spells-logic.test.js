@@ -153,6 +153,17 @@ test("Sunfist Sigil of Focus scales with Sunfist rank", () => {
   assert.equal(totals.td_mental, 15);
 });
 
+test("society rank factors read only from matching profile society", () => {
+  const defs = logic.buildFactorDefinitions(spellsData);
+  const colProfile = { society: { key: "col", rank: 12 } };
+  const volnProfile = { society: { key: "voln", rank: 14 } };
+
+  assert.equal(logic.getFactorValue(colProfile, defs.col_rank, null), 12);
+  assert.equal(logic.getFactorValue(colProfile, defs.voln_step, null), 0);
+  assert.equal(logic.getFactorValue(volnProfile, defs.voln_step, null), 14);
+  assert.equal(logic.getFactorValue(volnProfile, defs.sunfist_rank, null), 0);
+});
+
 test("calculateTotals sums spell and society modifiers together", () => {
   const wardingSphere = spellsData.buff_spells.find((spell) => spell.id === 310);
   const signDefending = societiesData.col.abilities.find((ability) => ability.id === "sign_of_defending");

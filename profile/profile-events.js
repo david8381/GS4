@@ -377,6 +377,39 @@
     });
   }
 
+  function bindSocietyImportEvents({
+    societyImport,
+    parseSocietyBlock,
+    societyImportStatus,
+    profileSociety,
+    profileSocietyRank,
+    updateProfileActionState,
+  }) {
+    bindTextParsingEvents(societyImport, () => {
+      try {
+        const parsed = parseSocietyBlock(String(societyImport.value || ""));
+        if (parsed == null) {
+          if (societyImportStatus) {
+            societyImportStatus.textContent = "Paste SOCIETY to load society and rank.";
+            societyImportStatus.style.color = "";
+          }
+          return;
+        }
+        if (profileSociety) profileSociety.value = parsed.society || "";
+        if (profileSocietyRank) profileSocietyRank.value = String(Math.max(0, Math.trunc(Number(parsed.rank) || 0)));
+        if (societyImportStatus) {
+          societyImportStatus.textContent = parsed.society
+            ? `Loaded ${parsed.society.toUpperCase()} rank ${parsed.rank}.`
+            : "Loaded: no society membership.";
+          societyImportStatus.style.color = "";
+        }
+        updateProfileActionState();
+      } catch (error) {
+        reportImportError(societyImportStatus, "SOCIETY import", error);
+      }
+    });
+  }
+
   function bindSkillsImportEvents({
     skillsImport,
     parseSkillsBlock,
@@ -458,6 +491,8 @@
     profileExperience,
     levelFromExperience,
     profileProfession,
+    profileSociety,
+    profileSocietyRank,
     updateSkillsImportFlags,
     updateSkillsStatusMessage,
     profileRaceSelect,
@@ -513,6 +548,11 @@
     profileRaceSelect.addEventListener("change", () => {
       updateDerivedDisplays();
       if (hasCurrentLevel0Stats()) recalcFromLevel0();
+    });
+
+    profileSociety?.addEventListener("change", () => {
+      if (!profileSocietyRank) return;
+      if (!profileSociety.value) profileSocietyRank.value = "0";
     });
   }
 
@@ -701,6 +741,7 @@
     bindSaveButtons,
     bindInfoImportEvents,
     bindExperienceEvents,
+    bindSocietyImportEvents,
     bindSkillsImportEvents,
     bindArmorAndCoreFieldEvents,
     bindAscensionImportEvents,

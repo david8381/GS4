@@ -88,6 +88,15 @@
               </div>
 
               <div class="input-block import-card">
+                <h2>SOCIETY</h2>
+                <div class="input-group">
+                  <label for="societyImport">Paste SOCIETY output</label>
+                  <textarea id="societyImport" rows="7" placeholder="Paste SOCIETY block"></textarea>
+                </div>
+                <div class="helper" id="societyImportStatus">Paste SOCIETY to load society and rank.</div>
+              </div>
+
+              <div class="input-block import-card">
                 <h2>ASC LIST</h2>
                 <div class="input-group">
                   <label for="ascImport">Paste ASC LIST output</label>
@@ -156,6 +165,25 @@
                   <label for="profileProfession">Profession</label>
                   <div class="input-row">
                     <select id="profileProfession"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="profileSociety">Society</label>
+                  <div class="input-row">
+                    <select id="profileSociety">
+                      <option value="">None</option>
+                      <option value="col">Council of Light</option>
+                      <option value="voln">Order of Voln</option>
+                      <option value="sunfist">Guardians of Sunfist</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="profileSocietyRank">Society rank</label>
+                  <div class="input-row">
+                    <input id="profileSocietyRank" type="number" min="0" step="1" value="0" />
                   </div>
                 </div>
 
@@ -495,6 +523,7 @@
               <ul>
                 <li><a href="https://gswiki.play.net/INFO" target="_blank" rel="noopener noreferrer">GSWiki: INFO</a></li>
                 <li><a href="https://gswiki.play.net/SKILLS" target="_blank" rel="noopener noreferrer">GSWiki: SKILLS</a></li>
+                <li><a href="https://gswiki.play.net/Society" target="_blank" rel="noopener noreferrer">GSWiki: Society</a></li>
                 <li><a href="https://gswiki.play.net/Ascension" target="_blank" rel="noopener noreferrer">GSWiki: Ascension</a></li>
               </ul>
             </section>
@@ -506,7 +535,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.2.33"></script>
-    <script src="../site.js?v=0.2.33"></script>
+    <script src="../shared.js?v=0.2.35"></script>
+    <script src="../site.js?v=0.2.35"></script>
   </body>
 </html>
