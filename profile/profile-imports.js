@@ -215,10 +215,9 @@
       if (!society) return null;
 
       const rankMatch = source.match(/(?:Step|Rank)\s+(\d+)\s+of\s+\d+/i);
-      if (!rankMatch) return null;
       return {
         society,
-        rank: Math.max(0, Math.trunc(Number(rankMatch[1]) || 0)),
+        rank: rankMatch ? Math.max(0, Math.trunc(Number(rankMatch[1]) || 0)) : 0,
       };
     }
 

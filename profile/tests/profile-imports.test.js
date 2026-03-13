@@ -246,3 +246,10 @@ test("parseSocietyBlock returns null for unparseable text", () => {
   const parsed = parsers.parseSocietyBlock(`not society text`);
   assert.equal(parsed, null);
 });
+
+test("parseSocietyBlock preserves society when rank line is missing", () => {
+  const parsed = parsers.parseSocietyBlock(`
+You are a Master of the Order of Voln.
+  `);
+  assert.deepEqual(parsed, { society: "voln", rank: 0 });
+});

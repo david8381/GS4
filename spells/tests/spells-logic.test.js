@@ -655,6 +655,20 @@ test("303 Prayer of Protection gains DS all from Cleric ranks above 3", () => {
   assert.equal(totals.bolt_ds, 20);
 });
 
+test("102 Spirit Barrier gains DS all from Minor Spiritual ranks above 2", () => {
+  const barrier = spellsData.buff_spells.find((spell) => spell.id === 102);
+  const totals = logic.calculateSpellModifiers(
+    barrier,
+    "self",
+    { level: 20, minor_spiritual_ranks: 10 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 28);
+  assert.equal(totals.bolt_ds, 28);
+  assert.equal(totals.as_physical, -20);
+});
+
 test("613 Self Control uses spiritual TD only and scales DS/TD correctly", () => {
   const selfControl = spellsData.buff_spells.find((spell) => spell.id === 613);
   const totals = logic.calculateSpellModifiers(
@@ -688,6 +702,40 @@ test("625 Nature's Touch starts scaling above 27 Ranger ranks", () => {
 
   assert.equal(below.td_spiritual, 1);
   assert.equal(above.td_spiritual, 2);
+});
+
+test("1220 Premonition gains DS all from Minor Mental ranks above 20", () => {
+  const premonition = spellsData.buff_spells.find((spell) => spell.id === 1220);
+  const totals = logic.calculateSpellModifiers(
+    premonition,
+    "self",
+    { level: 60, minor_mental_ranks: 35 },
+    spellsData
+  );
+
+  assert.equal(totals.non_bolt_ds, 35);
+  assert.equal(totals.bolt_ds, 35);
+});
+
+test("601 and 602 Blessings lore scaling is not prematurely capped at +9", () => {
+  const naturalColors = spellsData.buff_spells.find((spell) => spell.id === 601);
+  const resistElements = spellsData.buff_spells.find((spell) => spell.id === 602);
+  const naturalTotals = logic.calculateSpellModifiers(
+    naturalColors,
+    "self",
+    { spiritual_lore_blessings_ranks: 143 },
+    spellsData
+  );
+  const resistTotals = logic.calculateSpellModifiers(
+    resistElements,
+    "self",
+    { spiritual_lore_blessings_ranks: 143 },
+    spellsData
+  );
+
+  assert.equal(naturalTotals.non_bolt_ds, 23);
+  assert.equal(naturalTotals.bolt_ds, 23);
+  assert.equal(resistTotals.bolt_ds, 28);
 });
 
 test("1010 Song of Valor gains DS all from Bard ranks above 10", () => {

@@ -32,7 +32,7 @@
 
     return {
       ...record,
-      society: record?.society?.key ? record.society : (existing?.society || { key: null, rank: 0 }),
+      society: record?.society || existing?.society || { key: null, rank: 0 },
       ascension: existing.ascension || record.ascension,
       enhancive: existing.enhancive || record.enhancive,
       equipment: {

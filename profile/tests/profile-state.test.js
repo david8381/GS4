@@ -91,7 +91,7 @@ test("mergeImportedProfileState keeps existing enhancive equipment when there is
   assert.equal(merged.equipment.enhancives.manualResolutions.items[0].id, "manual-1");
 });
 
-test("mergeImportedProfileState preserves existing society when incoming record has no society", () => {
+test("mergeImportedProfileState uses incoming society even when key is null (user left society)", () => {
   const merged = profileState.mergeImportedProfileState({
     existing: {
       society: { key: "voln", rank: 14 },
@@ -108,7 +108,7 @@ test("mergeImportedProfileState preserves existing society when incoming record 
     normalizeEnhanciveEquipmentState: enhanciveImport.normalizeEnhanciveEquipmentState,
   });
 
-  assert.deepEqual(merged.society, { key: "voln", rank: 14 });
+  assert.deepEqual(merged.society, { key: null, rank: 0 });
 });
 
 test("rebuildImportedEnhanciveState preserves manual resolutions when requested", () => {

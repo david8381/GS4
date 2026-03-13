@@ -5,6 +5,12 @@
     root.ProfileEvents = factory();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  function clampSocietyRankValue(societyKey, rankValue) {
+    const max = societyKey === "voln" ? 26 : (societyKey ? 20 : 0);
+    const parsed = Math.max(0, Math.trunc(Number(rankValue) || 0));
+    return Math.min(parsed, max);
+  }
+
   function bindTextParsingEvents(element, handler) {
     if (!element || typeof handler !== "function") return;
     element.addEventListener("input", handler);
@@ -396,10 +402,12 @@
           return;
         }
         if (profileSociety) profileSociety.value = parsed.society || "";
-        if (profileSocietyRank) profileSocietyRank.value = String(Math.max(0, Math.trunc(Number(parsed.rank) || 0)));
+        if (profileSocietyRank) {
+          profileSocietyRank.value = String(clampSocietyRankValue(parsed.society, parsed.rank));
+        }
         if (societyImportStatus) {
           societyImportStatus.textContent = parsed.society
-            ? `Loaded ${parsed.society.toUpperCase()} rank ${parsed.rank}.`
+            ? `Loaded ${parsed.society.toUpperCase()} rank ${profileSocietyRank ? profileSocietyRank.value : parsed.rank}.`
             : "Loaded: no society membership.";
           societyImportStatus.style.color = "";
         }
@@ -552,7 +560,11 @@
 
     profileSociety?.addEventListener("change", () => {
       if (!profileSocietyRank) return;
-      if (!profileSociety.value) profileSocietyRank.value = "0";
+      profileSocietyRank.value = String(clampSocietyRankValue(profileSociety.value, profileSocietyRank.value));
+    });
+
+    profileSocietyRank?.addEventListener("change", () => {
+      profileSocietyRank.value = String(clampSocietyRankValue(profileSociety?.value || "", profileSocietyRank.value));
     });
   }
 
