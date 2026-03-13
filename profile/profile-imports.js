@@ -206,15 +206,24 @@
         return { society: null, rank: 0 };
       }
 
+      const currentStatusLine =
+        source.split(/\r?\n/).find((line) => /You are .*?(Council of Light|Order of Voln|Guardians of Sunfist)/i.test(line))
+        || "";
+
       const society =
-        (/Council of Light/i.test(source) && "col")
-        || (/Order of Voln/i.test(source) && "voln")
-        || (/Guardians of Sunfist/i.test(source) && "sunfist")
-        || null;
+        (/Council of Light/i.test(currentStatusLine) && "col")
+        || (/Order of Voln/i.test(currentStatusLine) && "voln")
+        || (/Guardians of Sunfist/i.test(currentStatusLine) && "sunfist")
+        || ((/Council of Light/i.test(source) && "col")
+          || (/Order of Voln/i.test(source) && "voln")
+          || (/Guardians of Sunfist/i.test(source) && "sunfist")
+          || null);
 
       if (!society) return null;
 
-      const rankMatch = source.match(/(?:Step|Rank)\s+(\d+)\s+of\s+\d+/i);
+      const rankMatch =
+        source.match(/(?:Step|Rank)\s+(\d+)\s+of\s+\d+/i)
+        || source.match(/at\s+(?:step|rank)\s+(\d+)\b/i);
       return {
         society,
         rank: rankMatch ? Math.max(0, Math.trunc(Number(rankMatch[1]) || 0)) : 0,

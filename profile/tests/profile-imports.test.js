@@ -253,3 +253,17 @@ You are a Master of the Order of Voln.
   `);
   assert.deepEqual(parsed, { society: "voln", rank: 0 });
 });
+
+test("parseSocietyBlock parses current society status format", () => {
+  const parsed = parsers.parseSocietyBlock(`
+Current society status:
+   You are a member in the Order of Voln at step 12.
+
+You have learned and are able to use the following abilities:
+   Symbol of Recognition
+
+Past society affiliations (resigned or cast out):
+   The Council of Light
+  `);
+  assert.deepEqual(parsed, { society: "voln", rank: 12 });
+});
