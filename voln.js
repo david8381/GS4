@@ -295,14 +295,18 @@
     const remaining = nextCost != null && sinceStepValue != null ? Math.max(0, nextCost - sinceStepValue) : null;
 
     currentFavorEl.textContent = formatNumber(currentFavorValue);
-    if (sinceStepValue != null && nextCost != null) {
-      stepProgressEl.textContent = `${formatNumber(sinceStepValue)} / ${formatNumber(nextCost)}`;
-    } else if (nextCost != null) {
-      stepProgressEl.textContent = `— / ${formatNumber(nextCost)}`;
-    } else {
-      stepProgressEl.textContent = "—";
+    if (stepProgressEl) {
+      if (sinceStepValue != null && nextCost != null) {
+        stepProgressEl.textContent = `${formatNumber(sinceStepValue)} / ${formatNumber(nextCost)}`;
+      } else if (nextCost != null) {
+        stepProgressEl.textContent = `— / ${formatNumber(nextCost)}`;
+      } else {
+        stepProgressEl.textContent = "—";
+      }
     }
-    remainingFavorEl.textContent = remaining != null ? `${formatNumber(remaining)} remaining` : "—";
+    if (remainingFavorEl) {
+      remainingFavorEl.textContent = remaining != null ? `${formatNumber(remaining)} remaining` : "—";
+    }
 
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
   }
@@ -380,7 +384,8 @@
   }
 
   function flagReload() {
-    if (profileLoadBtn) profileLoadBtn.classList.add("attention");
+    if (profileLoadBtn) { profileLoadBtn.disabled = false; profileLoadBtn.classList.add("attention"); }
+    if (profileSaveBtn) { profileSaveBtn.disabled = false; profileSaveBtn.classList.add("success-attention"); }
   }
 
   function doLoadProfile() {

@@ -1,0 +1,1642 @@
+{
+  "id": "profile-1772946419610",
+  "name": "Sajehn",
+  "race": "Dark Elf",
+  "profession": "Sorcerer",
+  "level": 80,
+  "experience": 5497246,
+  "ascensionExperience": 972896,
+  "ascensionMilestones": 4,
+  "ascensionAbilities": [
+    {
+      "name": "Agility",
+      "mnemonic": "agility",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 5
+    },
+    {
+      "name": "Aura",
+      "mnemonic": "aura",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 5
+    },
+    {
+      "name": "Constitution",
+      "mnemonic": "constitution",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Dexterity",
+      "mnemonic": "dexterity",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Discipline",
+      "mnemonic": "discipline",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Influence",
+      "mnemonic": "influence",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Intuition",
+      "mnemonic": "intuition",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Logic",
+      "mnemonic": "logic",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Strength",
+      "mnemonic": "strength",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 5
+    },
+    {
+      "name": "Wisdom",
+      "mnemonic": "wisdom",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Stat",
+      "ranks": 0
+    },
+    {
+      "name": "Ambush",
+      "mnemonic": "ambush",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Arcane Symbols",
+      "mnemonic": "arcanesymbols",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Armor Use",
+      "mnemonic": "armoruse",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Blunt Weapons",
+      "mnemonic": "bluntweapons",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Brawling",
+      "mnemonic": "brawling",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Climbing",
+      "mnemonic": "climbing",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Combat Maneuvers",
+      "mnemonic": "combatmaneuvers",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Disarming Traps",
+      "mnemonic": "disarmingtraps",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Dodging",
+      "mnemonic": "dodging",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Edged Weapons",
+      "mnemonic": "edgedweapons",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Elemental Lore - Air",
+      "mnemonic": "elair",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Elemental Lore - Ear",
+      "mnemonic": "elearth",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Elemental Lore - Fir",
+      "mnemonic": "elfire",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Elemental Lore - Wat",
+      "mnemonic": "elwater",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Elemental Mana Contr",
+      "mnemonic": "elementalmc",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "First Aid",
+      "mnemonic": "firstaid",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Harness Power",
+      "mnemonic": "harnesspower",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Magic Item Use",
+      "mnemonic": "magicitemuse",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Lore - Divina",
+      "mnemonic": "mldivination",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Lore - Manipu",
+      "mnemonic": "mlmanipulation",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Lore - Telepa",
+      "mnemonic": "mltelepathy",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Lore - Transf",
+      "mnemonic": "mltransference",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Lore - Transf",
+      "mnemonic": "mltransform",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Mental Mana Control",
+      "mnemonic": "mentalmc",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Multi Opponent Comba",
+      "mnemonic": "multiopponent",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Perception",
+      "mnemonic": "perception",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Physical Fitness",
+      "mnemonic": "physicalfitness",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Picking Locks",
+      "mnemonic": "pickinglocks",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Picking Pockets",
+      "mnemonic": "pickingpockets",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Polearm Weapons",
+      "mnemonic": "polearmsweapons",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Ranged Weapons",
+      "mnemonic": "rangedweapons",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Shield Use",
+      "mnemonic": "shielduse",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Sorcerous Lore - Dem",
+      "mnemonic": "soldemonology",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Sorcerous Lore - Nec",
+      "mnemonic": "solnecromancy",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Spell Aiming",
+      "mnemonic": "spellaiming",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Spirit Mana Control",
+      "mnemonic": "spiritmc",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Spiritual Lore - Ble",
+      "mnemonic": "slblessings",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Spiritual Lore - Rel",
+      "mnemonic": "slreligion",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Spiritual Lore - Sum",
+      "mnemonic": "slsummoning",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Stalking and Hiding",
+      "mnemonic": "stalking",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Survival",
+      "mnemonic": "survival",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Swimming",
+      "mnemonic": "swimming",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Thrown Weapons",
+      "mnemonic": "thrownweapons",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Trading",
+      "mnemonic": "trading",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Two Weapon Combat",
+      "mnemonic": "twoweaponcombat",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Two-Handed Weapons",
+      "mnemonic": "twohandedweapon",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Skill",
+      "ranks": 0
+    },
+    {
+      "name": "Acid Resistance",
+      "mnemonic": "resistacid",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Cold Resistance",
+      "mnemonic": "resistcold",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Crush Resistance",
+      "mnemonic": "resistcrush",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Disintegration Resis",
+      "mnemonic": "resistdisintegr",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Disruption Resistanc",
+      "mnemonic": "resistdisruptio",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Electric Resistance",
+      "mnemonic": "resistelectric",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Grapple Resistance",
+      "mnemonic": "resistgrapple",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Heat Resistance",
+      "mnemonic": "resistheat",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Impact Resistance",
+      "mnemonic": "resistimpact",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Plasma Resistance",
+      "mnemonic": "resistplasma",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Puncture Resistance",
+      "mnemonic": "resistpuncture",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Slash Resistance",
+      "mnemonic": "resistslash",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Steam Resistance",
+      "mnemonic": "resiststeam",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Unbalance Resistance",
+      "mnemonic": "resistunbalance",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Vacuum Resistance",
+      "mnemonic": "resistvacuum",
+      "cap": 40,
+      "category": "Common",
+      "subcategory": "Passive Common Resist",
+      "ranks": 0
+    },
+    {
+      "name": "Health Regeneration",
+      "mnemonic": "regenhealth",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Regen",
+      "ranks": 0
+    },
+    {
+      "name": "Mana Regeneration",
+      "mnemonic": "regenmana",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Regen",
+      "ranks": 0
+    },
+    {
+      "name": "Stamina Regeneration",
+      "mnemonic": "regenstamina",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Regen",
+      "ranks": 0
+    },
+    {
+      "name": "Porter",
+      "mnemonic": "porter",
+      "cap": 50,
+      "category": "Common",
+      "subcategory": "Passive Common Other",
+      "ranks": 0
+    },
+    {
+      "name": "Transcend Destiny",
+      "mnemonic": "trandest",
+      "cap": 10,
+      "category": "Common",
+      "subcategory": "Passive Elite Other",
+      "ranks": 0
+    }
+  ],
+  "level0Stats": {
+    "str": 70,
+    "con": 40,
+    "dex": 70,
+    "agi": 70,
+    "dis": 70,
+    "aur": 90,
+    "log": 70,
+    "int": 70,
+    "wis": 90,
+    "inf": 20
+  },
+  "stats": {
+    "str": {
+      "base": 82,
+      "enhanced": 87
+    },
+    "con": {
+      "base": 63,
+      "enhanced": 63
+    },
+    "dex": {
+      "base": 98,
+      "enhanced": 98
+    },
+    "agi": {
+      "base": 93,
+      "enhanced": 98
+    },
+    "dis": {
+      "base": 96,
+      "enhanced": 96
+    },
+    "aur": {
+      "base": 100,
+      "enhanced": 105
+    },
+    "log": {
+      "base": 98,
+      "enhanced": 98
+    },
+    "int": {
+      "base": 93,
+      "enhanced": 93
+    },
+    "wis": {
+      "base": 100,
+      "enhanced": 100
+    },
+    "inf": {
+      "base": 66,
+      "enhanced": 66
+    }
+  },
+  "ascension": {
+    "stats": {
+      "str": {
+        "stat": 5,
+        "bonus": 0
+      },
+      "con": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "dex": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "agi": {
+        "stat": 5,
+        "bonus": 0
+      },
+      "dis": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "aur": {
+        "stat": 5,
+        "bonus": 0
+      },
+      "log": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "int": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "wis": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "inf": {
+        "stat": 0,
+        "bonus": 0
+      }
+    },
+    "skills": {
+      "armor use": {
+        "bonus": 0
+      },
+      "shield use": {
+        "bonus": 0
+      },
+      "combat maneuvers": {
+        "bonus": 0
+      },
+      "edged weapons": {
+        "bonus": 0
+      },
+      "blunt weapons": {
+        "bonus": 0
+      },
+      "two-handed weapons": {
+        "bonus": 0
+      },
+      "ranged weapons": {
+        "bonus": 0
+      },
+      "thrown weapons": {
+        "bonus": 0
+      },
+      "polearm weapons": {
+        "bonus": 0
+      },
+      "brawling": {
+        "bonus": 0
+      },
+      "two weapon combat": {
+        "bonus": 0
+      },
+      "ambush": {
+        "bonus": 0
+      },
+      "multi opponent combat": {
+        "bonus": 0
+      },
+      "physical fitness": {
+        "bonus": 0
+      },
+      "dodging": {
+        "bonus": 0
+      },
+      "arcane symbols": {
+        "bonus": 0
+      },
+      "magic item use": {
+        "bonus": 0
+      },
+      "spell aiming": {
+        "bonus": 0
+      },
+      "harness power": {
+        "bonus": 0
+      },
+      "elemental mana control": {
+        "bonus": 0
+      },
+      "mental mana control": {
+        "bonus": 0
+      },
+      "spirit mana control": {
+        "bonus": 0
+      },
+      "elemental lore - air": {
+        "bonus": 0
+      },
+      "elemental lore - earth": {
+        "bonus": 0
+      },
+      "elemental lore - fire": {
+        "bonus": 0
+      },
+      "elemental lore - water": {
+        "bonus": 0
+      },
+      "spiritual lore - blessings": {
+        "bonus": 0
+      },
+      "spiritual lore - religion": {
+        "bonus": 0
+      },
+      "spiritual lore - summoning": {
+        "bonus": 0
+      },
+      "sorcerous lore - demonology": {
+        "bonus": 0
+      },
+      "sorcerous lore - necromancy": {
+        "bonus": 0
+      },
+      "mental lore - divination": {
+        "bonus": 0
+      },
+      "mental lore - manipulation": {
+        "bonus": 0
+      },
+      "mental lore - telepathy": {
+        "bonus": 0
+      },
+      "mental lore - transference": {
+        "bonus": 0
+      },
+      "mental lore - transformation": {
+        "bonus": 0
+      },
+      "stalking and hiding": {
+        "bonus": 0
+      },
+      "perception": {
+        "bonus": 0
+      },
+      "climbing": {
+        "bonus": 0
+      },
+      "swimming": {
+        "bonus": 0
+      },
+      "disarming traps": {
+        "bonus": 0
+      },
+      "picking locks": {
+        "bonus": 0
+      },
+      "picking pockets": {
+        "bonus": 0
+      },
+      "first aid": {
+        "bonus": 0
+      },
+      "survival": {
+        "bonus": 0
+      },
+      "trading": {
+        "bonus": 0
+      },
+      "minor elemental": {
+        "bonus": 0
+      },
+      "major elemental": {
+        "bonus": 0
+      },
+      "minor spiritual": {
+        "bonus": 0
+      },
+      "major spiritual": {
+        "bonus": 0
+      },
+      "minor mental": {
+        "bonus": 0
+      },
+      "major mental": {
+        "bonus": 0
+      },
+      "wizard": {
+        "bonus": 0
+      },
+      "bard": {
+        "bonus": 0
+      },
+      "cleric": {
+        "bonus": 0
+      },
+      "empath": {
+        "bonus": 0
+      },
+      "ranger": {
+        "bonus": 0
+      },
+      "paladin": {
+        "bonus": 0
+      },
+      "sorcerer": {
+        "bonus": 0
+      },
+      "monk": {
+        "bonus": 0
+      }
+    }
+  },
+  "enhancive": {
+    "stats": {
+      "str": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "con": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "dex": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "agi": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "dis": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "aur": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "log": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "int": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "wis": {
+        "stat": 0,
+        "bonus": 0
+      },
+      "inf": {
+        "stat": 0,
+        "bonus": 0
+      }
+    },
+    "skills": {
+      "armor use": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "shield use": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "combat maneuvers": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "edged weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "blunt weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "two-handed weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "ranged weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "thrown weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "polearm weapons": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "brawling": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "two weapon combat": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "ambush": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "multi opponent combat": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "physical fitness": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "dodging": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "arcane symbols": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "magic item use": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "spell aiming": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "harness power": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "elemental mana control": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental mana control": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "spirit mana control": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "elemental lore - air": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "elemental lore - earth": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "elemental lore - fire": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "elemental lore - water": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "spiritual lore - blessings": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "spiritual lore - religion": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "spiritual lore - summoning": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "sorcerous lore - demonology": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "sorcerous lore - necromancy": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental lore - divination": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental lore - manipulation": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental lore - telepathy": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental lore - transference": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "mental lore - transformation": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "stalking and hiding": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "perception": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "climbing": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "swimming": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "disarming traps": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "picking locks": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "picking pockets": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "first aid": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "survival": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "trading": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "minor elemental": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "major elemental": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "minor spiritual": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "major spiritual": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "minor mental": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "major mental": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "wizard": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "bard": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "cleric": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "empath": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "ranger": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "paladin": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "sorcerer": {
+        "rank": 0,
+        "bonus": 0
+      },
+      "monk": {
+        "rank": 0,
+        "bonus": 0
+      }
+    }
+  },
+  "equipment": {
+    "enhancives": {
+      "enhancivesEnabled": true,
+      "lastImportedAt": "2026-03-08T05:06:59.592Z",
+      "raw": {
+        "list": "You are not holding any enhancive items.\nYou are wearing the following enhancive items:\n  a <a exist=\"88621916\" noun=\"locus\">gilded locus</a>\n  a <a exist=\"88621917\" noun=\"badge\">tin-bound ceramic badge</a>\n(Items: 2)\nFor more information, see <d>INVENTORY ENHANCIVE TOTALS</d>.\n<prompt time=\"1772946431\">s&gt;</prompt>",
+        "totals": "<popBold/>  Enhancive Items: 2\n  Enhancive Properties: 2\n  Total Enhancive Amount: 5\n<output class=\"\"/>\nFor more details, see <d>INVENTORY ENHANCIVE TOTALS DETAILS</d>.\n<prompt time=\"1772946432\">s&gt;</prompt>",
+        "totalsDetails": "<popBold/>  Enhancive Items: 2\n  Enhancive Properties: 2\n  Total Enhancive Amount: 5\n<output class=\"\"/>\nFor fewer details, see <d>INVENTORY ENHANCIVE TOTALS</d>.\n<prompt time=\"1772946432\">s&gt;</prompt>"
+      },
+      "importedSnapshot": {
+        "items": [
+          {
+            "id": "import-list-1",
+            "name": "a <a exist=\"88621916\" noun=\"locus\">gilded locus</a>",
+            "worn": true,
+            "active": true,
+            "source": "import",
+            "effects": [
+
+            ]
+          },
+          {
+            "id": "import-list-2",
+            "name": "a <a exist=\"88621917\" noun=\"badge\">tin-bound ceramic badge</a>",
+            "worn": true,
+            "active": true,
+            "source": "import",
+            "effects": [
+
+            ]
+          },
+          {
+            "id": "import-list-3",
+            "name": "<prompt time=\"1772946431\">s&gt;</prompt>",
+            "worn": true,
+            "active": true,
+            "source": "import",
+            "effects": [
+
+            ]
+          }
+        ],
+        "unresolved": [
+
+        ],
+        "summary": {
+          "itemCount": 3,
+          "propertyCount": 0,
+          "totalAmount": 0
+        }
+      },
+      "manualResolutions": {
+        "items": [
+
+        ],
+        "resolvedFromImported": [
+
+        ]
+      }
+    }
+  },
+  "skills": [
+    {
+      "name": "Armor Use",
+      "ranks": 2,
+      "finalRanks": 2,
+      "bonus": 10
+    },
+    {
+      "name": "Shield Use",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Combat Maneuvers",
+      "ranks": 20,
+      "finalRanks": 20,
+      "bonus": 90
+    },
+    {
+      "name": "Edged Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Blunt Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Two-Handed Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Ranged Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Thrown Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Polearm Weapons",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Brawling",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Two Weapon Combat",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Ambush",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Multi Opponent Combat",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Physical Fitness",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Dodging",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Arcane Symbols",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Magic Item Use",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Spell Aiming",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Harness Power",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Elemental Mana Control",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Mental Mana Control",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Spirit Mana Control",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Elemental Lore - Air",
+      "ranks": 12,
+      "finalRanks": 12,
+      "bonus": 58
+    },
+    {
+      "name": "Elemental Lore - Earth",
+      "ranks": 14,
+      "finalRanks": 14,
+      "bonus": 66
+    },
+    {
+      "name": "Elemental Lore - Fire",
+      "ranks": 12,
+      "finalRanks": 12,
+      "bonus": 58
+    },
+    {
+      "name": "Elemental Lore - Water",
+      "ranks": 12,
+      "finalRanks": 12,
+      "bonus": 58
+    },
+    {
+      "name": "Spiritual Lore - Blessings",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Spiritual Lore - Religion",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Spiritual Lore - Summoning",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Sorcerous Lore - Demonology",
+      "ranks": 50,
+      "finalRanks": 50,
+      "bonus": 150
+    },
+    {
+      "name": "Sorcerous Lore - Necromancy",
+      "ranks": 30,
+      "finalRanks": 30,
+      "bonus": 120
+    },
+    {
+      "name": "Mental Lore - Divination",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Mental Lore - Manipulation",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Mental Lore - Telepathy",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Mental Lore - Transference",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Mental Lore - Transformation",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Stalking and Hiding",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Perception",
+      "ranks": 160,
+      "finalRanks": 160,
+      "bonus": 260
+    },
+    {
+      "name": "Climbing",
+      "ranks": 50,
+      "finalRanks": 50,
+      "bonus": 150
+    },
+    {
+      "name": "Swimming",
+      "ranks": 40,
+      "finalRanks": 40,
+      "bonus": 140
+    },
+    {
+      "name": "Disarming Traps",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Picking Locks",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Picking Pockets",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "First Aid",
+      "ranks": 160,
+      "finalRanks": 160,
+      "bonus": 260
+    },
+    {
+      "name": "Survival",
+      "ranks": 80,
+      "finalRanks": 80,
+      "bonus": 180
+    },
+    {
+      "name": "Trading",
+      "ranks": 41,
+      "finalRanks": 41,
+      "bonus": 141
+    },
+    {
+      "name": "Minor Elemental",
+      "ranks": 35,
+      "finalRanks": 35,
+      "bonus": 130
+    },
+    {
+      "name": "Major Elemental",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Minor Spiritual",
+      "ranks": 25,
+      "finalRanks": 25,
+      "bonus": 105
+    },
+    {
+      "name": "Major Spiritual",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Minor Mental",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Major Mental",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Wizard",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Bard",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Cleric",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Empath",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Ranger",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Paladin",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    },
+    {
+      "name": "Sorcerer",
+      "ranks": 100,
+      "finalRanks": 100,
+      "bonus": 200
+    },
+    {
+      "name": "Monk",
+      "ranks": 0,
+      "finalRanks": 0,
+      "bonus": 0
+    }
+  ],
+  "defaults": {
+    "armorAsg": "none",
+    "armorWeight": 0,
+    "useCustomArmorBase": false,
+    "armorBaseWeight": 0,
+    "accessoryWeight": 0,
+    "gearWeight": 0,
+    "silvers": 0,
+    "badge": {
+      "lifetimeBp": 0,
+      "components": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "boosts": [
+        {
+          "id": 1,
+          "value": 0
+        },
+        {
+          "id": 22,
+          "value": 0
+        },
+        {
+          "id": 87,
+          "value": 0
+        }
+      ]
+    }
+  }
+}
