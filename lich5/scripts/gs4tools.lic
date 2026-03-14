@@ -132,7 +132,6 @@ def compact_payload_for_url(payload)
       skills: sanitize_block_for_hash(blocks[:skills]),
       exp: sanitize_block_for_hash(blocks[:exp]),
       society: sanitize_block_for_hash(blocks[:society]),
-      resources: sanitize_block_for_hash(blocks[:resources]),
       ascList: sanitize_block_for_hash(blocks[:ascList]),
       ascMilestones: sanitize_block_for_hash(blocks[:ascMilestones]),
       enhanciveList: sanitize_block_for_hash(blocks[:enhanciveList]),
@@ -475,7 +474,7 @@ def collect_voln_blocks
   payload = {
     version: [existing_payload[:version].to_i, 2].max,
     character: existing_payload[:character] || character_name,
-    collectedAt: Time.now.utc.iso8601,
+    collectedAt: existing_payload[:collectedAt] || Time.now.utc.iso8601,
     blocks: blocks.merge(
       society: society,
       resources: resources
@@ -485,7 +484,7 @@ def collect_voln_blocks
     society: society,
     resources: resources,
     previous_payload: existing_payload,
-    collected_at: payload[:collectedAt]
+    collected_at: Time.now.utc.iso8601
   )
 
   File.write(data_path, JSON.pretty_generate(payload))

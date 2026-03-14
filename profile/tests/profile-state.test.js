@@ -149,3 +149,52 @@ test("rebuildImportedEnhanciveState preserves manual resolutions when requested"
   assert.equal(rebuilt.manualResolutions.items[0].id, "manual-1");
   assert.equal(rebuilt.lastImportedAt, "2026-03-09T00:00:00Z");
 });
+
+test("comparableProfile preserves society favor data", () => {
+  const comparable = profileState.comparableProfile({
+    record: {
+      name: "Sajehn",
+      race: "Dark Elf",
+      profession: "Sorcerer",
+      society: {
+        key: "voln",
+        rank: 12,
+        favor: {
+          current: 38027907,
+          atLastStepChange: 37500000,
+          history: [{ step: 12, favor: 37500000, previousStep: 11, timestamp: "2026-03-01T00:00:00Z" }],
+          lastUpdated: "2026-03-13T01:02:03Z",
+        },
+      },
+      level: 80,
+      experience: 5504113,
+      stats: { str: { base: 70, enhanced: 70 } },
+      ascension: { stats: {}, skills: {} },
+      enhancive: { stats: {}, skills: {} },
+      equipment: { enhancives: enhanciveImport.defaultEnhanciveEquipmentState() },
+      skills: [],
+      defaults: { badge: null },
+    },
+    stats: [{ key: "str" }],
+    mergeSkillsWithCatalog(skills) { return skills; },
+    skillKey(name) { return String(name || "").toLowerCase(); },
+    normalizeSkillEntry(skill) { return { name: skill?.name || "", ranks: Number(skill?.ranks) || 0 }; },
+    skillBonusFromRanks(ranks) { return Number(ranks) || 0; },
+    normalizeBadgeDefaults,
+    normalizeEnhanciveEquipmentState: enhanciveImport.normalizeEnhanciveEquipmentState,
+    normalizeAscensionAbilities(entries) { return entries || []; },
+    clamp(value, min, max) { return Math.min(Math.max(Number(value) || 0, min), max); },
+    experienceForLevel(level) { return Number(level) || 0; },
+  });
+
+  assert.deepEqual(comparable.society, {
+    key: "voln",
+    rank: 12,
+    favor: {
+      current: 38027907,
+      atLastStepChange: 37500000,
+      history: [{ step: 12, favor: 37500000, previousStep: 11, timestamp: "2026-03-01T00:00:00Z" }],
+      lastUpdated: "2026-03-13T01:02:03Z",
+    },
+  });
+});

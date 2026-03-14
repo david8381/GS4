@@ -151,6 +151,7 @@
       society: {
         key: String(record?.society?.key || "").trim().toLowerCase() || null,
         rank: Math.max(0, Math.trunc(Number(record?.society?.rank) || 0)),
+        favor: record?.society?.favor || null,
       },
       level: clamp(Number(record?.level), 0, 100),
       experience: Math.max(0, Math.trunc(Number(record?.experience) || experienceForLevel(record?.level))),
