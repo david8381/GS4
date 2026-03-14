@@ -277,7 +277,7 @@
       lastUpdated.textContent = "No captured favor yet";
       atLastStepChange.textContent = "Favor at last step change: —";
       remainingFavor.textContent = "Remaining to next step: —";
-      status.textContent = "Load a Voln character profile to review captured favor progress.";
+      status.textContent = "Select a Voln character profile to review captured favor progress.";
       status.style.color = "";
       if (atLastStepInput) atLastStepInput.value = "";
       if (currentLevelInput) currentLevelInput.value = "";
@@ -331,8 +331,8 @@
     atLastStepChange.textContent = `Favor at last step change: ${formatNumber(atLastStepValue)}`;
     remainingFavor.textContent = `Remaining to next step: ${formatNumber(remaining)}`;
     status.textContent = favor
-      ? "Voln favor progress is loaded from the profile snapshot."
-      : "No favor snapshot stored yet. Run ;gs4tools sync or ;gs4tools collect voln.";
+      ? `Showing favor data for ${profile.name || "selected profile"}.`
+      : "No favor snapshot stored. Run ;gs4tools sync or ;gs4tools collect voln.";
     status.style.color = "";
     if (atLastStepInput) {
       atLastStepInput.value = atLastStepValue == null ? "" : String(atLastStepValue);

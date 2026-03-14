@@ -21,49 +21,50 @@
           <p class="eyebrow">Order of Voln</p>
           <h1>Voln Progress</h1>
           <p>
-            Load a profile to review the current Voln step, stored favor snapshot, progress since the last step
+            Review the current Voln step, stored favor snapshot, progress since the last step
             change, and the recent step history captured by <code>;gs4tools sync</code> or <code>;gs4tools collect voln</code>.
           </p>
         </section>
 
         <section class="calc-panel">
           <div class="input-block">
-            <div class="helper" id="volnStatus">Load a Voln character profile to review captured favor progress.</div>
-          </div>
+            <div class="input-group compact-field">
+              <label for="volnCurrentLevelInput">Level</label>
+              <div class="input-row">
+                <input id="volnCurrentLevelInput" type="number" min="0" max="100" step="1" readonly />
+              </div>
+            </div>
 
-          <div class="spell-input-group-card voln-profile-inputs">
-            <h3>Profile Inputs</h3>
-            <div class="spell-input-groups">
-              <div class="spell-input-group-card voln-current-card">
-                <h3>Current</h3>
-                <div class="spell-input-grid two-col">
-                  <div class="input-group compact-field">
-                    <label for="volnCurrentLevelInput">Level</label>
-                    <input id="volnCurrentLevelInput" type="number" min="0" max="100" step="1" readonly />
-                  </div>
-                  <div class="input-group compact-field">
-                    <label for="volnCurrentRankInput">Voln Step</label>
-                    <input id="volnCurrentRankInput" type="number" min="0" max="26" step="1" readonly />
-                  </div>
-                </div>
-              </div>
-              <div class="spell-input-group-card voln-whatif-card">
-                <h3>What-If</h3>
-                <div class="spell-input-grid two-col">
-                  <div class="input-group compact-field">
-                    <label for="volnWhatIfLevelInput">Level</label>
-                    <input id="volnWhatIfLevelInput" type="number" min="0" max="100" step="1" />
-                  </div>
-                  <div class="input-group compact-field">
-                    <label for="volnWhatIfRankInput">Voln Step</label>
-                    <input id="volnWhatIfRankInput" type="number" min="0" max="26" step="1" />
-                  </div>
-                </div>
+            <div class="input-group compact-field">
+              <label for="volnCurrentRankInput">Voln Step</label>
+              <div class="input-row">
+                <input id="volnCurrentRankInput" type="number" min="0" max="26" step="1" readonly />
               </div>
             </div>
-            <div class="helper voln-note">
-              Favor spent on symbols reduces the stored current-favor snapshot, so progress to the next step can look lower than the true total earned since you joined the step.
+
+            <div class="input-group compact-field">
+              <label for="volnWhatIfLevelInput">What-If Level</label>
+              <div class="input-row">
+                <input id="volnWhatIfLevelInput" type="number" min="0" max="100" step="1" />
+              </div>
             </div>
+
+            <div class="input-group compact-field">
+              <label for="volnWhatIfRankInput">What-If Step</label>
+              <div class="input-row">
+                <input id="volnWhatIfRankInput" type="number" min="0" max="26" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="volnAtLastStepInput">Favor at Last Step Change</label>
+              <div class="input-row">
+                <input id="volnAtLastStepInput" type="number" min="0" step="1" inputmode="numeric" />
+                <button class="btn" id="volnAtLastStepSave" type="button">Save</button>
+              </div>
+            </div>
+
+            <div class="helper" id="volnStatus">Select a Voln character profile to review captured favor progress.</div>
           </div>
 
           <div class="summary-block">
@@ -81,13 +82,6 @@
               <div class="summary-title">Since Last Step</div>
               <div class="summary-value" id="volnSinceStep">—</div>
               <div class="summary-sub" id="volnAtLastStepChange">Favor at last step change: —</div>
-              <div class="input-group compact-field">
-                <label for="volnAtLastStepInput">Edit Changeover Favor</label>
-                <div class="input-row">
-                  <input id="volnAtLastStepInput" type="number" min="0" step="1" inputmode="numeric" />
-                  <button class="btn" id="volnAtLastStepSave" type="button">Save</button>
-                </div>
-              </div>
             </div>
             <div class="summary-card">
               <div class="summary-title">Next Step Cost</div>
