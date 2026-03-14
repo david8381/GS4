@@ -35,11 +35,13 @@ def usage
   say ''
   say 'usage:'
   say '  ;gs4tools                 # show status + help'
-  say '  ;gs4tools sync [page]     # collect full snapshot, save local, open profile import or redirect'
-  say '  ;gs4tools collect         # collect full snapshot and save locally'
-  say '  ;gs4tools collect voln    # collect SOCIETY + RESOURCES only and update Voln tracking'
-  say '  ;gs4tools open [page]     # open latest saved snapshot in browser, redirect if page given'
+  say '  ;gs4tools collect         # capture all game data to disk'
+  say '  ;gs4tools collect voln    # capture only Voln data (SOCIETY + RESOURCES)'
+  say '  ;gs4tools open            # open latest snapshot in browser'
+  say '  ;gs4tools open [page]     # open latest snapshot and redirect'
   say '  ;gs4tools open [page] --sync  # sync first, then land on target page'
+  say '  ;gs4tools sync            # collect and open profile import'
+  say '  ;gs4tools sync [page]     # collect and open with redirect'
   say '  ;gs4tools load            # show local raw capture summary'
   say '  ;gs4tools load --raw      # print local raw capture JSON'
   say '  ;gs4tools show            # print local raw capture path'
@@ -296,7 +298,7 @@ def collect_blocks
   say 'collecting RESOURCES...'
   resources = capture_block(
     command: 'resources',
-    start_pattern: /Voln Favor:|Mana:\s*\d+|Stamina:\s*\d+|Spirit:\s*\d+|resources/i,
+    start_pattern: /^\s*(Health|Mana|Stamina|Spirit|Voln Favor):/i,
     timeout_seconds: 10,
     require_prompt: true
   )
@@ -465,7 +467,7 @@ def collect_voln_blocks
   say 'collecting RESOURCES...'
   resources = capture_block(
     command: 'resources',
-    start_pattern: /Voln Favor:|Mana:\s*\d+|Stamina:\s*\d+|Spirit:\s*\d+|resources/i,
+    start_pattern: /^\s*(Health|Mana|Stamina|Spirit|Voln Favor):/i,
     timeout_seconds: 10,
     require_prompt: true
   )
@@ -487,7 +489,7 @@ def collect_voln_blocks
   )
 
   File.write(data_path, JSON.pretty_generate(payload))
-  say "saved #{data_path}"
+  say "updated Voln data in #{data_path}"
   payload
 end
 
@@ -695,10 +697,13 @@ case action
 when 'allow', 'consent'
   grant_consent
 when 'collect'
-  if args[1].to_s.strip.downcase == 'voln'
+  collect_target = args[1].to_s.strip.downcase
+  if collect_target == 'voln'
     collect_voln_blocks
-  else
+  elsif collect_target.empty?
     collect_blocks
+  else
+    say "unknown collect target '#{collect_target}'. valid: voln (or blank for all)"
   end
 when 'open'
   page_key = args[1] ? resolve_page_key(args[1]) : 'profile'
@@ -711,8 +716,7 @@ when 'open'
       open_payload_snapshot(payload, page_key)
       say "opened latest saved snapshot#{page_key == 'profile' ? '' : " and redirected to #{page_key}"}"
     else
-      open_page(page_key)
-      say "no saved snapshot found; opened #{page_key} without sync"
+      say 'no saved data found; run ;gs4tools collect first'
     end
   end
 when 'sync'
