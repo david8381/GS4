@@ -7,7 +7,7 @@
 
   const status = document.getElementById("volnStatus");
   const currentStepEl = document.getElementById("volnCurrentStep");
-  const currentFavorEl = document.getElementById("volnCurrentFavor"); // may be null if summary card removed
+  const currentFavorDisplayEl = document.getElementById("volnCurrentFavorDisplay");
   const stepProgressEl = document.getElementById("volnStepProgress");
   const characterNameEl = document.getElementById("volnCharacterName");
   const lastUpdatedEl = document.getElementById("volnLastUpdated");
@@ -123,48 +123,41 @@
     }
   }
 
-  function escapeAttr(str) {
-    return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/\n/g, "&#10;");
-  }
-
   function explainUseCost(level, useCost) {
     if (!useCost || typeof useCost !== "object") return "";
     const baseReturnCost = calculateSymbolReturnCost(level);
     const baseLine = baseReturnCost != null ? `Symbol of Return cost at level ${level}: ${formatNumber(baseReturnCost)}` : "";
-    let tip = "";
     switch (useCost.mode) {
       case "none":
-        tip = "No favor cost"; break;
+        return "No favor cost";
       case "symbol_return_table":
-        tip = baseLine || "Base Symbol of Return cost by level"; break;
+        return baseLine || "Base Symbol of Return cost by level";
       case "fixed_range":
-        tip = `Fixed cost: ${formatNumber(useCost.min)}-${formatNumber(useCost.max)}`; break;
+        return `Fixed cost: ${formatNumber(useCost.min)}-${formatNumber(useCost.max)}`;
       case "factor":
         if (typeof useCost.relative_cost_factor === "number") {
-          tip = `${(useCost.relative_cost_factor * 100).toFixed(0)}% of Symbol of Return cost\n${baseLine}`;
-        } else if (useCost.relative_cost_factor && typeof useCost.relative_cost_factor === "object") {
+          return `${(useCost.relative_cost_factor * 100).toFixed(0)}% of Symbol of Return cost\n${baseLine}`;
+        }
+        if (useCost.relative_cost_factor && typeof useCost.relative_cost_factor === "object") {
           const parts = Object.entries(useCost.relative_cost_factor)
             .map(([key, factor]) => `${key}: ${(Number(factor) * 100).toFixed(0)}%`);
-          tip = `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
+          return `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
         }
-        break;
+        return "";
       case "variable_factor": {
         const base = (Number(useCost.base_factor || 0) * 100).toFixed(0);
         const max = (Number(useCost.max_factor || useCost.base_factor || 0) * 100).toFixed(0);
-        tip = `${base}%-${max}% of Symbol of Return cost\n${baseLine}`;
-        break;
+        return `${base}%-${max}% of Symbol of Return cost\n${baseLine}`;
       }
       case "variant_factor": {
         const parts = Object.entries(useCost)
           .filter(([key]) => key !== "mode")
           .map(([key, factor]) => `${key}: ${(Number(factor) * 100).toFixed(0)}%`);
-        tip = `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
-        break;
+        return `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
       }
       default:
-        tip = "Variable cost";
+        return "Variable cost";
     }
-    return escapeAttr(tip);
   }
 
   function resolveCombatPreview(ability, effectiveStep) {
@@ -203,8 +196,6 @@
       const whatIfEffectiveStep = whatIfOwned ? whatIfStepValue : Math.max(0, Math.trunc(Number(ability.rank_required) || 0));
       const row = document.createElement("tr");
       row.className = owned ? "voln-owned-row" : "voln-locked-row";
-      const currentTip = explainUseCost(currentLevelValue, ability.use_cost);
-      const whatIfTip = explainUseCost(whatIfLevelValue, ability.use_cost);
       row.innerHTML = `
         <td>${formatNumber(ability.rank_required)}</td>
         <td><strong>${ability.name}</strong></td>
@@ -212,9 +203,14 @@
         <td>${ability.effect_summary || "—"}</td>
         <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, currentEffectiveStep)}${owned ? "" : ` (at step ${formatNumber(currentEffectiveStep)})`}` : "—"}</td>
         <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, whatIfEffectiveStep)}${whatIfOwned ? "" : ` (at step ${formatNumber(whatIfEffectiveStep)})`}` : "—"}</td>
-        <td title="${currentTip}">${formatUseCost(calculateUseCost(currentLevelValue, ability.use_cost))}</td>
-        <td title="${whatIfTip}">${formatUseCost(calculateUseCost(whatIfLevelValue, ability.use_cost))}</td>
+        <td>${formatUseCost(calculateUseCost(currentLevelValue, ability.use_cost))}</td>
+        <td>${formatUseCost(calculateUseCost(whatIfLevelValue, ability.use_cost))}</td>
       `;
+      const cells = row.cells;
+      const currentTip = explainUseCost(currentLevelValue, ability.use_cost);
+      const whatIfTip = explainUseCost(whatIfLevelValue, ability.use_cost);
+      if (currentTip) cells[cells.length - 2].title = currentTip;
+      if (whatIfTip) cells[cells.length - 1].title = whatIfTip;
       abilityTable.appendChild(row);
     });
   }
@@ -311,7 +307,7 @@
     const nextCost = calculateNextStepCost(currentLevel, currentStep);
     const remaining = nextCost != null && sinceStepValue != null ? Math.max(0, nextCost - sinceStepValue) : null;
 
-    if (currentFavorEl) currentFavorEl.textContent = formatNumber(currentFavorValue);
+    if (currentFavorDisplayEl) currentFavorDisplayEl.textContent = formatNumber(currentFavorValue);
     if (stepProgressEl) {
       if (sinceStepValue != null && nextCost != null) {
         stepProgressEl.textContent = `${formatNumber(sinceStepValue)} / ${formatNumber(nextCost)}`;

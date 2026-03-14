@@ -188,25 +188,6 @@
                 </div>
 
                 <div class="input-group compact-field">
-                  <label for="profileSociety">Society</label>
-                  <div class="input-row">
-                    <select id="profileSociety">
-                      <option value="">None</option>
-                      <option value="col">Council of Light</option>
-                      <option value="voln">Order of Voln</option>
-                      <option value="sunfist">Guardians of Sunfist</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="input-group compact-field">
-                  <label for="profileSocietyRank">Society rank</label>
-                  <div class="input-row">
-                    <input id="profileSocietyRank" type="number" min="0" step="1" value="0" />
-                  </div>
-                </div>
-
-                <div class="input-group compact-field">
                   <label for="profileLevel">Current level</label>
                   <div class="input-row">
                     <input id="profileLevel" type="number" min="0" max="100" step="1" value="0" />
@@ -251,24 +232,41 @@
           <div class="collapsible-body">
             <section class="calc-panel">
               <div class="input-block">
+                <div class="input-group inline-actions">
+                  <button class="btn" id="societyProfileLoad" type="button" disabled>Reload from Profile</button>
+                  <button class="btn" id="societyProfileSave" type="button" disabled>Update Profile</button>
+                </div>
+
                 <div class="input-group compact-field">
-                  <label>Society</label>
+                  <label for="profileSociety">Society</label>
                   <div class="input-row">
-                    <span id="profileSocietyDisplay">—</span>
+                    <select id="profileSociety">
+                      <option value="">None</option>
+                      <option value="col">Council of Light</option>
+                      <option value="voln">Order of Voln</option>
+                      <option value="sunfist">Guardians of Sunfist</option>
+                    </select>
                   </div>
                 </div>
 
                 <div class="input-group compact-field">
-                  <label>Society Rank</label>
+                  <label for="profileSocietyRank">Society Rank</label>
                   <div class="input-row">
-                    <span id="profileSocietyRankDisplay">—</span>
+                    <input id="profileSocietyRank" type="number" min="0" step="1" value="0" />
                   </div>
                 </div>
 
                 <div class="input-group compact-field">
-                  <label>Current Favor</label>
+                  <label for="profileCurrentFavor">Current Favor</label>
                   <div class="input-row">
-                    <span id="profileFavorDisplay">—</span>
+                    <input id="profileCurrentFavor" type="number" min="0" step="1" inputmode="numeric" />
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="profileFavorAtLastRank">Favor at Last Rank Change</label>
+                  <div class="input-row">
+                    <input id="profileFavorAtLastRank" type="number" min="0" step="1" inputmode="numeric" />
                   </div>
                 </div>
 
@@ -279,7 +277,7 @@
                   </div>
                 </div>
 
-                <div class="helper" id="profileSocietyFavorStatus">Society and favor data are set via the General section or imported from game data.</div>
+                <div class="helper" id="profileSocietyFavorStatus">Favor data is imported via <code>;gs4tools sync</code> or editable here.</div>
               </div>
             </section>
           </div>
@@ -593,7 +591,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.2.54"></script>
-    <script src="../site.js?v=0.2.54"></script>
+    <script src="../shared.js?v=0.2.55"></script>
+    <script src="../site.js?v=0.2.55"></script>
   </body>
 </html>
