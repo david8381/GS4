@@ -773,6 +773,7 @@ const profileSocietyLink = document.getElementById("profileSocietyLink");
 const societyLoadBtn = document.getElementById("societyProfileLoad");
 const societySaveBtn = document.getElementById("societyProfileSave");
 const societyPageMap = { voln: "voln.html", col: "col.html", sunfist: "sunfist.html" };
+const societyLabels = { voln: "Order of Voln", col: "Council of Light", sunfist: "Guardians of Sunfist" };
 let societySnapshot = null;
 
 function currentSocietySnapshot() {
