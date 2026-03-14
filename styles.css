@@ -204,8 +204,8 @@ body {
 .tool-link-card {
   display: block;
   background: linear-gradient(145deg, #f7f0e3 0%, #fcfaf4 100%);
-  padding: 18px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
   border: 2px solid #d5ccbe;
   box-shadow: 4px 4px 0 rgba(27, 27, 27, 0.1);
   color: var(--ink);
@@ -224,7 +224,6 @@ body {
   font-family: "Besley", serif;
   font-size: 1.05rem;
   font-weight: 600;
-  margin-bottom: 8px;
 }
 
 .tool-link-copy {

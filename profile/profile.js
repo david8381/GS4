@@ -774,6 +774,9 @@ const societyLoadBtn = document.getElementById("societyProfileLoad");
 const societySaveBtn = document.getElementById("societyProfileSave");
 const societyPageMap = { voln: "voln.html", col: "col.html", sunfist: "sunfist.html" };
 const societyLabels = { voln: "Order of Voln", col: "Council of Light", sunfist: "Guardians of Sunfist" };
+const societyCardTitles = { voln: "Voln Progress", col: "Council of Light", sunfist: "Guardians of Sunfist" };
+const profileSocietyCard = document.getElementById("profileSocietyCard");
+const profileSocietyCardTitle = document.getElementById("profileSocietyCardTitle");
 let societySnapshot = null;
 
 function currentSocietySnapshot() {
@@ -809,6 +812,11 @@ function updateSocietyFavorDisplay() {
   const isVoln = societyKey === "voln";
   if (profileFavorFields) profileFavorFields.hidden = !isVoln;
   const root = document.body.dataset.root || "";
+  if (profileSocietyCard) {
+    const page = societyPageMap[societyKey];
+    profileSocietyCard.href = page ? `${root}${page}` : `${root}societies.html`;
+    if (profileSocietyCardTitle) profileSocietyCardTitle.textContent = societyCardTitles[societyKey] || "Societies";
+  }
   if (profileSocietyLink) {
     const page = societyPageMap[societyKey];
     if (page) {
