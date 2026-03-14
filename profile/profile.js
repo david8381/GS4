@@ -953,6 +953,9 @@ function updateProfileDiffHighlights(currentProfile, selectedProfile) {
 }
 
 function buildCurrentProfileRecord(nameOverride = null) {
+  const selectedProfile = profileSelect?.value
+    ? storage.findProfile(profiles, profileSelect.value)
+    : null;
   const baseRecord = logic.buildCurrentProfileRecord({
     name: nameOverride == null ? profileName.value : nameOverride,
     raceName: races.find((race) => race.key === profileRace.value)?.name || "Human",
@@ -981,6 +984,12 @@ function buildCurrentProfileRecord(nameOverride = null) {
 
   return {
     ...baseRecord,
+    society: {
+      ...baseRecord.society,
+      favor: baseRecord.society?.key === "voln"
+        ? (selectedProfile?.society?.favor || null)
+        : null,
+    },
     defaults: {
       ...baseRecord.defaults,
       armorAsg: armorAsgSelect.value,
