@@ -777,17 +777,6 @@
       const levelPayload = clamp(Number(profileLevel.value), 0, 100);
       const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
-      let record = {
-        id: "",
-        ...currentRecord,
-        race: racePayload,
-        profession: professionPayload,
-        society: societyPayload,
-        level: levelPayload,
-        experience: expPayload,
-        level0Stats: parsedInfoStart?.level0Stats || getCurrentLevel0Stats(),
-      };
-
       saveStage = "match existing profile";
       const selectedId = profileSelect.value || "";
       const normalizedName = normalizeProfileNameForMatch(name);
@@ -804,6 +793,16 @@
         key: societyKeyPayload,
         rank: Math.max(0, Math.trunc(Number(profileSocietyRank?.value) || 0)),
         favor: societyFavorPayload,
+      };
+      let record = {
+        id: "",
+        ...currentRecord,
+        race: racePayload,
+        profession: professionPayload,
+        society: societyPayload,
+        level: levelPayload,
+        experience: expPayload,
+        level0Stats: parsedInfoStart?.level0Stats || getCurrentLevel0Stats(),
       };
       record.id = id;
 
