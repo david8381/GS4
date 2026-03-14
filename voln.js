@@ -237,6 +237,13 @@
       characterNameEl.textContent = "No profile loaded";
       status.textContent = "Enter values manually or select a profile from the header.";
       status.style.color = "";
+      if (currentLevelInput) currentLevelInput.value = "";
+      if (currentRankInput) currentRankInput.value = "";
+      if (whatIfLevelInput) whatIfLevelInput.value = "";
+      if (whatIfRankInput) whatIfRankInput.value = "";
+      if (atLastStepInput) atLastStepInput.value = "";
+      lastUpdatedEl.textContent = "No captured favor yet";
+      renderHistory([]);
       return;
     }
 
@@ -435,8 +442,8 @@
   profileLoadBtn?.addEventListener("click", doLoadProfile);
   profileSaveBtn?.addEventListener("click", saveProfileFromInputs);
 
-  // Profile changes flag the reload button, don't auto-overwrite inputs
+  // Profile selection changes auto-load; external profile data changes flag reload
   window.addEventListener("storage", flagReload);
   window.addEventListener("gs4:profile-saved", flagReload);
-  window.addEventListener("gs4:selected-profile-changed", flagReload);
+  window.addEventListener("gs4:selected-profile-changed", doLoadProfile);
 })();
