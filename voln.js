@@ -15,7 +15,9 @@
   const historyTable = document.getElementById("volnHistoryTable");
   const abilityTable = document.getElementById("volnAbilityTable");
   const atLastStepInput = document.getElementById("volnAtLastStepInput");
-  const atLastStepSave = document.getElementById("volnAtLastStepSave");
+  const progressTrack = document.getElementById("volnProgressTrack");
+  const progressFill = document.getElementById("volnProgressFill");
+  const totalNeededEl = document.getElementById("volnTotalNeeded");
   const currentLevelInput = document.getElementById("volnCurrentLevelInput");
   const currentRankInput = document.getElementById("volnCurrentRankInput");
   const whatIfLevelInput = document.getElementById("volnWhatIfLevelInput");
@@ -59,45 +61,6 @@
       history: Array.isArray(favor.history) ? favor.history.map((entry) => ({ ...entry })) : [],
       lastUpdated: String(favor.lastUpdated || ""),
     };
-  }
-
-  function saveAtLastStepBaseline() {
-    const profile = getSelectedProfile();
-    if (!profile || String(profile.society?.key || "") !== "voln") {
-      status.textContent = "Select a Voln profile before saving a changeover value.";
-      status.style.color = "#b42318";
-      return;
-    }
-    const rawValue = String(atLastStepInput?.value || "").trim();
-    if (!rawValue) {
-      status.textContent = "Enter a favor value to save.";
-      status.style.color = "#b42318";
-      return;
-    }
-    const baseline = Number(rawValue);
-    if (!Number.isFinite(baseline) || baseline < 0) {
-      status.textContent = "Favor at last step change must be a non-negative number.";
-      status.style.color = "#b42318";
-      return;
-    }
-
-    const profiles = storage.loadProfiles();
-    const selected = storage.findProfile(profiles, profile.id);
-    if (!selected) {
-      status.textContent = "Selected profile could not be found in storage.";
-      status.style.color = "#b42318";
-      return;
-    }
-
-    const currentFavorState = cloneFavorState(selected.society?.favor);
-    const nextFavorState = { ...currentFavorState, atLastStepChange: Math.max(0, Math.trunc(baseline)) };
-    const nextProfile = { ...selected, society: { ...selected.society, favor: nextFavorState } };
-    const nextProfiles = profiles.map((entry) => (entry.id === selected.id ? nextProfile : entry));
-    storage.saveProfiles(nextProfiles);
-    localStorage.setItem(storage.SELECTED_PROFILE_KEY, selected.id);
-    status.textContent = "Updated favor at last step change.";
-    status.style.color = "#1f4e42";
-    recalculate();
   }
 
   function calculateNextStepCost(level, step) {
@@ -159,41 +122,48 @@
     }
   }
 
+  function escapeAttr(str) {
+    return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/\n/g, "&#10;");
+  }
+
   function explainUseCost(level, useCost) {
     if (!useCost || typeof useCost !== "object") return "";
     const baseReturnCost = calculateSymbolReturnCost(level);
     const baseLine = baseReturnCost != null ? `Symbol of Return cost at level ${level}: ${formatNumber(baseReturnCost)}` : "";
+    let tip = "";
     switch (useCost.mode) {
       case "none":
-        return "No favor cost";
+        tip = "No favor cost"; break;
       case "symbol_return_table":
-        return baseLine || "Base Symbol of Return cost by level";
+        tip = baseLine || "Base Symbol of Return cost by level"; break;
       case "fixed_range":
-        return `Fixed cost: ${formatNumber(useCost.min)}-${formatNumber(useCost.max)}`;
+        tip = `Fixed cost: ${formatNumber(useCost.min)}-${formatNumber(useCost.max)}`; break;
       case "factor":
         if (typeof useCost.relative_cost_factor === "number") {
-          return `${(useCost.relative_cost_factor * 100).toFixed(0)}% of Symbol of Return cost\n${baseLine}`;
-        }
-        if (useCost.relative_cost_factor && typeof useCost.relative_cost_factor === "object") {
+          tip = `${(useCost.relative_cost_factor * 100).toFixed(0)}% of Symbol of Return cost\n${baseLine}`;
+        } else if (useCost.relative_cost_factor && typeof useCost.relative_cost_factor === "object") {
           const parts = Object.entries(useCost.relative_cost_factor)
             .map(([key, factor]) => `${key}: ${(Number(factor) * 100).toFixed(0)}%`);
-          return `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
+          tip = `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
         }
-        return "";
+        break;
       case "variable_factor": {
         const base = (Number(useCost.base_factor || 0) * 100).toFixed(0);
         const max = (Number(useCost.max_factor || useCost.base_factor || 0) * 100).toFixed(0);
-        return `${base}%-${max}% of Symbol of Return cost\n${baseLine}`;
+        tip = `${base}%-${max}% of Symbol of Return cost\n${baseLine}`;
+        break;
       }
       case "variant_factor": {
         const parts = Object.entries(useCost)
           .filter(([key]) => key !== "mode")
           .map(([key, factor]) => `${key}: ${(Number(factor) * 100).toFixed(0)}%`);
-        return `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
+        tip = `Factor of Symbol of Return cost:\n${parts.join(", ")}\n${baseLine}`;
+        break;
       }
       default:
-        return "Variable cost";
+        tip = "Variable cost";
     }
+    return escapeAttr(tip);
   }
 
   function resolveCombatPreview(ability, effectiveStep) {
@@ -350,8 +320,26 @@
         stepProgressEl.textContent = "—";
       }
     }
+    if (progressTrack) {
+      if (nextCost != null) {
+        progressTrack.hidden = false;
+        const pct = sinceStepValue != null ? Math.min(100, (sinceStepValue / nextCost) * 100) : 0;
+        if (progressFill) progressFill.style.width = `${pct}%`;
+      } else {
+        progressTrack.hidden = true;
+      }
+    }
+    if (totalNeededEl) {
+      if (nextCost != null && atLastStepValue != null) {
+        totalNeededEl.textContent = `Total favor needed: ${formatNumber(atLastStepValue + nextCost)}`;
+      } else if (nextCost != null) {
+        totalNeededEl.textContent = `Step cost: ${formatNumber(nextCost)}`;
+      } else {
+        totalNeededEl.textContent = "Max step reached";
+      }
+    }
     if (remainingFavorEl) {
-      remainingFavorEl.textContent = remaining != null ? `${formatNumber(remaining)} remaining` : "—";
+      remainingFavorEl.textContent = remaining != null ? `${formatNumber(remaining)} remaining` : "";
     }
 
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
@@ -470,12 +458,6 @@
   whatIfLevelInput?.addEventListener("input", recalculate);
   whatIfRankInput?.addEventListener("input", recalculate);
   atLastStepInput?.addEventListener("input", onInputChange);
-
-  // Changeover favor inline save (keeps the dedicated save button too)
-  atLastStepSave?.addEventListener("click", saveAtLastStepBaseline);
-  atLastStepInput?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") saveAtLastStepBaseline();
-  });
 
   // Profile load/save buttons
   profileLoadBtn?.addEventListener("click", doLoadProfile);

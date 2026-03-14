@@ -65,7 +65,6 @@
               <label for="volnAtLastStepInput">Favor at Last Step Change</label>
               <div class="input-row">
                 <input id="volnAtLastStepInput" type="number" min="0" step="1" inputmode="numeric" />
-                <button class="btn" id="volnAtLastStepSave" type="button">Save</button>
               </div>
             </div>
 
@@ -86,7 +85,11 @@
             <div class="summary-card">
               <div class="summary-title">Progress to Next Step</div>
               <div class="summary-value" id="volnStepProgress">—</div>
-              <div class="summary-sub" id="volnRemainingFavor">Remaining: —</div>
+              <div class="voln-progress-bar-track" id="volnProgressTrack" hidden>
+                <div class="voln-progress-bar-fill" id="volnProgressFill"></div>
+              </div>
+              <div class="summary-sub" id="volnTotalNeeded">—</div>
+              <div class="summary-sub" id="volnRemainingFavor">—</div>
             </div>
           </div>
         </section>
@@ -129,7 +132,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.52"></script>
-    <script src="site.js?v=0.2.52"></script>
+    <script src="shared.js?v=0.2.53"></script>
+    <script src="site.js?v=0.2.53"></script>
   </body>
 </html>
