@@ -2220,6 +2220,30 @@ body[data-page="spells"] .spell-helper-actions {
   margin-top: 8px;
 }
 
+body[data-page="voln"] .spell-input-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+body[data-page="voln"] .spell-input-group-card {
+  border: 1px solid #d9d0c2;
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(255, 253, 248, 0.7);
+}
+
+body[data-page="voln"] .spell-input-group-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+body[data-page="voln"] .spell-input-grid.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 body[data-page="voln"] .calc-panel,
 body[data-page="experience"] .calc-panel {
   align-items: start;
@@ -2239,8 +2263,8 @@ body[data-page="voln"] .voln-owned-row {
 }
 
 body[data-page="voln"] .voln-locked-row {
-  background: rgba(15, 23, 42, 0.05);
-  color: #5f6977;
+  background: rgba(148, 163, 184, 0.16);
+  color: #4a5565;
 }
 
 body[data-page="voln"] .table-panel td strong {

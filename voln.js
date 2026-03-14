@@ -5,8 +5,6 @@
   if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before voln.js.");
   if (!volnData) throw new Error("GS4_VOLN_DATA is not loaded. Ensure data/societies/voln.js is loaded before voln.js.");
 
-  const profileSelect = document.getElementById("volnProfileSelect");
-  const profileLoad = document.getElementById("volnProfileLoad");
   const status = document.getElementById("volnStatus");
   const currentStep = document.getElementById("volnCurrentStep");
   const currentFavor = document.getElementById("volnCurrentFavor");
@@ -20,6 +18,10 @@
   const abilityTable = document.getElementById("volnAbilityTable");
   const atLastStepInput = document.getElementById("volnAtLastStepInput");
   const atLastStepSave = document.getElementById("volnAtLastStepSave");
+  const currentLevelInput = document.getElementById("volnCurrentLevelInput");
+  const currentRankInput = document.getElementById("volnCurrentRankInput");
+  const whatIfLevelInput = document.getElementById("volnWhatIfLevelInput");
+  const whatIfRankInput = document.getElementById("volnWhatIfRankInput");
   const VOLN_RETURN_COSTS = {
     3: 4, 4: 6, 5: 9, 6: 12, 7: 15, 8: 19, 9: 23, 10: 28, 11: 34, 12: 40, 13: 46, 14: 53, 15: 61, 16: 69,
     17: 77, 18: 86, 19: 95, 20: 105, 21: 115, 22: 125, 23: 136, 24: 147, 25: 159, 26: 171, 27: 183, 28: 196,
@@ -52,28 +54,9 @@
     return Number.isFinite(number) ? number.toLocaleString() : "—";
   }
 
-  function loadProfiles() {
-    return storage.loadProfiles();
-  }
-
-  function refreshProfileSelect() {
-    const profiles = loadProfiles();
-    const selectedId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
-    profileSelect.innerHTML = '<option value="">Select from Profile</option>';
-    profiles.forEach((profile) => {
-      const option = document.createElement("option");
-      option.value = profile.id;
-      option.textContent = profile.name;
-      profileSelect.appendChild(option);
-    });
-    if (selectedId && profiles.some((profile) => profile.id === selectedId)) {
-      profileSelect.value = selectedId;
-    }
-  }
-
   function getSelectedProfile() {
-    const profiles = loadProfiles();
-    return storage.findProfile(profiles, profileSelect.value || localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "");
+    const profiles = storage.loadProfiles();
+    return storage.findProfile(profiles, localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "");
   }
 
   function setEditControlsEnabled(enabled) {
@@ -125,7 +108,7 @@
       return;
     }
 
-    const profiles = loadProfiles();
+    const profiles = storage.loadProfiles();
     const selected = storage.findProfile(profiles, profile.id);
     if (!selected) {
       status.textContent = "Selected profile could not be found in storage.";
@@ -243,16 +226,20 @@
     abilityTable.innerHTML = "";
     const abilities = Array.isArray(volnData?.abilities) ? volnData.abilities : [];
     const currentStepValue = Math.max(0, Math.trunc(Number(profile?.society?.rank) || 0));
-    const levelValue = Math.max(0, Math.trunc(Number(profile?.level) || 0));
+    const currentLevelValue = Math.max(0, Math.trunc(Number(profile?.level) || 0));
+    const whatIfLevelValue = Math.max(0, Math.trunc(Number(whatIfLevelInput?.value) || currentLevelValue));
+    const whatIfStepValue = Math.max(0, Math.trunc(Number(whatIfRankInput?.value) || currentStepValue));
     if (!profile || String(profile.society?.key || "") !== "voln") {
       const row = document.createElement("tr");
-      row.innerHTML = '<td colspan="6">Load a Voln profile to review symbol unlocks and favor costs.</td>';
+      row.innerHTML = '<td colspan="8">Load a Voln profile to review symbol unlocks and favor costs.</td>';
       abilityTable.appendChild(row);
       return;
     }
     abilities.forEach((ability) => {
       const owned = currentStepValue >= Number(ability.rank_required || 0);
-      const effectiveStep = owned ? currentStepValue : Math.max(0, Math.trunc(Number(ability.rank_required) || 0));
+      const currentEffectiveStep = owned ? currentStepValue : Math.max(0, Math.trunc(Number(ability.rank_required) || 0));
+      const whatIfOwned = whatIfStepValue >= Number(ability.rank_required || 0);
+      const whatIfEffectiveStep = whatIfOwned ? whatIfStepValue : Math.max(0, Math.trunc(Number(ability.rank_required) || 0));
       const row = document.createElement("tr");
       row.className = owned ? "voln-owned-row" : "voln-locked-row";
       row.innerHTML = `
@@ -260,8 +247,10 @@
         <td><strong>${ability.name}</strong></td>
         <td>${owned ? "Owned" : "Locked"}</td>
         <td>${ability.effect_summary || "—"}</td>
-        <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, effectiveStep)}${owned ? "" : ` (at step ${formatNumber(effectiveStep)})`}` : "—"}</td>
-        <td>${formatUseCost(calculateUseCost(levelValue, ability.use_cost))}</td>
+        <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, currentEffectiveStep)}${owned ? "" : ` (at step ${formatNumber(currentEffectiveStep)})`}` : "—"}</td>
+        <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, whatIfEffectiveStep)}${whatIfOwned ? "" : ` (at step ${formatNumber(whatIfEffectiveStep)})`}` : "—"}</td>
+        <td>${formatUseCost(calculateUseCost(currentLevelValue, ability.use_cost))}</td>
+        <td>${formatUseCost(calculateUseCost(whatIfLevelValue, ability.use_cost))}</td>
       `;
       abilityTable.appendChild(row);
     });
@@ -302,6 +291,10 @@
       status.textContent = "Load a Voln character profile to review captured favor progress.";
       status.style.color = "";
       if (atLastStepInput) atLastStepInput.value = "";
+      if (currentLevelInput) currentLevelInput.value = "";
+      if (currentRankInput) currentRankInput.value = "";
+      if (whatIfLevelInput) whatIfLevelInput.value = "";
+      if (whatIfRankInput) whatIfRankInput.value = "";
       setEditControlsEnabled(false);
       renderAbilities(null);
       renderHistory([]);
@@ -323,6 +316,10 @@
       status.textContent = `${profile.name || "Loaded profile"} is not currently marked as a Voln character.`;
       status.style.color = "#b42318";
       if (atLastStepInput) atLastStepInput.value = "";
+      if (currentLevelInput) currentLevelInput.value = String(Math.max(0, Math.trunc(Number(profile.level) || 0)));
+      if (currentRankInput) currentRankInput.value = "0";
+      if (whatIfLevelInput) whatIfLevelInput.value = String(Math.max(0, Math.trunc(Number(profile.level) || 0)));
+      if (whatIfRankInput) whatIfRankInput.value = "0";
       setEditControlsEnabled(false);
       renderAbilities(null);
       renderHistory([]);
@@ -351,18 +348,25 @@
     if (atLastStepInput) {
       atLastStepInput.value = atLastStepValue == null ? "" : String(atLastStepValue);
     }
+    if (currentLevelInput) currentLevelInput.value = String(Math.max(0, Math.trunc(Number(profile.level) || 0)));
+    if (currentRankInput) currentRankInput.value = String(step);
+    if (whatIfLevelInput && !String(whatIfLevelInput.value || "").trim()) {
+      whatIfLevelInput.value = String(Math.max(0, Math.trunc(Number(profile.level) || 0)));
+    }
+    if (whatIfRankInput && !String(whatIfRankInput.value || "").trim()) {
+      whatIfRankInput.value = String(step);
+    }
     setEditControlsEnabled(true);
     renderAbilities(profile);
     renderHistory(favor?.history || []);
   }
 
-  refreshProfileSelect();
   renderProfile();
 
-  profileLoad.addEventListener("click", renderProfile);
-  profileSelect.addEventListener("change", renderProfile);
   atLastStepSave?.addEventListener("click", saveAtLastStepBaseline);
   atLastStepInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") saveAtLastStepBaseline();
   });
+  whatIfLevelInput?.addEventListener("input", renderProfile);
+  whatIfRankInput?.addEventListener("input", renderProfile);
 })();

@@ -28,18 +28,41 @@
 
         <section class="calc-panel">
           <div class="input-block">
-            <div class="input-group compact-field">
-              <label for="volnProfileSelect">Character Profile</label>
-              <div class="input-row">
-                <select id="volnProfileSelect">
-                  <option value="">Select from Profile</option>
-                </select>
-                <button class="btn" id="volnProfileLoad" type="button">Load</button>
-              </div>
-            </div>
             <div class="helper" id="volnStatus">Load a Voln character profile to review captured favor progress.</div>
             <div class="helper voln-note">
               Favor spent on symbols reduces the stored current-favor snapshot, so progress to the next step can look lower than the true total earned since you joined the step.
+            </div>
+          </div>
+
+          <div class="spell-input-group-card">
+            <h3>Profile Inputs</h3>
+            <div class="spell-input-groups">
+              <div class="spell-input-group-card">
+                <h3>Current</h3>
+                <div class="spell-input-grid two-col">
+                  <div class="input-group compact-field">
+                    <label for="volnCurrentLevelInput">Level</label>
+                    <input id="volnCurrentLevelInput" type="number" min="0" max="100" step="1" readonly />
+                  </div>
+                  <div class="input-group compact-field">
+                    <label for="volnCurrentRankInput">Voln Step</label>
+                    <input id="volnCurrentRankInput" type="number" min="0" max="26" step="1" readonly />
+                  </div>
+                </div>
+              </div>
+              <div class="spell-input-group-card">
+                <h3>What-If</h3>
+                <div class="spell-input-grid two-col">
+                  <div class="input-group compact-field">
+                    <label for="volnWhatIfLevelInput">Level</label>
+                    <input id="volnWhatIfLevelInput" type="number" min="0" max="100" step="1" />
+                  </div>
+                  <div class="input-group compact-field">
+                    <label for="volnWhatIfRankInput">Voln Step</label>
+                    <input id="volnWhatIfRankInput" type="number" min="0" max="26" step="1" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -83,8 +106,10 @@
                 <th>Symbol</th>
                 <th>Status</th>
                 <th>Benefit</th>
-                <th>Current Effect</th>
-                <th>Use Favor</th>
+                <th>Current</th>
+                <th>What-If</th>
+                <th>Current Favor</th>
+                <th>What-If Favor</th>
               </tr>
             </thead>
             <tbody id="volnAbilityTable"></tbody>
@@ -110,7 +135,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.48"></script>
-    <script src="site.js?v=0.2.48"></script>
+    <script src="shared.js?v=0.2.49"></script>
+    <script src="site.js?v=0.2.49"></script>
   </body>
 </html>
