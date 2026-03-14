@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.2.2'
+SCRIPT_VERSION = '0.2.3'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -682,9 +682,12 @@ def open_browser(url)
 end
 
 args = script_args
+args.shift if args[0].to_s.downcase == SCRIPT_NAME
 action = (args[0] || 'help').downcase
+action_args = Array(args[1..]).map { |arg| arg.to_s.strip }.reject(&:empty?)
+action_args.shift while action_args.first.to_s.downcase == action
 say "version #{SCRIPT_VERSION}"
-wants_sync = args.any? { |arg| arg.to_s.downcase == '--sync' }
+wants_sync = action_args.any? { |arg| arg.to_s.downcase == '--sync' }
 needs_consent = %w[sync collect].include?(action) || (action == 'open' && wants_sync)
 
 if needs_consent && !consent_granted?
@@ -696,7 +699,7 @@ case action
 when 'allow', 'consent'
   grant_consent
 when 'collect'
-  collect_target = args[1].to_s.strip.downcase
+  collect_target = action_args[0].to_s.downcase
   if collect_target == 'voln'
     collect_voln_blocks
   elsif collect_target.empty?
@@ -705,7 +708,7 @@ when 'collect'
     say "unknown collect target '#{collect_target}'. valid: voln (or blank for all)"
   end
 when 'open'
-  page_key = args[1] ? resolve_page_key(args[1]) : 'profile'
+  page_key = action_args[0] && action_args[0] != '--sync' ? resolve_page_key(action_args[0]) : 'profile'
   if wants_sync
     payload = collect_blocks
     open_payload_snapshot(payload, page_key)
@@ -719,11 +722,11 @@ when 'open'
     end
   end
 when 'sync'
-  page_key = args[1] ? resolve_page_key(args[1]) : 'profile'
+  page_key = action_args[0] ? resolve_page_key(action_args[0]) : 'profile'
   payload = collect_blocks
   open_payload_snapshot(payload, page_key)
 when 'load'
-  if args.any? { |arg| arg.to_s.downcase == '--raw' }
+  if action_args.any? { |arg| arg.to_s.downcase == '--raw' }
     payload = load_payload
     if payload
       say_json_object(payload)
