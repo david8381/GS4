@@ -305,12 +305,42 @@
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
   }
 
+  let loadedSnapshot = null;
+
+  function currentInputSnapshot() {
+    return {
+      level: Math.max(0, Math.trunc(Number(currentLevelInput?.value) || 0)),
+      step: Math.max(0, Math.trunc(Number(currentRankInput?.value) || 0)),
+    };
+  }
+
+  function updateLoadButtonState() {
+    if (!profileLoadBtn) return;
+    profileLoadBtn.classList.remove("attention");
+    if (!loadedSnapshot) return;
+    const current = currentInputSnapshot();
+    if (current.level !== loadedSnapshot.level || current.step !== loadedSnapshot.step) {
+      profileLoadBtn.classList.add("attention");
+    }
+  }
+
   function flagReload() {
     if (profileLoadBtn) profileLoadBtn.classList.add("attention");
   }
 
   function doLoadProfile() {
     loadProfileIntoInputs();
+    const profile = getSelectedProfile();
+    if (profile) {
+      const society = profile.society || {};
+      const isVoln = String(society.key || "") === "voln";
+      loadedSnapshot = {
+        level: Math.max(0, Math.trunc(Number(profile.level) || 0)),
+        step: isVoln ? Math.max(0, Math.trunc(Number(society.rank) || 0)) : 0,
+      };
+    } else {
+      loadedSnapshot = null;
+    }
     recalculate();
     if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
   }
@@ -318,9 +348,14 @@
   // Initial load
   doLoadProfile();
 
-  // Input changes recalculate but don't reload profile
-  currentLevelInput?.addEventListener("input", recalculate);
-  currentRankInput?.addEventListener("input", recalculate);
+  function onInputChange() {
+    recalculate();
+    updateLoadButtonState();
+  }
+
+  // Input changes recalculate and check for drift from profile
+  currentLevelInput?.addEventListener("input", onInputChange);
+  currentRankInput?.addEventListener("input", onInputChange);
   whatIfLevelInput?.addEventListener("input", recalculate);
   whatIfRankInput?.addEventListener("input", recalculate);
 
