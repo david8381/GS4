@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Experience Overview</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="experience" data-page-scripts="data/gs4-data.js,experience.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Experience Overview</p>
+          <h1>Profile Experience</h1>
+          <p>
+            Load a profile to review the current level and experience snapshot, then jump directly into the absorb and
+            Lumnis planning tools from one place.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="input-group compact-field">
+              <label for="experienceProfileSelect">Character Profile</label>
+              <div class="input-row">
+                <select id="experienceProfileSelect">
+                  <option value="">Select from Profile</option>
+                </select>
+                <button class="btn" id="experienceProfileLoad" type="button">Load</button>
+              </div>
+            </div>
+            <div class="helper" id="experienceStatus">Load a profile to review current level and experience data.</div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Current Level</div>
+              <div class="summary-value" id="experienceLevel">—</div>
+              <div class="summary-sub" id="experienceCharacterName">No profile loaded</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Experience</div>
+              <div class="summary-value" id="experienceTotal">—</div>
+              <div class="summary-sub" id="experienceNextLevel">To next level: —</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Ascension Experience</div>
+              <div class="summary-value" id="experienceAscension">—</div>
+              <div class="summary-sub">Pulled from the saved profile snapshot</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <a class="tool-link-card" href="calculator.html">
+            <div class="tool-link-title">Absorb / Burn Calculator</div>
+            <div class="tool-link-copy">Model experience burn-down time by pool size and absorb rate assumptions.</div>
+          </a>
+          <a class="tool-link-card" href="lumnis.html">
+            <div class="tool-link-title">Lumnis + Tutelage</div>
+            <div class="tool-link-copy">Compare Lumnis, tutelage, and related experience options side by side.</div>
+          </a>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="shared.js?v=0.2.41"></script>
+    <script src="site.js?v=0.2.41"></script>
+  </body>
+</html>

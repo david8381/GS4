@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voln Progress</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="voln" data-page-scripts="data/societies/voln.js,voln.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Order of Voln</p>
+          <h1>Voln Progress</h1>
+          <p>
+            Load a profile to review the current Voln step, stored favor snapshot, progress since the last step
+            change, and the recent step history captured by <code>;gs4tools sync</code> or <code>;gs4tools collect voln</code>.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="input-group compact-field">
+              <label for="volnProfileSelect">Character Profile</label>
+              <div class="input-row">
+                <select id="volnProfileSelect">
+                  <option value="">Select from Profile</option>
+                </select>
+                <button class="btn" id="volnProfileLoad" type="button">Load</button>
+              </div>
+            </div>
+            <div class="helper" id="volnStatus">Load a Voln character profile to review captured favor progress.</div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Current Step</div>
+              <div class="summary-value" id="volnCurrentStep">—</div>
+              <div class="summary-sub" id="volnCharacterName">No profile loaded</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Current Favor</div>
+              <div class="summary-value" id="volnCurrentFavor">—</div>
+              <div class="summary-sub" id="volnLastUpdated">No captured favor yet</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Since Last Step</div>
+              <div class="summary-value" id="volnSinceStep">—</div>
+              <div class="summary-sub" id="volnAtLastStepChange">Favor at last step change: —</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Next Step Cost</div>
+              <div class="summary-value" id="volnNextStepCost">—</div>
+              <div class="summary-sub" id="volnRemainingFavor">Remaining to next step: —</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Step History</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Previous Step</th>
+                <th>Favor at Change</th>
+                <th>Captured</th>
+              </tr>
+            </thead>
+            <tbody id="volnHistoryTable"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="shared.js?v=0.2.41"></script>
+    <script src="site.js?v=0.2.41"></script>
+  </body>
+</html>
