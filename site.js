@@ -19,7 +19,8 @@ function getPageProfileElements() {
   const updateButton =
     document.getElementById("profileSave") ||
     document.getElementById("profileDefaultsSave") ||
-    document.getElementById("badgeProfileSave");
+    document.getElementById("badgeProfileSave") ||
+    document.getElementById("volnProfileSave");
   return { select, loadButton, updateButton };
 }
 

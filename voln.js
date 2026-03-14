@@ -305,23 +305,74 @@
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
   }
 
+  const profileSaveBtn = document.getElementById("volnProfileSave");
   let loadedSnapshot = null;
 
   function currentInputSnapshot() {
+    const rawAtLastStep = String(atLastStepInput?.value || "").trim();
     return {
       level: Math.max(0, Math.trunc(Number(currentLevelInput?.value) || 0)),
       step: Math.max(0, Math.trunc(Number(currentRankInput?.value) || 0)),
+      atLastStepChange: rawAtLastStep === "" ? null : Math.max(0, Math.trunc(Number(rawAtLastStep) || 0)),
     };
   }
 
-  function updateLoadButtonState() {
-    if (!profileLoadBtn) return;
-    profileLoadBtn.classList.remove("attention");
-    if (!loadedSnapshot) return;
-    const current = currentInputSnapshot();
-    if (current.level !== loadedSnapshot.level || current.step !== loadedSnapshot.step) {
-      profileLoadBtn.classList.add("attention");
+  function snapshotsMatch(a, b) {
+    return a.level === b.level && a.step === b.step && a.atLastStepChange === b.atLastStepChange;
+  }
+
+  function updateButtonStates() {
+    if (!loadedSnapshot) {
+      if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
+      if (profileSaveBtn) profileSaveBtn.classList.remove("success-attention");
+      return;
     }
+    const current = currentInputSnapshot();
+    const changed = !snapshotsMatch(current, loadedSnapshot);
+    if (profileLoadBtn) {
+      profileLoadBtn.classList.toggle("attention", changed);
+    }
+    if (profileSaveBtn) {
+      profileSaveBtn.classList.toggle("success-attention", changed);
+    }
+  }
+
+  function saveProfileFromInputs() {
+    const profile = getSelectedProfile();
+    if (!profile) {
+      status.textContent = "Select a profile before updating.";
+      status.style.color = "#b42318";
+      return;
+    }
+    const current = currentInputSnapshot();
+    const profiles = storage.loadProfiles();
+    const selected = storage.findProfile(profiles, profile.id);
+    if (!selected) {
+      status.textContent = "Selected profile could not be found in storage.";
+      status.style.color = "#b42318";
+      return;
+    }
+
+    const society = selected.society || {};
+    const favor = cloneFavorState(society.favor);
+    if (current.atLastStepChange != null) {
+      favor.atLastStepChange = current.atLastStepChange;
+    }
+
+    const nextProfile = {
+      ...selected,
+      level: current.level,
+      society: { ...society, rank: current.step, favor },
+    };
+    const nextProfiles = profiles.map((entry) => (entry.id === selected.id ? nextProfile : entry));
+    storage.saveProfiles(nextProfiles);
+    localStorage.setItem(storage.SELECTED_PROFILE_KEY, selected.id);
+
+    loadedSnapshot = { ...current };
+    updateButtonStates();
+    status.textContent = `Updated profile for ${selected.name || "selected profile"}.`;
+    status.style.color = "#1f4e42";
+    window.dispatchEvent(new CustomEvent("gs4:profile-saved"));
   }
 
   function flagReload() {
@@ -334,15 +385,20 @@
     if (profile) {
       const society = profile.society || {};
       const isVoln = String(society.key || "") === "voln";
+      const favor = society.favor || null;
       loadedSnapshot = {
         level: Math.max(0, Math.trunc(Number(profile.level) || 0)),
         step: isVoln ? Math.max(0, Math.trunc(Number(society.rank) || 0)) : 0,
+        atLastStepChange: favor && Number.isFinite(Number(favor.atLastStepChange))
+          ? Math.max(0, Math.trunc(Number(favor.atLastStepChange)))
+          : null,
       };
     } else {
       loadedSnapshot = null;
     }
     recalculate();
     if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
+    if (profileSaveBtn) profileSaveBtn.classList.remove("success-attention");
   }
 
   // Initial load
@@ -350,7 +406,7 @@
 
   function onInputChange() {
     recalculate();
-    updateLoadButtonState();
+    updateButtonStates();
   }
 
   // Input changes recalculate and check for drift from profile
@@ -358,15 +414,17 @@
   currentRankInput?.addEventListener("input", onInputChange);
   whatIfLevelInput?.addEventListener("input", recalculate);
   whatIfRankInput?.addEventListener("input", recalculate);
+  atLastStepInput?.addEventListener("input", onInputChange);
 
-  // Changeover favor
+  // Changeover favor inline save (keeps the dedicated save button too)
   atLastStepSave?.addEventListener("click", saveAtLastStepBaseline);
   atLastStepInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") saveAtLastStepBaseline();
   });
 
-  // Profile load button
+  // Profile load/save buttons
   profileLoadBtn?.addEventListener("click", doLoadProfile);
+  profileSaveBtn?.addEventListener("click", saveProfileFromInputs);
 
   // Profile changes flag the reload button, don't auto-overwrite inputs
   window.addEventListener("storage", flagReload);
