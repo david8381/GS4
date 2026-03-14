@@ -8,11 +8,9 @@
   const status = document.getElementById("volnStatus");
   const currentStepEl = document.getElementById("volnCurrentStep");
   const currentFavorEl = document.getElementById("volnCurrentFavor");
-  const sinceStepEl = document.getElementById("volnSinceStep");
-  const nextStepCostEl = document.getElementById("volnNextStepCost");
+  const stepProgressEl = document.getElementById("volnStepProgress");
   const characterNameEl = document.getElementById("volnCharacterName");
   const lastUpdatedEl = document.getElementById("volnLastUpdated");
-  const atLastStepChangeEl = document.getElementById("volnAtLastStepChange");
   const remainingFavorEl = document.getElementById("volnRemainingFavor");
   const historyTable = document.getElementById("volnHistoryTable");
   const abilityTable = document.getElementById("volnAbilityTable");
@@ -297,10 +295,14 @@
     const remaining = nextCost != null && sinceStepValue != null ? Math.max(0, nextCost - sinceStepValue) : null;
 
     currentFavorEl.textContent = formatNumber(currentFavorValue);
-    sinceStepEl.textContent = formatNumber(sinceStepValue);
-    nextStepCostEl.textContent = formatNumber(nextCost);
-    atLastStepChangeEl.textContent = `Favor at last step change: ${formatNumber(atLastStepValue)}`;
-    remainingFavorEl.textContent = `Remaining to next step: ${formatNumber(remaining)}`;
+    if (sinceStepValue != null && nextCost != null) {
+      stepProgressEl.textContent = `${formatNumber(sinceStepValue)} / ${formatNumber(nextCost)}`;
+    } else if (nextCost != null) {
+      stepProgressEl.textContent = `— / ${formatNumber(nextCost)}`;
+    } else {
+      stepProgressEl.textContent = "—";
+    }
+    remainingFavorEl.textContent = remaining != null ? `${formatNumber(remaining)} remaining` : "—";
 
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
   }
@@ -323,16 +325,18 @@
 
   function updateButtonStates() {
     if (!loadedSnapshot) {
-      if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
-      if (profileSaveBtn) profileSaveBtn.classList.remove("success-attention");
+      if (profileLoadBtn) { profileLoadBtn.disabled = true; profileLoadBtn.classList.remove("attention"); }
+      if (profileSaveBtn) { profileSaveBtn.disabled = true; profileSaveBtn.classList.remove("success-attention"); }
       return;
     }
     const current = currentInputSnapshot();
     const changed = !snapshotsMatch(current, loadedSnapshot);
     if (profileLoadBtn) {
+      profileLoadBtn.disabled = !changed;
       profileLoadBtn.classList.toggle("attention", changed);
     }
     if (profileSaveBtn) {
+      profileSaveBtn.disabled = !changed;
       profileSaveBtn.classList.toggle("success-attention", changed);
     }
   }
@@ -397,8 +401,8 @@
       loadedSnapshot = null;
     }
     recalculate();
-    if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
-    if (profileSaveBtn) profileSaveBtn.classList.remove("success-attention");
+    if (profileLoadBtn) { profileLoadBtn.disabled = true; profileLoadBtn.classList.remove("attention"); }
+    if (profileSaveBtn) { profileSaveBtn.disabled = true; profileSaveBtn.classList.remove("success-attention"); }
   }
 
   // Initial load

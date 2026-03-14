@@ -28,8 +28,10 @@
 
         <section class="calc-panel">
           <div class="input-block">
-            <button class="btn" id="volnProfileLoad" type="button" hidden>Reload from Profile</button>
-            <button class="btn" id="volnProfileSave" type="button" hidden>Update Profile</button>
+            <div class="input-group inline-actions">
+              <button class="btn" id="volnProfileLoad" type="button" disabled>Reload from Profile</button>
+              <button class="btn" id="volnProfileSave" type="button" disabled>Update Profile</button>
+            </div>
 
             <div class="input-group compact-field">
               <label for="volnCurrentLevelInput">Level</label>
@@ -82,14 +84,9 @@
               <div class="summary-sub" id="volnLastUpdated">No captured favor yet</div>
             </div>
             <div class="summary-card">
-              <div class="summary-title">Since Last Step</div>
-              <div class="summary-value" id="volnSinceStep">—</div>
-              <div class="summary-sub" id="volnAtLastStepChange">Favor at last step change: —</div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-title">Next Step Cost</div>
-              <div class="summary-value" id="volnNextStepCost">—</div>
-              <div class="summary-sub" id="volnRemainingFavor">Remaining to next step: —</div>
+              <div class="summary-title">Progress to Next Step</div>
+              <div class="summary-value" id="volnStepProgress">—</div>
+              <div class="summary-sub" id="volnRemainingFavor">Remaining: —</div>
             </div>
           </div>
         </section>

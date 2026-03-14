@@ -113,6 +113,10 @@ function refreshHeaderProfileControls() {
     headerDirtyLabel.classList.toggle("is-visible", dataChanged);
     headerDirtyLabel.classList.toggle("is-hidden", !dataChanged);
   }
+  const headerOpen = document.getElementById("headerProfileOpen");
+  if (headerOpen) {
+    headerOpen.disabled = !hasHeaderSelection;
+  }
 }
 
 function renderHeader() {
@@ -133,6 +137,7 @@ function renderHeader() {
           <option value="">Select Profile</option>
         </select>
         <button class="btn" id="headerProfileNew" type="button">New</button>
+        <button class="btn" id="headerProfileOpen" type="button" disabled>Open</button>
         <div class="header-profile-actions">
           <span class="header-profile-note is-hidden" id="headerDirtyLabel">Data Changed</span>
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
@@ -145,6 +150,7 @@ function renderHeader() {
 
   const headerSelect = document.getElementById("headerProfileSelect");
   const headerNew = document.getElementById("headerProfileNew");
+  const headerOpen = document.getElementById("headerProfileOpen");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
 
@@ -179,6 +185,15 @@ function renderHeader() {
     headerNew.addEventListener("click", () => {
       localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
       window.location.assign(`${root}profile/profile.html`);
+    });
+  }
+
+  if (headerOpen) {
+    headerOpen.addEventListener("click", () => {
+      const profileId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
+      if (profileId) {
+        window.location.assign(`${root}profile/profile.html?id=${encodeURIComponent(profileId)}`);
+      }
     });
   }
 
