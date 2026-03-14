@@ -29,15 +29,12 @@
         <section class="calc-panel">
           <div class="input-block">
             <div class="helper" id="volnStatus">Load a Voln character profile to review captured favor progress.</div>
-            <div class="helper voln-note">
-              Favor spent on symbols reduces the stored current-favor snapshot, so progress to the next step can look lower than the true total earned since you joined the step.
-            </div>
           </div>
 
-          <div class="spell-input-group-card">
+          <div class="spell-input-group-card voln-profile-inputs">
             <h3>Profile Inputs</h3>
             <div class="spell-input-groups">
-              <div class="spell-input-group-card">
+              <div class="spell-input-group-card voln-current-card">
                 <h3>Current</h3>
                 <div class="spell-input-grid two-col">
                   <div class="input-group compact-field">
@@ -50,7 +47,7 @@
                   </div>
                 </div>
               </div>
-              <div class="spell-input-group-card">
+              <div class="spell-input-group-card voln-whatif-card">
                 <h3>What-If</h3>
                 <div class="spell-input-grid two-col">
                   <div class="input-group compact-field">
@@ -63,6 +60,9 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <div class="helper voln-note">
+              Favor spent on symbols reduces the stored current-favor snapshot, so progress to the next step can look lower than the true total earned since you joined the step.
             </div>
           </div>
 
@@ -135,7 +135,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.49"></script>
-    <script src="site.js?v=0.2.49"></script>
+    <script src="shared.js?v=0.2.50"></script>
+    <script src="site.js?v=0.2.50"></script>
   </body>
 </html>

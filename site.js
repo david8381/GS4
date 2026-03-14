@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.2.49";
+const SITE_VERSION = "0.2.50";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
@@ -154,6 +154,9 @@ function renderHeader() {
       const value = headerSelect.value || "";
       if (value) localStorage.setItem(storage.SELECTED_PROFILE_KEY, value);
       else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
+      window.dispatchEvent(new CustomEvent("gs4:selected-profile-changed", {
+        detail: { profileId: value },
+      }));
       syncPageSelect(value);
       refreshHeaderProfileControls();
     });

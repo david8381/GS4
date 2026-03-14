@@ -519,7 +519,7 @@ def collect_voln_blocks
   payload = {
     version: [existing_payload[:version].to_i, 2].max,
     character: existing_payload[:character] || character_name,
-    collectedAt: existing_payload[:collectedAt] || Time.now.utc.iso8601,
+    collectedAt: existing_payload[:collectedAt],
     blocks: blocks.merge(
       society: society,
       resources: resources
