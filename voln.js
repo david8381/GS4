@@ -7,13 +7,14 @@
 
   const status = document.getElementById("volnStatus");
   const currentStepEl = document.getElementById("volnCurrentStep");
-  const currentFavorEl = document.getElementById("volnCurrentFavor");
+  const currentFavorEl = document.getElementById("volnCurrentFavor"); // may be null if summary card removed
   const stepProgressEl = document.getElementById("volnStepProgress");
   const characterNameEl = document.getElementById("volnCharacterName");
   const lastUpdatedEl = document.getElementById("volnLastUpdated");
   const remainingFavorEl = document.getElementById("volnRemainingFavor");
   const historyTable = document.getElementById("volnHistoryTable");
   const abilityTable = document.getElementById("volnAbilityTable");
+  const currentFavorInput = document.getElementById("volnCurrentFavorInput");
   const atLastStepInput = document.getElementById("volnAtLastStepInput");
   const progressTrack = document.getElementById("volnProgressTrack");
   const progressFill = document.getElementById("volnProgressFill");
@@ -250,8 +251,9 @@
       if (currentRankInput) currentRankInput.value = "";
       if (whatIfLevelInput) whatIfLevelInput.value = "";
       if (whatIfRankInput) whatIfRankInput.value = "";
+      if (currentFavorInput) currentFavorInput.value = "";
       if (atLastStepInput) atLastStepInput.value = "";
-      lastUpdatedEl.textContent = "No captured favor yet";
+      if (lastUpdatedEl) lastUpdatedEl.textContent = "No captured favor yet";
       renderHistory([]);
       return;
     }
@@ -271,7 +273,8 @@
     if (!isVoln) {
       status.textContent = `${profile.name || "Loaded profile"} is not a Voln character. You can still enter values manually.`;
       status.style.color = "";
-      lastUpdatedEl.textContent = "Not a Voln character";
+      if (lastUpdatedEl) lastUpdatedEl.textContent = "Not a Voln character";
+      if (currentFavorInput) currentFavorInput.value = "";
       if (atLastStepInput) atLastStepInput.value = "";
       return;
     }
@@ -279,7 +282,8 @@
     const currentFavorValue = favor && Number.isFinite(Number(favor.current)) ? Math.max(0, Math.trunc(Number(favor.current))) : null;
     const atLastStepValue = favor && Number.isFinite(Number(favor.atLastStepChange)) ? Math.max(0, Math.trunc(Number(favor.atLastStepChange))) : null;
 
-    lastUpdatedEl.textContent = favor?.lastUpdated ? `Last updated ${new Date(favor.lastUpdated).toLocaleString()}` : "No captured favor yet";
+    if (lastUpdatedEl) lastUpdatedEl.textContent = favor?.lastUpdated ? `Last updated ${new Date(favor.lastUpdated).toLocaleString()}` : "No captured favor yet";
+    if (currentFavorInput) currentFavorInput.value = currentFavorValue == null ? "" : String(currentFavorValue);
     if (atLastStepInput) atLastStepInput.value = atLastStepValue == null ? "" : String(atLastStepValue);
 
     status.textContent = favor
@@ -287,8 +291,6 @@
       : "No favor snapshot stored. Run ;gs4tools sync or ;gs4tools collect voln.";
     status.style.color = "";
 
-    // Store favor values as data attributes so recalculate can read them
-    if (currentFavorEl) currentFavorEl.dataset.rawFavor = currentFavorValue == null ? "" : String(currentFavorValue);
     renderHistory(favor?.history || []);
   }
 
@@ -301,16 +303,15 @@
 
     currentStepEl.textContent = String(currentStep);
 
-    // Favor comes from the profile, not from inputs
-    const profile = getSelectedProfile();
-    const favor = profile?.society?.favor || null;
-    const currentFavorValue = favor && Number.isFinite(Number(favor.current)) ? Math.max(0, Math.trunc(Number(favor.current))) : null;
-    const atLastStepValue = favor && Number.isFinite(Number(favor.atLastStepChange)) ? Math.max(0, Math.trunc(Number(favor.atLastStepChange))) : null;
+    const rawFavor = String(currentFavorInput?.value || "").trim();
+    const currentFavorValue = rawFavor !== "" && Number.isFinite(Number(rawFavor)) ? Math.max(0, Math.trunc(Number(rawFavor))) : null;
+    const rawAtLast = String(atLastStepInput?.value || "").trim();
+    const atLastStepValue = rawAtLast !== "" && Number.isFinite(Number(rawAtLast)) ? Math.max(0, Math.trunc(Number(rawAtLast))) : null;
     const sinceStepValue = currentFavorValue != null && atLastStepValue != null ? Math.max(0, currentFavorValue - atLastStepValue) : null;
     const nextCost = calculateNextStepCost(currentLevel, currentStep);
     const remaining = nextCost != null && sinceStepValue != null ? Math.max(0, nextCost - sinceStepValue) : null;
 
-    currentFavorEl.textContent = formatNumber(currentFavorValue);
+    if (currentFavorEl) currentFavorEl.textContent = formatNumber(currentFavorValue);
     if (stepProgressEl) {
       if (sinceStepValue != null && nextCost != null) {
         stepProgressEl.textContent = `${formatNumber(sinceStepValue)} / ${formatNumber(nextCost)}`;
@@ -349,16 +350,18 @@
   let loadedSnapshot = null;
 
   function currentInputSnapshot() {
+    const rawFavor = String(currentFavorInput?.value || "").trim();
     const rawAtLastStep = String(atLastStepInput?.value || "").trim();
     return {
       level: Math.max(0, Math.trunc(Number(currentLevelInput?.value) || 0)),
       step: Math.max(0, Math.trunc(Number(currentRankInput?.value) || 0)),
+      currentFavor: rawFavor === "" ? null : Math.max(0, Math.trunc(Number(rawFavor) || 0)),
       atLastStepChange: rawAtLastStep === "" ? null : Math.max(0, Math.trunc(Number(rawAtLastStep) || 0)),
     };
   }
 
   function snapshotsMatch(a, b) {
-    return a.level === b.level && a.step === b.step && a.atLastStepChange === b.atLastStepChange;
+    return a.level === b.level && a.step === b.step && a.currentFavor === b.currentFavor && a.atLastStepChange === b.atLastStepChange;
   }
 
   function updateButtonStates() {
@@ -397,6 +400,9 @@
 
     const society = selected.society || {};
     const favor = cloneFavorState(society.favor);
+    if (current.currentFavor != null) {
+      favor.current = current.currentFavor;
+    }
     if (current.atLastStepChange != null) {
       favor.atLastStepChange = current.atLastStepChange;
     }
@@ -432,6 +438,9 @@
       loadedSnapshot = {
         level: Math.max(0, Math.trunc(Number(profile.level) || 0)),
         step: isVoln ? Math.max(0, Math.trunc(Number(society.rank) || 0)) : 0,
+        currentFavor: favor && Number.isFinite(Number(favor.current))
+          ? Math.max(0, Math.trunc(Number(favor.current)))
+          : null,
         atLastStepChange: favor && Number.isFinite(Number(favor.atLastStepChange))
           ? Math.max(0, Math.trunc(Number(favor.atLastStepChange)))
           : null,
@@ -455,9 +464,10 @@
   // Input changes recalculate and check for drift from profile
   currentLevelInput?.addEventListener("input", onInputChange);
   currentRankInput?.addEventListener("input", onInputChange);
+  currentFavorInput?.addEventListener("input", onInputChange);
+  atLastStepInput?.addEventListener("input", onInputChange);
   whatIfLevelInput?.addEventListener("input", recalculate);
   whatIfRankInput?.addEventListener("input", recalculate);
-  atLastStepInput?.addEventListener("input", onInputChange);
 
   // Profile load/save buttons
   profileLoadBtn?.addEventListener("click", doLoadProfile);

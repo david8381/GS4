@@ -62,6 +62,13 @@
             </div>
 
             <div class="input-group compact-field">
+              <label for="volnCurrentFavorInput">Current Favor</label>
+              <div class="input-row">
+                <input id="volnCurrentFavorInput" type="number" min="0" step="1" inputmode="numeric" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
               <label for="volnAtLastStepInput">Favor at Last Step Change</label>
               <div class="input-row">
                 <input id="volnAtLastStepInput" type="number" min="0" step="1" inputmode="numeric" />
@@ -76,11 +83,6 @@
               <div class="summary-title">Current Step</div>
               <div class="summary-value" id="volnCurrentStep">—</div>
               <div class="summary-sub" id="volnCharacterName">No profile loaded</div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-title">Current Favor</div>
-              <div class="summary-value" id="volnCurrentFavor">—</div>
-              <div class="summary-sub" id="volnLastUpdated">No captured favor yet</div>
             </div>
             <div class="summary-card">
               <div class="summary-title">Progress to Next Step</div>
@@ -132,7 +134,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.53"></script>
-    <script src="site.js?v=0.2.53"></script>
+    <script src="shared.js?v=0.2.54"></script>
+    <script src="site.js?v=0.2.54"></script>
   </body>
 </html>

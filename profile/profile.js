@@ -765,6 +765,29 @@ function handleInfoStartParse() {
   });
 }
 
+const societyLabels = { col: "Council of Light", voln: "Order of Voln", sunfist: "Guardians of Sunfist" };
+const societyDisplayEl = document.getElementById("profileSocietyDisplay");
+const societyRankDisplayEl = document.getElementById("profileSocietyRankDisplay");
+const favorDisplayEl = document.getElementById("profileFavorDisplay");
+const favorSinceRankDisplayEl = document.getElementById("profileFavorSinceRankDisplay");
+
+function updateSocietyFavorDisplay() {
+  const societyKey = profileSociety?.value || "";
+  const rank = Math.max(0, Math.trunc(Number(profileSocietyRank?.value) || 0));
+  if (societyDisplayEl) societyDisplayEl.textContent = societyLabels[societyKey] || "None";
+  if (societyRankDisplayEl) societyRankDisplayEl.textContent = societyKey ? String(rank) : "—";
+
+  const selectedId = profileSelect?.value || "";
+  const profile = selectedId ? storage.findProfile(profiles, selectedId) : null;
+  const favor = profile?.society?.favor || null;
+  const currentFavor = favor && Number.isFinite(Number(favor.current)) ? Math.trunc(Number(favor.current)) : null;
+  const atLastStep = favor && Number.isFinite(Number(favor.atLastStepChange)) ? Math.trunc(Number(favor.atLastStepChange)) : null;
+  const sinceRank = currentFavor != null && atLastStep != null ? Math.max(0, currentFavor - atLastStep) : null;
+
+  if (favorDisplayEl) favorDisplayEl.textContent = currentFavor != null ? currentFavor.toLocaleString() : "—";
+  if (favorSinceRankDisplayEl) favorSinceRankDisplayEl.textContent = sinceRank != null ? sinceRank.toLocaleString() : "—";
+}
+
 function applyProfile(profile) {
   profileActions.applyProfile({
     profile,
@@ -787,6 +810,7 @@ function applyProfile(profile) {
       updateProfileActionState,
     },
   });
+  updateSocietyFavorDisplay();
 }
 
 function updateArmorWeight() {
@@ -1338,6 +1362,10 @@ try {
     renderSkillsTable,
     getCurrentSkills: () => currentSkills,
   });
+
+  profileSociety?.addEventListener("change", updateSocietyFavorDisplay);
+  profileSocietyRank?.addEventListener("change", updateSocietyFavorDisplay);
+  updateSocietyFavorDisplay();
 
   const initiallySelectedProfileId = localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "";
   if (initiallySelectedProfileId) {
