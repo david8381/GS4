@@ -17,6 +17,8 @@
   const atLastStepChange = document.getElementById("volnAtLastStepChange");
   const remainingFavor = document.getElementById("volnRemainingFavor");
   const historyTable = document.getElementById("volnHistoryTable");
+  const atLastStepInput = document.getElementById("volnAtLastStepInput");
+  const atLastStepSave = document.getElementById("volnAtLastStepSave");
 
   function formatNumber(value) {
     const number = Number(value);
@@ -45,6 +47,83 @@
   function getSelectedProfile() {
     const profiles = loadProfiles();
     return storage.findProfile(profiles, profileSelect.value || localStorage.getItem(storage.SELECTED_PROFILE_KEY) || "");
+  }
+
+  function setEditControlsEnabled(enabled) {
+    if (atLastStepInput) atLastStepInput.disabled = !enabled;
+    if (atLastStepSave) atLastStepSave.disabled = !enabled;
+  }
+
+  function cloneFavorState(favor) {
+    if (!favor || typeof favor !== "object") {
+      return {
+        current: null,
+        atLastStepChange: null,
+        history: [],
+        lastUpdated: "",
+      };
+    }
+    return {
+      current: Number.isFinite(Number(favor.current)) ? Math.max(0, Math.trunc(Number(favor.current))) : null,
+      atLastStepChange: Number.isFinite(Number(favor.atLastStepChange))
+        ? Math.max(0, Math.trunc(Number(favor.atLastStepChange)))
+        : null,
+      history: Array.isArray(favor.history) ? favor.history.map((entry) => ({ ...entry })) : [],
+      lastUpdated: String(favor.lastUpdated || ""),
+    };
+  }
+
+  function saveAtLastStepBaseline() {
+    const profile = getSelectedProfile();
+    if (!profile) {
+      status.textContent = "Load a Voln profile before editing favor at the last step change.";
+      status.style.color = "#b42318";
+      return;
+    }
+    if (String(profile.society?.key || "") !== "voln") {
+      status.textContent = "Only Voln profiles can store a favor changeover value.";
+      status.style.color = "#b42318";
+      return;
+    }
+    const rawValue = String(atLastStepInput?.value || "").trim();
+    if (!rawValue) {
+      status.textContent = "Enter a favor value to save for the last Voln step change.";
+      status.style.color = "#b42318";
+      return;
+    }
+    const baseline = Number(rawValue);
+    if (!Number.isFinite(baseline) || baseline < 0) {
+      status.textContent = "Favor at last step change must be a non-negative number.";
+      status.style.color = "#b42318";
+      return;
+    }
+
+    const profiles = loadProfiles();
+    const selected = storage.findProfile(profiles, profile.id);
+    if (!selected) {
+      status.textContent = "Selected profile could not be found in storage.";
+      status.style.color = "#b42318";
+      return;
+    }
+
+    const currentFavorState = cloneFavorState(selected.society?.favor);
+    const nextFavorState = {
+      ...currentFavorState,
+      atLastStepChange: Math.max(0, Math.trunc(baseline)),
+    };
+    const nextProfile = {
+      ...selected,
+      society: {
+        ...selected.society,
+        favor: nextFavorState,
+      },
+    };
+    const nextProfiles = profiles.map((entry) => (entry.id === selected.id ? nextProfile : entry));
+    storage.saveProfiles(nextProfiles);
+    localStorage.setItem(storage.SELECTED_PROFILE_KEY, selected.id);
+    status.textContent = "Updated favor at last step change for the selected profile.";
+    status.style.color = "#1f4e42";
+    renderProfile();
   }
 
   function calculateNextStepCost(profile, step) {
@@ -94,6 +173,9 @@
       atLastStepChange.textContent = "Favor at last step change: —";
       remainingFavor.textContent = "Remaining to next step: —";
       status.textContent = "Load a Voln character profile to review captured favor progress.";
+      status.style.color = "";
+      if (atLastStepInput) atLastStepInput.value = "";
+      setEditControlsEnabled(false);
       renderHistory([]);
       return;
     }
@@ -111,6 +193,9 @@
       atLastStepChange.textContent = "Favor at last step change: —";
       remainingFavor.textContent = "Remaining to next step: —";
       status.textContent = `${profile.name || "Loaded profile"} is not currently marked as a Voln character.`;
+      status.style.color = "#b42318";
+      if (atLastStepInput) atLastStepInput.value = "";
+      setEditControlsEnabled(false);
       renderHistory([]);
       return;
     }
@@ -133,6 +218,11 @@
     status.textContent = favor
       ? "Voln favor progress is loaded from the profile snapshot."
       : "No favor snapshot stored yet. Run ;gs4tools sync or ;gs4tools collect voln.";
+    status.style.color = "";
+    if (atLastStepInput) {
+      atLastStepInput.value = atLastStepValue == null ? "" : String(atLastStepValue);
+    }
+    setEditControlsEnabled(true);
     renderHistory(favor?.history || []);
   }
 
@@ -141,4 +231,8 @@
 
   profileLoad.addEventListener("click", renderProfile);
   profileSelect.addEventListener("change", renderProfile);
+  atLastStepSave?.addEventListener("click", saveAtLastStepBaseline);
+  atLastStepInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") saveAtLastStepBaseline();
+  });
 })();
