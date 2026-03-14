@@ -31,10 +31,14 @@
         };
       })
       .filter(Boolean);
+    const explicitAtLastStepChangeRaw = volnTracking.atLastStepChange;
+    const explicitAtLastStepChangeNumber = Number(explicitAtLastStepChangeRaw);
     const matchingHistory = normalizedHistory.filter((entry) => entry.step === currentStep);
-    const atLastStepChange = matchingHistory.length
-      ? matchingHistory[matchingHistory.length - 1].favor
-      : currentFavor;
+    const atLastStepChange = Number.isFinite(explicitAtLastStepChangeNumber)
+      ? Math.max(0, Math.trunc(explicitAtLastStepChangeNumber))
+      : (matchingHistory.length
+        ? matchingHistory[matchingHistory.length - 1].favor
+        : currentFavor);
 
     return {
       current: currentFavor,

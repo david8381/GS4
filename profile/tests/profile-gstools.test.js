@@ -44,6 +44,19 @@ test("buildSocietyFavorOverride falls back to current favor when current step ha
   assert.equal(result.atLastStepChange, 123456);
 });
 
+test("buildSocietyFavorOverride prefers explicit atLastStepChange override when present", () => {
+  const result = profileGstools.buildSocietyFavorOverride({
+    society: "voln",
+    step: 12,
+    favor: 123456,
+    atLastStepChange: 100000,
+    history: [{ step: 12, favor: 90000, previousStep: 11, timestamp: "2026-03-01T00:00:00Z" }],
+  });
+
+  assert.equal(result.current, 123456);
+  assert.equal(result.atLastStepChange, 100000);
+});
+
 test("buildSocietyFavorOverride returns null when favor is missing", () => {
   const result = profileGstools.buildSocietyFavorOverride({
     society: "voln",

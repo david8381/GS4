@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.2.3'
+SCRIPT_VERSION = '0.2.4'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -44,6 +44,7 @@ def usage
   say '  ;gs4tools open [page] --sync  # sync first, then land on target page'
   say '  ;gs4tools sync            # collect and open profile import'
   say '  ;gs4tools sync [page]     # collect and open with redirect'
+  say '  ;gs4tools voln baseline N # set favor at last Voln step change in the raw snapshot'
   say '  ;gs4tools load            # show local raw capture summary'
   say '  ;gs4tools load --raw      # print local raw capture JSON'
   say '  ;gs4tools show            # print local raw capture path'
@@ -418,6 +419,9 @@ def build_voln_tracking(society:, resources:, previous_payload:, collected_at:)
   current_favor = resources_state&.dig(:favor)
   previous_voln = previous_payload.is_a?(Hash) ? previous_payload[:voln] : nil
   previous_step = previous_voln.is_a?(Hash) ? previous_voln[:step].to_i : 0
+  previous_baseline = if previous_voln.is_a?(Hash) && !previous_voln[:atLastStepChange].nil?
+                        previous_voln[:atLastStepChange].to_i
+                      end
   history = Array(previous_voln.is_a?(Hash) ? previous_voln[:history] : nil).map do |entry|
     next unless entry.is_a?(Hash)
     {
@@ -444,13 +448,52 @@ def build_voln_tracking(society:, resources:, previous_payload:, collected_at:)
     }
   end
 
+  matching_history = history.select { |entry| entry[:step].to_i == current_step && !entry[:favor].nil? }
+  at_last_step_change =
+    if current_step != previous_step && !current_favor.nil?
+      current_favor
+    elsif !previous_baseline.nil?
+      previous_baseline
+    elsif matching_history.any?
+      matching_history.last[:favor].to_i
+    else
+      current_favor
+    end
+
   {
     society: 'voln',
     step: current_step,
     favor: current_favor,
+    atLastStepChange: at_last_step_change,
     history: history,
     lastUpdated: collected_at,
   }
+end
+
+def set_voln_baseline(raw_value)
+  payload = load_payload
+  unless payload
+    say 'no saved raw capture found; run ;gs4tools collect voln first'
+    return false
+  end
+
+  voln = payload[:voln]
+  unless voln.is_a?(Hash) && voln[:society].to_s == 'voln'
+    say 'no Voln tracking found in the saved raw capture; run ;gs4tools collect voln first'
+    return false
+  end
+
+  text = raw_value.to_s.strip
+  if text.empty? || text !~ /\A\d+\z/
+    say 'usage: ;gs4tools voln baseline N'
+    return false
+  end
+
+  baseline = text.to_i
+  voln[:atLastStepChange] = baseline
+  File.write(data_path, JSON.pretty_generate(payload))
+  say "updated Voln changeover favor to #{baseline} in #{data_path}"
+  true
 end
 
 def collect_voln_blocks
@@ -749,11 +792,22 @@ when 'load'
     say "  blocks: infoStart=#{present_block?(payload, :infoStart) ? 'yes' : 'no'}, skills=#{present_block?(payload, :skills) ? 'yes' : 'no'}, exp=#{present_block?(payload, :exp) ? 'yes' : 'no'}, society=#{present_block?(payload, :society) ? 'yes' : 'no'}, resources=#{present_block?(payload, :resources) ? 'yes' : 'no'}, ascList=#{present_block?(payload, :ascList) ? 'yes' : 'no'}, ascMilestones=#{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}, enhList=#{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}, enhTotals=#{present_block?(payload, :enhanciveTotals) ? 'yes' : 'no'}, enhDetails=#{present_block?(payload, :enhanciveTotalsDetails) ? 'yes' : 'no'}"
     if payload[:voln].is_a?(Hash)
       say "  voln: step=#{payload[:voln][:step] || 0}, favor=#{payload[:voln][:favor] || 'unknown'}, history=#{Array(payload[:voln][:history]).length}"
+      say "        atLastStepChange=#{payload[:voln][:atLastStepChange] || 'unknown'}"
     end
   end
 when 'show'
   say "raw capture: #{data_path}"
   say "legacy normalized profile: #{normalized_profile_path}" if File.exist?(normalized_profile_path)
+when 'voln'
+  subcommand = action_args[0].to_s.downcase
+  if subcommand == 'baseline'
+    set_voln_baseline(action_args[1])
+  elsif action_args.empty?
+    open_page('voln')
+    say 'opened voln without sync'
+  else
+    say "unknown voln subcommand '#{subcommand}'. valid: baseline"
+  end
 when 'status'
   status
 when 'revoke'
