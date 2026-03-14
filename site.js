@@ -90,11 +90,9 @@ function refreshHeaderProfileControls() {
 
   const { select, loadButton, updateButton } = getPageProfileElements();
   const hasHeaderSelection = Boolean(headerSelect.value);
-  const hasPageSelection = Boolean(
-    select &&
-    select.value &&
-    profiles.some((profile) => String(profile.id) === String(select.value))
-  );
+  const hasPageSelection = select
+    ? Boolean(select.value && profiles.some((profile) => String(profile.id) === String(select.value)))
+    : hasHeaderSelection;
   const hasSelection = hasHeaderSelection && hasPageSelection;
   const canReload = hasSelection && isHeaderActionRelevant(loadButton, "reload");
   const canUpdate = hasSelection && isHeaderActionRelevant(updateButton, "update");
