@@ -310,6 +310,7 @@ let applyingProfile = false;
 let skillsImportUnmatchedKeys = new Set();
 let skillsImportOffProfessionKeys = new Set();
 let syncingLevelExperience = false;
+let profiles = [];
 
 function fillSelect(select, items, labelKey = "name") {
   select.innerHTML = "";
@@ -1175,7 +1176,7 @@ try {
   fillSelect(armorAsgSelect, armorAsg);
   updateArmorWeight();
 
-  let profiles = storage.loadProfiles();
+  profiles = storage.loadProfiles();
   profileStateAccess.getProfiles = () => profiles;
   profileStateMutators.setProfiles = (value) => { profiles = value; };
   profileRender.refreshProfileSelect({ profileSelect, profiles });
