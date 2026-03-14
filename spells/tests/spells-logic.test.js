@@ -139,9 +139,19 @@ test("Voln Symbol of Protection scales with Voln step", () => {
   const totals = logic.calculateSocietyAbilityModifiers(protection, true, { voln_step: 20 }, spellsData);
 
   assert.equal(totals.non_bolt_ds, 20);
+  assert.equal(totals.bolt_ds, 20);
   assert.equal(totals.td_spiritual, 10);
   assert.equal(totals.td_elemental, 10);
   assert.equal(totals.td_mental, 10);
+});
+
+test("Voln Symbol of Courage scales physical and bolt AS with Voln step", () => {
+  const courage = societiesData.voln.abilities.find((ability) => ability.id === "symbol_of_courage");
+  const totals = logic.calculateSocietyAbilityModifiers(courage, true, { voln_step: 18 }, spellsData);
+
+  assert.equal(totals.as_physical, 18);
+  assert.equal(totals.as_bolt, 18);
+  assert.equal(totals.uaf, 18);
 });
 
 test("Sunfist Sigil of Focus scales with Sunfist rank", () => {
