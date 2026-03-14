@@ -38,6 +38,9 @@
               </div>
             </div>
             <div class="helper" id="volnStatus">Load a Voln character profile to review captured favor progress.</div>
+            <div class="helper voln-note">
+              Favor spent on symbols reduces the stored current-favor snapshot, so progress to the next step can look lower than the true total earned since you joined the step.
+            </div>
           </div>
 
           <div class="summary-block">
@@ -72,6 +75,23 @@
         </section>
 
         <section class="table-panel">
+          <h2>Voln Symbols</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Symbol</th>
+                <th>Status</th>
+                <th>Benefit</th>
+                <th>Current Effect</th>
+                <th>Use Favor</th>
+              </tr>
+            </thead>
+            <tbody id="volnAbilityTable"></tbody>
+          </table>
+        </section>
+
+        <section class="table-panel">
           <h2>Step History</h2>
           <table>
             <thead>
@@ -90,7 +110,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.2.46"></script>
-    <script src="site.js?v=0.2.46"></script>
+    <script src="shared.js?v=0.2.48"></script>
+    <script src="site.js?v=0.2.48"></script>
   </body>
 </html>

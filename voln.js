@@ -17,8 +17,35 @@
   const atLastStepChange = document.getElementById("volnAtLastStepChange");
   const remainingFavor = document.getElementById("volnRemainingFavor");
   const historyTable = document.getElementById("volnHistoryTable");
+  const abilityTable = document.getElementById("volnAbilityTable");
   const atLastStepInput = document.getElementById("volnAtLastStepInput");
   const atLastStepSave = document.getElementById("volnAtLastStepSave");
+  const VOLN_RETURN_COSTS = {
+    3: 4, 4: 6, 5: 9, 6: 12, 7: 15, 8: 19, 9: 23, 10: 28, 11: 34, 12: 40, 13: 46, 14: 53, 15: 61, 16: 69,
+    17: 77, 18: 86, 19: 95, 20: 105, 21: 115, 22: 125, 23: 136, 24: 147, 25: 159, 26: 171, 27: 183, 28: 196,
+    29: 209, 30: 223, 31: 237, 32: 251, 33: 266, 34: 281, 35: 297, 36: 313, 37: 329, 38: 346, 39: 363, 40: 380,
+    41: 398, 42: 416, 43: 434, 44: 453, 45: 472, 46: 491, 47: 511, 48: 531, 49: 551, 50: 572, 51: 593, 52: 614,
+    53: 635, 54: 657, 55: 679, 56: 702, 57: 724, 58: 747, 59: 771, 60: 794, 61: 818, 62: 842, 63: 867, 64: 891,
+    65: 916, 66: 942, 67: 967, 68: 993, 69: 1019, 70: 1046, 71: 1072, 72: 1099, 73: 1127, 74: 1154, 75: 1182,
+    76: 1210, 77: 1239, 78: 1267, 79: 1296, 80: 1325, 81: 1355, 82: 1384, 83: 1414, 84: 1445, 85: 1475, 86: 1506,
+    87: 1537, 88: 1568, 89: 1600, 90: 1631, 91: 1663, 92: 1696, 93: 1728, 94: 1761, 95: 1794, 96: 1827, 97: 1861,
+    98: 1895, 99: 1929, 100: 1963,
+  };
+  const METRIC_LABELS = {
+    non_bolt_ds: "DS",
+    bolt_ds: "Bolt DS",
+    as_physical: "AS",
+    as_bolt: "Bolt AS",
+    td_spiritual: "Spiritual TD",
+    td_elemental: "Elemental TD",
+    td_mental: "Mental TD",
+    cs_spiritual: "Spiritual CS",
+    cs_elemental: "Elemental CS",
+    cs_mental: "Mental CS",
+    cs_sorcerer: "Sorcerer CS",
+    cs_bard: "Bard CS",
+    uaf: "UAF",
+  };
 
   function formatNumber(value) {
     const number = Number(value);
@@ -140,6 +167,106 @@
     return Math.ceil(base + ((level * level * factor) / 3));
   }
 
+  function calculateSymbolReturnCost(level) {
+    const normalized = Math.max(3, Math.min(100, Math.trunc(Number(level) || 0)));
+    return VOLN_RETURN_COSTS[normalized] || null;
+  }
+
+  function formatUseCost(value) {
+    if (value == null) return "—";
+    if (typeof value === "number") return formatNumber(value);
+    return String(value);
+  }
+
+  function calculateUseCost(level, useCost) {
+    if (!useCost || typeof useCost !== "object") return "—";
+    const baseReturnCost = calculateSymbolReturnCost(level);
+    switch (useCost.mode) {
+      case "none":
+        return "Free";
+      case "symbol_return_table":
+        return baseReturnCost == null ? "—" : baseReturnCost;
+      case "fixed_range":
+        return `${formatNumber(useCost.min)}-${formatNumber(useCost.max)}`;
+      case "factor":
+        if (!baseReturnCost) return "—";
+        if (typeof useCost.relative_cost_factor === "number") {
+          return Math.ceil(baseReturnCost * useCost.relative_cost_factor);
+        }
+        if (useCost.relative_cost_factor && typeof useCost.relative_cost_factor === "object") {
+          return Object.entries(useCost.relative_cost_factor)
+            .map(([key, factor]) => `${key}: ${formatNumber(Math.ceil(baseReturnCost * Number(factor || 0)))}`)
+            .join(" / ");
+        }
+        return "—";
+      case "variable_factor":
+        if (!baseReturnCost) return "—";
+        return `${formatNumber(Math.ceil(baseReturnCost * Number(useCost.base_factor || 0)))}-${formatNumber(Math.ceil(baseReturnCost * Number(useCost.max_factor || useCost.base_factor || 0)))}`;
+      case "variant_factor":
+        if (!baseReturnCost) return "—";
+        return Object.entries(useCost)
+          .filter(([key]) => key !== "mode")
+          .map(([key, factor]) => `${key}: ${formatNumber(Math.ceil(baseReturnCost * Number(factor || 0)))}`)
+          .join(" / ");
+      default:
+        return "Varies";
+    }
+  }
+
+  function resolveCombatPreview(ability, effectiveStep) {
+    const totals = {};
+    const rules = Array.isArray(ability?.dynamic_rules) ? ability.dynamic_rules : [];
+    rules.forEach((rule) => {
+      if (!rule || typeof rule !== "object") return;
+      const metric = String(rule.metric || "");
+      if (!metric || !(metric in METRIC_LABELS)) return;
+      let amount = 0;
+      if (rule.type === "per_rank") {
+        amount = effectiveStep * Number(rule.amount_per_rank || 0);
+      } else if (rule.type === "per_n_ranks") {
+        const divisor = Math.max(1, Number(rule.divisor) || 1);
+        amount = Math.floor(effectiveStep / divisor) * Number(rule.amount_per_step || 0);
+      }
+      if (Number.isFinite(Number(rule.max_total))) {
+        amount = Math.min(amount, Number(rule.max_total));
+      }
+      if (amount > 0) totals[metric] = (totals[metric] || 0) + amount;
+    });
+    const parts = Object.entries(METRIC_LABELS)
+      .map(([metric, label]) => (totals[metric] ? `+${formatNumber(totals[metric])} ${label}` : null))
+      .filter(Boolean);
+    return parts.length ? parts.join(" / ") : "—";
+  }
+
+  function renderAbilities(profile) {
+    if (!abilityTable) return;
+    abilityTable.innerHTML = "";
+    const abilities = Array.isArray(volnData?.abilities) ? volnData.abilities : [];
+    const currentStepValue = Math.max(0, Math.trunc(Number(profile?.society?.rank) || 0));
+    const levelValue = Math.max(0, Math.trunc(Number(profile?.level) || 0));
+    if (!profile || String(profile.society?.key || "") !== "voln") {
+      const row = document.createElement("tr");
+      row.innerHTML = '<td colspan="6">Load a Voln profile to review symbol unlocks and favor costs.</td>';
+      abilityTable.appendChild(row);
+      return;
+    }
+    abilities.forEach((ability) => {
+      const owned = currentStepValue >= Number(ability.rank_required || 0);
+      const effectiveStep = owned ? currentStepValue : Math.max(0, Math.trunc(Number(ability.rank_required) || 0));
+      const row = document.createElement("tr");
+      row.className = owned ? "voln-owned-row" : "voln-locked-row";
+      row.innerHTML = `
+        <td>${formatNumber(ability.rank_required)}</td>
+        <td><strong>${ability.name}</strong></td>
+        <td>${owned ? "Owned" : "Locked"}</td>
+        <td>${ability.effect_summary || "—"}</td>
+        <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, effectiveStep)}${owned ? "" : ` (at step ${formatNumber(effectiveStep)})`}` : "—"}</td>
+        <td>${formatUseCost(calculateUseCost(levelValue, ability.use_cost))}</td>
+      `;
+      abilityTable.appendChild(row);
+    });
+  }
+
   function renderHistory(history) {
     historyTable.innerHTML = "";
     const entries = Array.isArray(history) ? history.slice().reverse() : [];
@@ -176,6 +303,7 @@
       status.style.color = "";
       if (atLastStepInput) atLastStepInput.value = "";
       setEditControlsEnabled(false);
+      renderAbilities(null);
       renderHistory([]);
       return;
     }
@@ -196,6 +324,7 @@
       status.style.color = "#b42318";
       if (atLastStepInput) atLastStepInput.value = "";
       setEditControlsEnabled(false);
+      renderAbilities(null);
       renderHistory([]);
       return;
     }
@@ -223,6 +352,7 @@
       atLastStepInput.value = atLastStepValue == null ? "" : String(atLastStepValue);
     }
     setEditControlsEnabled(true);
+    renderAbilities(profile);
     renderHistory(favor?.history || []);
   }
 

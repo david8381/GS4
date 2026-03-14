@@ -2229,3 +2229,20 @@ body[data-page="voln"] .summary-card,
 body[data-page="experience"] .summary-card {
   min-height: 132px;
 }
+
+body[data-page="voln"] .voln-note {
+  margin-top: 10px;
+}
+
+body[data-page="voln"] .voln-owned-row {
+  background: rgba(31, 78, 66, 0.08);
+}
+
+body[data-page="voln"] .voln-locked-row {
+  background: rgba(15, 23, 42, 0.05);
+  color: #5f6977;
+}
+
+body[data-page="voln"] .table-panel td strong {
+  color: #13263b;
+}
