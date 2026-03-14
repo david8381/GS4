@@ -5,6 +5,45 @@
     root.ProfileGstools = factory();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  function buildSocietyFavorOverride(volnTracking) {
+    if (!volnTracking || String(volnTracking.society || "").trim().toLowerCase() !== "voln") {
+      return null;
+    }
+    const history = Array.isArray(volnTracking.history) ? volnTracking.history : [];
+    const currentStep = Math.max(0, Math.trunc(Number(volnTracking.step) || 0));
+    const currentFavorRaw = volnTracking.favor;
+    const currentFavorNumber = Number(currentFavorRaw);
+    if (currentFavorRaw == null || !Number.isFinite(currentFavorNumber)) return null;
+    const currentFavor = Math.max(0, Math.trunc(currentFavorNumber));
+    const normalizedHistory = history
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") return null;
+        const step = Math.max(0, Math.trunc(Number(entry.step) || 0));
+        const favorNumber = Number(entry.favor);
+        if (!Number.isFinite(favorNumber)) return null;
+        const favor = Math.max(0, Math.trunc(favorNumber));
+        const previousStepRaw = entry.previousStep;
+        return {
+          step,
+          favor,
+          previousStep: previousStepRaw == null ? null : Math.max(0, Math.trunc(Number(previousStepRaw) || 0)),
+          timestamp: String(entry.timestamp || ""),
+        };
+      })
+      .filter(Boolean);
+    const matchingHistory = normalizedHistory.filter((entry) => entry.step === currentStep);
+    const atLastStepChange = matchingHistory.length
+      ? matchingHistory[matchingHistory.length - 1].favor
+      : currentFavor;
+
+    return {
+      current: currentFavor,
+      atLastStepChange,
+      history: normalizedHistory,
+      lastUpdated: String(volnTracking.lastUpdated || ""),
+    };
+  }
+
   function decodeBase64UrlUtf8(input) {
     if (!input) return "";
     const normalized = String(input).replace(/-/g, "+").replace(/_/g, "/");
@@ -61,6 +100,7 @@
       const jsonText = decodeBase64UrlUtf8(encoded);
       const payload = JSON.parse(jsonText);
       const blocks = payload?.blocks || {};
+      const volnTracking = payload?.voln || null;
       const payloadCharacterName = stripMarkupTags(payload?.character || "");
 
       dispatchIfText(infoImport, blocks.infoStart);
@@ -80,7 +120,10 @@
       let saveError = null;
       let savedProfile = null;
       try {
-        savedProfile = handleProfileSave({ preserveUnsyncedFromExisting: true });
+        savedProfile = handleProfileSave({
+          preserveUnsyncedFromExisting: true,
+          societyFavorOverride: buildSocietyFavorOverride(volnTracking),
+        });
       } catch (error) {
         saveError = error;
         console.error("gstools hash import auto-save failed", error);
@@ -142,6 +185,7 @@
   }
 
   return {
+    buildSocietyFavorOverride,
     decodeBase64UrlUtf8,
     importGstoolsPayloadFromHash,
   };

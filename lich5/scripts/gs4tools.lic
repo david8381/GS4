@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.2.1'
+SCRIPT_VERSION = '0.2.2'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
@@ -35,9 +35,11 @@ def usage
   say ''
   say 'usage:'
   say '  ;gs4tools                 # show status + help'
-  say '  ;gs4tools sync            # collect blocks, save local, open profile import'
-  say '  ;gs4tools open <page>     # open page (no sync, profile optional)'
-  say '  ;gs4tools open <page> --sync  # sync first, then land on target page'
+  say '  ;gs4tools sync [page]     # collect full snapshot, save local, open profile import or redirect'
+  say '  ;gs4tools collect         # collect full snapshot and save locally'
+  say '  ;gs4tools collect voln    # collect SOCIETY + RESOURCES only and update Voln tracking'
+  say '  ;gs4tools open [page]     # open latest saved snapshot in browser, redirect if page given'
+  say '  ;gs4tools open [page] --sync  # sync first, then land on target page'
   say '  ;gs4tools load            # show local raw capture summary'
   say '  ;gs4tools load --raw      # print local raw capture JSON'
   say '  ;gs4tools show            # print local raw capture path'
@@ -122,11 +124,13 @@ def compact_payload_for_url(payload)
     version: payload[:version],
     character: payload[:character],
     collectedAt: payload[:collectedAt],
+    voln: payload[:voln],
     blocks: {
       infoStart: sanitize_block_for_hash(blocks[:infoStart]),
       skills: sanitize_block_for_hash(blocks[:skills]),
       exp: sanitize_block_for_hash(blocks[:exp]),
       society: sanitize_block_for_hash(blocks[:society]),
+      resources: sanitize_block_for_hash(blocks[:resources]),
       ascList: sanitize_block_for_hash(blocks[:ascList]),
       ascMilestones: sanitize_block_for_hash(blocks[:ascMilestones]),
       enhanciveList: sanitize_block_for_hash(blocks[:enhanciveList]),
@@ -169,7 +173,7 @@ end
 
 def print_consent_prompt
   say 'before running, this script will:'
-  say '1) send INFO START / SKILLS / EXP / ASC LIST / ASC MILESTONES / INV ENH ...'
+  say '1) send INFO START / SKILLS / EXP / SOCIETY / RESOURCES / ASC LIST / ASC MILESTONES / INV ENH ...'
   say '2) save raw capture data locally under lich5/data/gstools'
   say '3) open your browser to gs4tools.com with encoded data in URL hash'
   say 'privacy: gs4tools.com is a static site and does not store submitted data'
@@ -289,6 +293,14 @@ def collect_blocks
     require_prompt: true
   )
 
+  say 'collecting RESOURCES...'
+  resources = capture_block(
+    command: 'resources',
+    start_pattern: /Voln Favor:|Mana:\s*\d+|Stamina:\s*\d+|Spirit:\s*\d+|resources/i,
+    timeout_seconds: 10,
+    require_prompt: true
+  )
+
   say 'collecting ASC LIST...'
   asc_list = capture_block(
     command: 'asc list',
@@ -327,8 +339,9 @@ def collect_blocks
     require_prompt: true
   )
 
+  previous_payload = load_payload
   payload = {
-    version: 1,
+    version: 2,
     character: character_name,
     collectedAt: Time.now.utc.iso8601,
     blocks: {
@@ -336,6 +349,7 @@ def collect_blocks
       skills: skills,
       exp: exp,
       society: society,
+      resources: resources,
       ascList: asc_list,
       ascMilestones: asc_milestones,
       enhanciveList: enhancive_list,
@@ -343,6 +357,134 @@ def collect_blocks
       enhanciveTotalsDetails: enhancive_totals_details
     }
   }
+  payload[:voln] = build_voln_tracking(society: society, resources: resources, previous_payload: previous_payload, collected_at: payload[:collectedAt])
+
+  File.write(data_path, JSON.pretty_generate(payload))
+  say "saved #{data_path}"
+  payload
+end
+
+def parse_society_tracking(text)
+  source = text.to_s
+  return { society: nil, step: 0 } if source.strip.empty?
+  return { society: nil, step: 0 } if source.match?(/not currently a member of any society/i)
+
+  current_status_line = source.lines.find { |line| line.match?(/You are a member in the .+ at (?:step|rank)\s+\d+/i) }.to_s
+  society =
+    if current_status_line.match?(/Order of Voln/i)
+      'voln'
+    elsif current_status_line.match?(/Council of Light/i)
+      'col'
+    elsif current_status_line.match?(/Guardians of Sunfist/i)
+      'sunfist'
+    elsif source.match?(/Order of Voln/i)
+      'voln'
+    elsif source.match?(/Council of Light/i)
+      'col'
+    elsif source.match?(/Guardians of Sunfist/i)
+      'sunfist'
+    end
+  return { society: nil, step: 0 } unless society
+
+  rank_match =
+    source.match(/at step\s+(\d+)/i) ||
+    source.match(/at rank\s+(\d+)/i) ||
+    source.match(/current(?:ly)? at step\s+(\d+)/i) ||
+    source.match(/current(?:ly)? at rank\s+(\d+)/i) ||
+    source.match(/step\s+(\d+)\s+of\s+\d+/i) ||
+    source.match(/rank\s+(\d+)\s+of\s+\d+/i)
+  rank = rank_match ? rank_match[1].to_i : 0
+  max = society == 'voln' ? 26 : 20
+  { society: society, step: [[rank, 0].max, max].min }
+end
+
+def parse_resources_tracking(text)
+  source = text.to_s
+  return nil if source.strip.empty?
+  favor_match = source.match(/Voln Favor:\s*([\d,]+)/i) || source.match(/Favor:\s*([\d,]+)/i)
+  return nil unless favor_match
+  { favor: favor_match[1].delete(',').to_i }
+end
+
+def build_voln_tracking(society:, resources:, previous_payload:, collected_at:)
+  society_state = parse_society_tracking(society)
+  resources_state = parse_resources_tracking(resources)
+  return nil unless society_state[:society] == 'voln'
+
+  current_step = society_state[:step]
+  current_favor = resources_state&.dig(:favor)
+  previous_voln = previous_payload.is_a?(Hash) ? previous_payload[:voln] : nil
+  previous_step = previous_voln.is_a?(Hash) ? previous_voln[:step].to_i : 0
+  history = Array(previous_voln.is_a?(Hash) ? previous_voln[:history] : nil).map do |entry|
+    next unless entry.is_a?(Hash)
+    {
+      step: entry[:step].to_i,
+      favor: entry[:favor].nil? ? nil : entry[:favor].to_i,
+      previousStep: entry[:previousStep].nil? ? nil : entry[:previousStep].to_i,
+      timestamp: entry[:timestamp].to_s,
+    }
+  end.compact
+
+  if history.empty? && !current_favor.nil?
+    history << {
+      step: current_step,
+      favor: current_favor,
+      previousStep: nil,
+      timestamp: collected_at,
+    }
+  elsif current_step != previous_step && !current_favor.nil?
+    history << {
+      step: current_step,
+      favor: current_favor,
+      previousStep: previous_step,
+      timestamp: collected_at,
+    }
+  end
+
+  {
+    society: 'voln',
+    step: current_step,
+    favor: current_favor,
+    history: history,
+    lastUpdated: collected_at,
+  }
+end
+
+def collect_voln_blocks
+  existing_payload = load_payload || {}
+  blocks = existing_payload[:blocks].is_a?(Hash) ? existing_payload[:blocks] : {}
+
+  say 'collecting SOCIETY...'
+  society = capture_block(
+    command: 'society',
+    start_pattern: /member of any society|Council of Light|Order of Voln|Guardians of Sunfist|currently at (?:Step|Rank)\s+\d+\s+of\s+\d+|Current society status:/i,
+    timeout_seconds: 15,
+    require_prompt: true
+  )
+
+  say 'collecting RESOURCES...'
+  resources = capture_block(
+    command: 'resources',
+    start_pattern: /Voln Favor:|Mana:\s*\d+|Stamina:\s*\d+|Spirit:\s*\d+|resources/i,
+    timeout_seconds: 10,
+    require_prompt: true
+  )
+
+  payload = {
+    version: [existing_payload[:version].to_i, 2].max,
+    character: existing_payload[:character] || character_name,
+    collectedAt: Time.now.utc.iso8601,
+    blocks: blocks.merge(
+      society: society,
+      resources: resources
+    )
+  }
+  payload[:voln] = build_voln_tracking(
+    society: society,
+    resources: resources,
+    previous_payload: existing_payload,
+    collected_at: payload[:collectedAt]
+  )
 
   File.write(data_path, JSON.pretty_generate(payload))
   say "saved #{data_path}"
@@ -371,6 +513,7 @@ def summarize_payload(payload)
   say "skills: #{present_block?(payload, :skills) ? 'yes' : 'no'}"
   say "exp: #{present_block?(payload, :exp) ? 'yes' : 'no'}"
   say "society: #{present_block?(payload, :society) ? 'yes' : 'no'}"
+  say "resources: #{present_block?(payload, :resources) ? 'yes' : 'no'}"
   say "ascList: #{present_block?(payload, :ascList) ? 'yes' : 'no'}"
   say "ascMilestones: #{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}"
   say "enhanciveList: #{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}"
@@ -440,6 +583,9 @@ def status
     if payload
       say "saved data: #{data_path}"
       say "last collected: #{payload[:collectedAt] || 'unknown'}"
+      if payload[:voln].is_a?(Hash)
+        say "voln tracking: step #{payload[:voln][:step] || 0}, favor #{payload[:voln][:favor] || 'unknown'}"
+      end
     end
   end
   unless File.exist?(data_path)
@@ -459,6 +605,17 @@ def build_open_url(base_url, payload:, next_page_key: nil)
   params = ["gstools=#{encoded}"]
   params << "next=#{next_page_key}" if next_page_key && !next_page_key.empty?
   "#{base_url}##{params.join('&')}"
+end
+
+def open_payload_snapshot(payload, page_key = 'profile')
+  compact_payload = compact_payload_for_url(payload)
+  open_browser(
+    build_open_url(
+      DEFAULT_PROFILE_URL,
+      payload: compact_payload,
+      next_page_key: (page_key == 'profile' ? nil : page_key)
+    )
+  )
 end
 
 def resolve_page_key(raw)
@@ -538,32 +695,30 @@ case action
 when 'allow', 'consent'
   grant_consent
 when 'collect'
-  collect_blocks
+  if args[1].to_s.strip.downcase == 'voln'
+    collect_voln_blocks
+  else
+    collect_blocks
+  end
 when 'open'
-  page_key = resolve_page_key(args[1])
+  page_key = args[1] ? resolve_page_key(args[1]) : 'profile'
   if wants_sync
     payload = collect_blocks
-    compact_payload = compact_payload_for_url(payload)
-    open_browser(
-      build_open_url(
-        DEFAULT_PROFILE_URL,
-        payload: compact_payload,
-        next_page_key: (page_key == 'profile' ? nil : page_key)
-      )
-    )
+    open_payload_snapshot(payload, page_key)
   else
-    open_page(page_key)
-    say "opened #{page_key} without sync"
+    payload = load_payload
+    if payload
+      open_payload_snapshot(payload, page_key)
+      say "opened latest saved snapshot#{page_key == 'profile' ? '' : " and redirected to #{page_key}"}"
+    else
+      open_page(page_key)
+      say "no saved snapshot found; opened #{page_key} without sync"
+    end
   end
 when 'sync'
+  page_key = args[1] ? resolve_page_key(args[1]) : 'profile'
   payload = collect_blocks
-  compact_payload = compact_payload_for_url(payload)
-  open_browser(
-    build_open_url(
-      DEFAULT_PROFILE_URL,
-      payload: compact_payload
-    )
-  )
+  open_payload_snapshot(payload, page_key)
 when 'load'
   if args.any? { |arg| arg.to_s.downcase == '--raw' }
     payload = load_payload
@@ -580,7 +735,10 @@ when 'load'
     say 'raw capture:'
     say "  path: #{data_path}"
     say "  last collected: #{payload[:collectedAt] || file_timestamp(data_path)}"
-    say "  blocks: infoStart=#{present_block?(payload, :infoStart) ? 'yes' : 'no'}, skills=#{present_block?(payload, :skills) ? 'yes' : 'no'}, exp=#{present_block?(payload, :exp) ? 'yes' : 'no'}, society=#{present_block?(payload, :society) ? 'yes' : 'no'}, ascList=#{present_block?(payload, :ascList) ? 'yes' : 'no'}, ascMilestones=#{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}, enhList=#{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}, enhTotals=#{present_block?(payload, :enhanciveTotals) ? 'yes' : 'no'}, enhDetails=#{present_block?(payload, :enhanciveTotalsDetails) ? 'yes' : 'no'}"
+    say "  blocks: infoStart=#{present_block?(payload, :infoStart) ? 'yes' : 'no'}, skills=#{present_block?(payload, :skills) ? 'yes' : 'no'}, exp=#{present_block?(payload, :exp) ? 'yes' : 'no'}, society=#{present_block?(payload, :society) ? 'yes' : 'no'}, resources=#{present_block?(payload, :resources) ? 'yes' : 'no'}, ascList=#{present_block?(payload, :ascList) ? 'yes' : 'no'}, ascMilestones=#{present_block?(payload, :ascMilestones) ? 'yes' : 'no'}, enhList=#{present_block?(payload, :enhanciveList) ? 'yes' : 'no'}, enhTotals=#{present_block?(payload, :enhanciveTotals) ? 'yes' : 'no'}, enhDetails=#{present_block?(payload, :enhanciveTotalsDetails) ? 'yes' : 'no'}"
+    if payload[:voln].is_a?(Hash)
+      say "  voln: step=#{payload[:voln][:step] || 0}, favor=#{payload[:voln][:favor] || 'unknown'}, history=#{Array(payload[:voln][:history]).length}"
+    end
   end
 when 'show'
   say "raw capture: #{data_path}"

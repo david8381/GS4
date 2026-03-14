@@ -717,6 +717,7 @@
 
   function handleProfileSave({
     preserveUnsyncedFromExisting = false,
+    societyFavorOverride = null,
     domRefs,
     services,
     stateAccess,
@@ -773,10 +774,6 @@
       const currentRecord = buildCurrentProfileRecord(name);
       const racePayload = parsedInfo ? parsedInfo.race : races.find((race) => race.key === profileRace.value)?.name || "Human";
       const professionPayload = parsedInfoStart?.profession || profileProfession.value;
-      const societyPayload = {
-        key: String(profileSociety?.value || "").trim().toLowerCase() || null,
-        rank: Math.max(0, Math.trunc(Number(profileSocietyRank?.value) || 0)),
-      };
       const levelPayload = clamp(Number(profileLevel.value), 0, 100);
       const expPayload = Math.max(0, Math.trunc(Number(profileExperience.value) || experienceForLevel(levelPayload)));
 
@@ -799,6 +796,15 @@
       const isUpdate = Boolean(existingById || existingByName);
       const existing = existingById || existingByName || null;
       const id = existingById?.id || existingByName?.id || `profile-${Date.now()}`;
+      const societyKeyPayload = String(profileSociety?.value || "").trim().toLowerCase() || null;
+      const societyFavorPayload = societyKeyPayload === "voln"
+        ? (societyFavorOverride || existing?.society?.favor || null)
+        : null;
+      const societyPayload = {
+        key: societyKeyPayload,
+        rank: Math.max(0, Math.trunc(Number(profileSocietyRank?.value) || 0)),
+        favor: societyFavorPayload,
+      };
       record.id = id;
 
       if (preserveUnsyncedFromExisting && existing) {
@@ -817,6 +823,7 @@
           ...buildCurrentProfileRecord(name),
           race: racePayload,
           profession: professionPayload,
+          society: societyPayload,
           level: levelPayload,
           experience: expPayload,
           level0Stats: parsedInfoStart?.level0Stats || getCurrentLevel0Stats(),
