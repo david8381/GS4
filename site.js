@@ -13,7 +13,9 @@ function getPageProfileElements() {
     document.getElementById("profileApply") ||
     document.getElementById("profileLoad") ||
     document.getElementById("profileLoadCalc") ||
-    document.getElementById("badgeProfileLoad");
+    document.getElementById("badgeProfileLoad") ||
+    document.getElementById("volnProfileLoad") ||
+    document.getElementById("experienceProfileLoad");
   const updateButton =
     document.getElementById("profileSave") ||
     document.getElementById("profileDefaultsSave") ||

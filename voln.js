@@ -22,6 +22,7 @@
   const currentRankInput = document.getElementById("volnCurrentRankInput");
   const whatIfLevelInput = document.getElementById("volnWhatIfLevelInput");
   const whatIfRankInput = document.getElementById("volnWhatIfRankInput");
+  const profileLoadBtn = document.getElementById("volnProfileLoad");
   const METRIC_LABELS = {
     non_bolt_ds: "DS",
     bolt_ds: "Bolt DS",
@@ -304,9 +305,18 @@
     renderAbilities(currentLevel, currentStep, whatIfLevel, whatIfStep);
   }
 
+  function flagReload() {
+    if (profileLoadBtn) profileLoadBtn.classList.add("attention");
+  }
+
+  function doLoadProfile() {
+    loadProfileIntoInputs();
+    recalculate();
+    if (profileLoadBtn) profileLoadBtn.classList.remove("attention");
+  }
+
   // Initial load
-  loadProfileIntoInputs();
-  recalculate();
+  doLoadProfile();
 
   // Input changes recalculate but don't reload profile
   currentLevelInput?.addEventListener("input", recalculate);
@@ -320,13 +330,11 @@
     if (event.key === "Enter") saveAtLastStepBaseline();
   });
 
-  // Profile changes reload inputs and recalculate
-  function onProfileChange() {
-    loadProfileIntoInputs();
-    recalculate();
-  }
-  window.addEventListener("storage", onProfileChange);
-  window.addEventListener("focus", onProfileChange);
-  window.addEventListener("gs4:profile-saved", onProfileChange);
-  window.addEventListener("gs4:selected-profile-changed", onProfileChange);
+  // Profile load button
+  profileLoadBtn?.addEventListener("click", doLoadProfile);
+
+  // Profile changes flag the reload button, don't auto-overwrite inputs
+  window.addEventListener("storage", flagReload);
+  window.addEventListener("gs4:profile-saved", flagReload);
+  window.addEventListener("gs4:selected-profile-changed", flagReload);
 })();
