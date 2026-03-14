@@ -1155,6 +1155,7 @@ function resetEditorForNewProfile() {
 function handleProfileSave(options = {}) {
   return profileActions.handleProfileSave({
     preserveUnsyncedFromExisting: options.preserveUnsyncedFromExisting,
+    societyFavorOverride: options.societyFavorOverride,
     domRefs: profileDomRefs,
     services: profileServices,
     stateAccess: profileStateAccess,
