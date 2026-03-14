@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Council of Light</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="col" data-page-scripts="data/societies/col.js,col.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Council of Light</p>
+          <h1>Council of Light</h1>
+          <p>
+            Review current Council of Light rank, sign details, combat modifiers,
+            and what-if projections for different ranks and levels.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="input-group inline-actions">
+              <button class="btn" id="colProfileLoad" type="button" disabled>Reload from Profile</button>
+              <button class="btn" id="colProfileSave" type="button" disabled>Update Profile</button>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="colCurrentLevelInput">Level</label>
+              <div class="input-row">
+                <input id="colCurrentLevelInput" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="colCurrentRankInput">CoL Rank</label>
+              <div class="input-row">
+                <input id="colCurrentRankInput" type="number" min="0" max="20" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="colWhatIfLevelInput">What-If Level</label>
+              <div class="input-row">
+                <input id="colWhatIfLevelInput" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="colWhatIfRankInput">What-If Rank</label>
+              <div class="input-row">
+                <input id="colWhatIfRankInput" type="number" min="0" max="20" step="1" />
+              </div>
+            </div>
+
+            <div class="helper" id="colStatus">Select a Council of Light character profile to review signs and combat modifiers.</div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Current Rank</div>
+              <div class="summary-value" id="colCurrentRank">—</div>
+              <div class="summary-sub" id="colCharacterName">No profile loaded</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Signs Owned</div>
+              <div class="summary-value" id="colSignsOwned">—</div>
+              <div class="summary-sub" id="colSignsTotal">of 20 signs</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Council of Light Signs</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Sign</th>
+                <th>Status</th>
+                <th>Benefit</th>
+                <th>Current Mods</th>
+                <th>What-If Mods</th>
+                <th>Mana</th>
+                <th>Spirit</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody id="colAbilityTable"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="shared.js?v=0.2.56"></script>
+    <script src="site.js?v=0.2.56"></script>
+  </body>
+</html>

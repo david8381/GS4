@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guardians of Sunfist</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="sunfist" data-page-scripts="data/societies/sunfist.js,sunfist.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Guardians of Sunfist</p>
+          <h1>Guardians of Sunfist</h1>
+          <p>
+            Review Sunfist rank, sigil inventory, resource costs, and combat modifier previews.
+            Use the What-If inputs to preview sigils and modifiers at different ranks.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <div class="input-group inline-actions">
+              <button class="btn" id="sunfistProfileLoad" type="button" disabled>Reload from Profile</button>
+              <button class="btn" id="sunfistProfileSave" type="button" disabled>Update Profile</button>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="sunfistCurrentLevelInput">Level</label>
+              <div class="input-row">
+                <input id="sunfistCurrentLevelInput" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="sunfistCurrentRankInput">GoS Rank</label>
+              <div class="input-row">
+                <input id="sunfistCurrentRankInput" type="number" min="0" max="20" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="sunfistWhatIfLevelInput">What-If Level</label>
+              <div class="input-row">
+                <input id="sunfistWhatIfLevelInput" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="input-group compact-field">
+              <label for="sunfistWhatIfRankInput">What-If Rank</label>
+              <div class="input-row">
+                <input id="sunfistWhatIfRankInput" type="number" min="0" max="20" step="1" />
+              </div>
+            </div>
+
+            <div class="helper" id="sunfistStatus">Select a Sunfist character profile to review sigils and combat modifiers.</div>
+          </div>
+
+          <div class="summary-block">
+            <div class="summary-card">
+              <div class="summary-title">Current Rank</div>
+              <div class="summary-value" id="sunfistCurrentRank">—</div>
+              <div class="summary-sub" id="sunfistCharacterName">No profile loaded</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-title">Sigils Owned</div>
+              <div class="summary-value" id="sunfistOwnedCount">—</div>
+              <div class="summary-sub" id="sunfistTotalCount">of 20 sigils</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="table-panel">
+          <h2>Sunfist Sigils</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Sigil</th>
+                <th>Points Required</th>
+                <th>Status</th>
+                <th>Benefit</th>
+                <th>Current Mods</th>
+                <th>What-If Mods</th>
+                <th>Mana</th>
+                <th>Stamina</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody id="sunfistAbilityTable"></tbody>
+          </table>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="shared.js?v=0.2.56"></script>
+    <script src="site.js?v=0.2.56"></script>
+  </body>
+</html>

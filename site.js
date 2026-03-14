@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.2.55";
+const SITE_VERSION = "0.2.56";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
@@ -15,12 +15,16 @@ function getPageProfileElements() {
     document.getElementById("profileLoadCalc") ||
     document.getElementById("badgeProfileLoad") ||
     document.getElementById("volnProfileLoad") ||
+    document.getElementById("colProfileLoad") ||
+    document.getElementById("sunfistProfileLoad") ||
     document.getElementById("experienceProfileLoad");
   const updateButton =
     document.getElementById("profileSave") ||
     document.getElementById("profileDefaultsSave") ||
     document.getElementById("badgeProfileSave") ||
-    document.getElementById("volnProfileSave");
+    document.getElementById("volnProfileSave") ||
+    document.getElementById("colProfileSave") ||
+    document.getElementById("sunfistProfileSave");
   return { select, loadButton, updateButton };
 }
 

@@ -2247,6 +2247,40 @@ body[data-page="voln"] .table-panel td strong {
   color: #13263b;
 }
 
+body[data-page="col"] .col-owned-row {
+  background: rgba(31, 78, 66, 0.08);
+}
+
+body[data-page="col"] .col-locked-row {
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+}
+
+body[data-page="col"] .col-locked-row td strong {
+  color: #94a3b8;
+}
+
+body[data-page="col"] .table-panel td strong {
+  color: #13263b;
+}
+
+body[data-page="sunfist"] .sunfist-owned-row {
+  background: rgba(31, 78, 66, 0.08);
+}
+
+body[data-page="sunfist"] .sunfist-locked-row {
+  background: rgba(148, 163, 184, 0.08);
+  color: #94a3b8;
+}
+
+body[data-page="sunfist"] .sunfist-locked-row td strong {
+  color: #94a3b8;
+}
+
+body[data-page="sunfist"] .table-panel td strong {
+  color: #13263b;
+}
+
 .voln-progress-bar-track {
   width: 100%;
   height: 8px;

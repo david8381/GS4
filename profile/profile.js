@@ -767,9 +767,12 @@ function handleInfoStartParse() {
 
 const profileCurrentFavorInput = document.getElementById("profileCurrentFavor");
 const profileFavorAtLastRankInput = document.getElementById("profileFavorAtLastRank");
+const profileFavorFields = document.getElementById("profileFavorFields");
 const favorSinceRankDisplayEl = document.getElementById("profileFavorSinceRankDisplay");
+const profileSocietyLink = document.getElementById("profileSocietyLink");
 const societyLoadBtn = document.getElementById("societyProfileLoad");
 const societySaveBtn = document.getElementById("societyProfileSave");
+const societyPageMap = { voln: "voln.html", col: "col.html", sunfist: "sunfist.html" };
 let societySnapshot = null;
 
 function currentSocietySnapshot() {
@@ -801,6 +804,22 @@ function updateSocietyButtonStates() {
 }
 
 function updateSocietyFavorDisplay() {
+  const societyKey = profileSociety?.value || "";
+  const isVoln = societyKey === "voln";
+  if (profileFavorFields) profileFavorFields.hidden = !isVoln;
+  const root = document.body.dataset.root || "";
+  if (profileSocietyLink) {
+    const page = societyPageMap[societyKey];
+    if (page) {
+      profileSocietyLink.href = `${root}${page}`;
+      profileSocietyLink.textContent = `View ${societyLabels[societyKey] || "Society"}`;
+      profileSocietyLink.classList.remove("disabled");
+    } else {
+      profileSocietyLink.href = `${root}societies.html`;
+      profileSocietyLink.textContent = "View Societies";
+      profileSocietyLink.classList.remove("disabled");
+    }
+  }
   const rawFavor = String(profileCurrentFavorInput?.value || "").trim();
   const rawAtLast = String(profileFavorAtLastRankInput?.value || "").trim();
   const currentFavor = rawFavor !== "" && Number.isFinite(Number(rawFavor)) ? Math.trunc(Number(rawFavor)) : null;

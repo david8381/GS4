@@ -228,7 +228,7 @@
         </details>
 
         <details class="collapsible-section" id="societyFavorSection">
-          <summary>Society & Favor</summary>
+          <summary>Society</summary>
           <div class="collapsible-body">
             <section class="calc-panel">
               <div class="input-block">
@@ -256,24 +256,33 @@
                   </div>
                 </div>
 
-                <div class="input-group compact-field">
-                  <label for="profileCurrentFavor">Current Favor</label>
-                  <div class="input-row">
-                    <input id="profileCurrentFavor" type="number" min="0" step="1" inputmode="numeric" />
+                <div id="profileFavorFields" hidden>
+                  <div class="input-group compact-field">
+                    <label for="profileCurrentFavor">Current Favor</label>
+                    <div class="input-row">
+                      <input id="profileCurrentFavor" type="number" min="0" step="1" inputmode="numeric" />
+                    </div>
+                  </div>
+
+                  <div class="input-group compact-field">
+                    <label for="profileFavorAtLastRank">Favor at Last Rank Change</label>
+                    <div class="input-row">
+                      <input id="profileFavorAtLastRank" type="number" min="0" step="1" inputmode="numeric" />
+                    </div>
+                  </div>
+
+                  <div class="input-group compact-field">
+                    <label>Favor Since Last Rank</label>
+                    <div class="input-row">
+                      <span id="profileFavorSinceRankDisplay">—</span>
+                    </div>
                   </div>
                 </div>
 
                 <div class="input-group compact-field">
-                  <label for="profileFavorAtLastRank">Favor at Last Rank Change</label>
+                  <label>Society Page</label>
                   <div class="input-row">
-                    <input id="profileFavorAtLastRank" type="number" min="0" step="1" inputmode="numeric" />
-                  </div>
-                </div>
-
-                <div class="input-group compact-field">
-                  <label>Favor Since Last Rank</label>
-                  <div class="input-row">
-                    <span id="profileFavorSinceRankDisplay">—</span>
+                    <a class="btn" id="profileSocietyLink" href="societies.html">View Society</a>
                   </div>
                 </div>
 
@@ -591,7 +600,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.2.55"></script>
-    <script src="../site.js?v=0.2.55"></script>
+    <script src="../shared.js?v=0.2.56"></script>
+    <script src="../site.js?v=0.2.56"></script>
   </body>
 </html>
