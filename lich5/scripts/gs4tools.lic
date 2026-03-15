@@ -181,7 +181,7 @@ def print_consent_prompt
   say '2) save raw capture data locally under lich5/data/gstools'
   say '3) open your browser to gs4tools.com with encoded data in URL hash'
   say 'privacy: gs4tools.com is a static site and does not store submitted data'
-  say 'privacy: your script data stays local unless you choose to save profiles in your browser'
+  say 'privacy: the site automatically saves imported data to your browser localStorage'
   say "if you agree, run: ;gs4tools allow"
   say "to cancel, do nothing. you can revoke later with: ;gs4tools revoke"
 end
