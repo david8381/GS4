@@ -199,7 +199,7 @@
       row.innerHTML = `
         <td>${formatNumber(ability.rank_required)}</td>
         <td><strong>${ability.name}</strong></td>
-        <td>${owned ? "Owned" : "Locked"}</td>
+        <td>${owned ? "Learned" : "Locked"}</td>
         <td>${ability.effect_summary || "—"}</td>
         <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, currentEffectiveStep)}${owned ? "" : ` (at step ${formatNumber(currentEffectiveStep)})`}` : "—"}</td>
         <td>${ability.combat_relevant ? `${resolveCombatPreview(ability, whatIfEffectiveStep)}${whatIfOwned ? "" : ` (at step ${formatNumber(whatIfEffectiveStep)})`}` : "—"}</td>

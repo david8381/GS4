@@ -172,7 +172,7 @@
         "<td>" + formatNumber(ability.rank_required) + "</td>" +
         "<td><strong>" + (ability.name || "—") + "</strong></td>" +
         "<td>" + formatNumber(ability.points_required) + "</td>" +
-        "<td>" + (owned ? "Owned" : "Locked") + "</td>" +
+        "<td>" + (owned ? "Learned" : "Locked") + "</td>" +
         "<td>" + (ability.effect_summary || "—") + "</td>" +
         "<td>" + currentModsText + "</td>" +
         "<td>" + whatIfModsText + "</td>" +
