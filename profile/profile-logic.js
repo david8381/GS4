@@ -461,12 +461,12 @@
       : [0, 0, 0, 0, 0];
     while (components.length < 5) components.push(0);
 
-    const fallbackBoosts = [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }];
+    const fallbackBoosts = [{ id: 0, value: 0 }, { id: 0, value: 0 }, { id: 0, value: 0 }];
     const boosts = Array.isArray(source.boosts)
       ? source.boosts.slice(0, 3).map((entry, index) => {
         const fallback = fallbackBoosts[index] || fallbackBoosts[0];
         return {
-          id: Math.max(1, Math.trunc(Number(entry?.id) || fallback.id)),
+          id: Math.max(0, Math.trunc(Number(entry?.id) || fallback.id)),
           value: Math.max(0, Math.trunc(Number(entry?.value) || 0)),
         };
       })

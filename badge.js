@@ -236,9 +236,9 @@ const state = {
   lifetimeBp: 0,
   components: [0, 0, 0, 0, 0],
   boosts: [
-    { id: 1, value: 0 },
-    { id: 22, value: 0 },
-    { id: 87, value: 0 },
+    { id: 0, value: 0 },
+    { id: 0, value: 0 },
+    { id: 0, value: 0 },
   ],
 };
 
@@ -340,20 +340,22 @@ function parseStateJson(text) {
     parsed.boosts.forEach((entry, index) => {
       if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
         reasons.push(`boosts[${index}] must be an object with id and value.`);
-        boosts.push({ id: 1, value: 0 });
+        boosts.push({ id: 0, value: 0 });
         return;
       }
 
       const id = safeInt(entry.id);
-      const def = boostById.get(id);
-      if (!def) reasons.push(`boosts[${index}].id is not a valid boost id.`);
+      const def = id === 0 ? null : boostById.get(id);
+      if (id !== 0 && !def) reasons.push(`boosts[${index}].id is not a valid boost id.`);
 
       const value = safeInt(entry.value);
-      if (value == null || value < 0 || (def && value > def.max)) {
+      if (id === 0 && value !== 0 && value != null) {
+        reasons.push(`boosts[${index}].value must be 0 when no boost is selected.`);
+      } else if (value == null || value < 0 || (def && value > def.max)) {
         reasons.push(`boosts[${index}].value must be between 0 and max for selected id.`);
       }
 
-      boosts.push({ id: def ? id : 1, value: value ?? 0 });
+      boosts.push({ id: (id === 0 || def) ? (id ?? 0) : 0, value: value ?? 0 });
     });
   }
 
@@ -594,6 +596,12 @@ function changeBoostValue(index, delta) {
 
 function setBoostId(index, id) {
   const numeric = Number(id);
+  if (numeric === 0) {
+    state.boosts[index].id = 0;
+    state.boosts[index].value = 0;
+    render();
+    return;
+  }
   const def = boostById.get(numeric);
   if (!def) return;
   state.boosts[index].id = numeric;
@@ -697,9 +705,12 @@ function renderComponentTable() {
 function renderBoostTable() {
   boostTable.innerHTML = "";
   const saved = getSavedBadgeState();
+  const usedIds = new Set(state.boosts.map((b) => b.id).filter((id) => id !== 0));
 
   state.boosts.forEach((entry, index) => {
     const def = boostById.get(entry.id);
+    const isSelected = def != null;
+    const maxVal = isSelected ? def.max : 0;
     const rowCost = boostCost(entry);
     const required = requiredUpgradesForCost(rowCost);
     const unlocked = slotIsUnlocked(index);
@@ -715,22 +726,24 @@ function renderBoostTable() {
       <td>${index + 1}</td>
       <td>
         <select data-boost-id="${index}">
+          <option value="0" ${entry.id === 0 ? "selected" : ""}>Select Boost</option>
           ${boostDefs
             .map(
               (opt) =>
-                `<option value="${opt.id}" ${opt.id === entry.id ? "selected" : ""}>${opt.id}. ${opt.name}</option>`
+                `<option value="${opt.id}" ${opt.id === entry.id ? "selected" : ""} ${opt.id !== entry.id && usedIds.has(opt.id) ? "disabled" : ""}>${opt.id}. ${opt.name}</option>`
             )
             .join("")}
         </select>
+        <button class="btn ghost" data-boost-clear="${index}" type="button" ${entry.id === 0 ? "disabled" : ""}>clear</button>
       </td>
       <td>
         <div class="inline-actions">
-          <button class="btn ghost" data-boost-minus="${index}" type="button" ${entry.value <= 0 ? "disabled" : ""}>-</button>
+          <button class="btn ghost" data-boost-minus="${index}" type="button" ${entry.value <= 0 || !isSelected ? "disabled" : ""}>-</button>
           <span>${entry.value}</span>
-          <button class="btn ghost" data-boost-plus="${index}" type="button" ${entry.value >= def.max ? "disabled" : ""}>+</button>
+          <button class="btn ghost" data-boost-plus="${index}" type="button" ${entry.value >= maxVal || !isSelected ? "disabled" : ""}>+</button>
         </div>
       </td>
-      <td>${def.max}</td>
+      <td>${isSelected ? maxVal : "—"}</td>
       <td>${required}</td>
       <td>${formatNumber(rowCost)} BP</td>
     `;
@@ -749,6 +762,10 @@ function renderBoostTable() {
 
   boostTable.querySelectorAll("button[data-boost-plus]").forEach((button) => {
     button.addEventListener("click", () => changeBoostValue(Number(button.dataset.boostPlus), 1));
+  });
+
+  boostTable.querySelectorAll("button[data-boost-clear]").forEach((button) => {
+    button.addEventListener("click", () => setBoostId(Number(button.dataset.boostClear), 0));
   });
 }
 

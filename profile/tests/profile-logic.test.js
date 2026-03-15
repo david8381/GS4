@@ -358,7 +358,7 @@ test("normalizeBadgeDefaults clamps malformed badge state", () => {
     {
       lifetimeBp: 123,
       components: [1, 10, 0, 0, 0],
-      boosts: [{ id: 5, value: 9 }, { id: 22, value: 0 }, { id: 87, value: 0 }],
+      boosts: [{ id: 5, value: 9 }, { id: 0, value: 0 }, { id: 0, value: 0 }],
     }
   );
 });
