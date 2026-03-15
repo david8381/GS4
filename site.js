@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.3.2";
+const SITE_VERSION = "0.3.3";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
@@ -133,9 +133,8 @@ function renderHeader() {
   const isProfileManagerPage = page === "profile-manager";
   headerSlot.innerHTML = `
     <header class="site-header">
-      <div class="brand">GS4 Tools</div>
+      <a class="brand" href="${root}index.html" ${homeAttrs}>GS4 Tools</a>
       <div class="header-actions">
-        <a class="home-link" href="${root}index.html" ${homeAttrs}>Home</a>
         <a class="home-link" href="${root}profile/manager.html"${isProfileManagerPage ? ' aria-current="page"' : ""}>Manage Profiles</a>
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">Select Profile</option>
@@ -147,6 +146,7 @@ function renderHeader() {
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
           <button class="btn" id="headerProfileUpdate" type="button">Update Profile</button>
         </div>
+        <button class="btn theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">${document.documentElement.getAttribute("data-theme") === "dark" ? "\u263E" : "\u2600"}</button>
         <span class="site-version" aria-label="Site version">v${SITE_VERSION}</span>
       </div>
     </header>
@@ -157,6 +157,21 @@ function renderHeader() {
   const headerOpen = document.getElementById("headerProfileOpen");
   const headerLoad = document.getElementById("headerProfileLoad");
   const headerUpdate = document.getElementById("headerProfileUpdate");
+  const themeToggle = document.getElementById("themeToggle");
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      const next = isDark ? "light" : "dark";
+      if (next === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        document.documentElement.removeAttribute("data-theme");
+      }
+      localStorage.setItem(storage.THEME_KEY, next);
+      themeToggle.textContent = next === "dark" ? "\u263E" : "\u2600";
+    });
+  }
 
   refreshHeaderProfileControls();
 

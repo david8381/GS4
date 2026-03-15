@@ -9,6 +9,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   const PROFILE_KEY = "gs4.characterProfiles";
   const SELECTED_PROFILE_KEY = "gs4.selectedProfileId";
+  const THEME_KEY = "gs4.theme";
 
   function loadProfiles() {
     try {
@@ -68,6 +69,7 @@
     GS4Storage: {
       PROFILE_KEY,
       SELECTED_PROFILE_KEY,
+      THEME_KEY,
       loadProfiles,
       saveProfiles,
       findProfile,
@@ -80,3 +82,11 @@
     },
   };
 });
+
+// Apply saved theme immediately to prevent flash of wrong theme.
+(function () {
+  if (typeof localStorage === "undefined" || typeof document === "undefined") return;
+  var saved = localStorage.getItem("gs4.theme");
+  var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+})();
