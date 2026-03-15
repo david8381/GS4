@@ -1,5 +1,5 @@
 (() => {
-const SITE_VERSION = "0.2.59";
+const SITE_VERSION = "0.2.60";
 const storage = globalThis.GS4Storage;
 
 if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loaded before site.js.");
@@ -140,8 +140,8 @@ function renderHeader() {
         <select id="headerProfileSelect" class="header-profile-select" aria-label="Selected Profile">
           <option value="">Select Profile</option>
         </select>
-        <button class="btn" id="headerProfileNew" type="button">New</button>
         <button class="btn" id="headerProfileOpen" type="button" disabled>Open</button>
+        <button class="btn" id="headerProfileNew" type="button">New</button>
         <div class="header-profile-actions">
           <span class="header-profile-note is-hidden" id="headerDirtyLabel">Data Changed</span>
           <button class="btn" id="headerProfileLoad" type="button">Reload from Profile</button>
