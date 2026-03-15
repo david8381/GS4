@@ -9,7 +9,7 @@ require 'time'
 require 'timeout'
 
 SCRIPT_NAME = 'gs4tools'
-SCRIPT_VERSION = '0.2.4'
+SCRIPT_VERSION = '0.3.0'
 DEFAULT_PROFILE_URL = 'https://gs4tools.com/profile/profile.html'
 SITE_ROOT_URL = 'https://gs4tools.com'
 DATA_DIR = File.expand_path('../data/gstools/profiles', __dir__)
