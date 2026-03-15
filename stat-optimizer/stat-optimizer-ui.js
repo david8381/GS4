@@ -46,6 +46,8 @@
   const startConstraintMaxBody = document.getElementById("startConstraintMaxBody");
   const startConstraintWarning = document.getElementById("startConstraintWarning");
   const minFinalStatsBody = document.getElementById("minFinalStatsBody");
+  const finalConstraintReqdStart = document.getElementById("finalConstraintReqdStart");
+  const finalConstraintWarning = document.getElementById("finalConstraintWarning");
   const finalConstraintHelper = document.getElementById("finalConstraintHelper");
   const resultSummary = document.getElementById("resultSummary");
   const resultCurrentLevelDelta = document.getElementById("resultCurrentLevelDelta");
@@ -290,6 +292,7 @@
     updateTpBiasLabel();
 
     renderMinimumFinalStatsInputs({ resetToDefaults: true });
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs({ resetToDefaults: true });
     renderPrimeSummary();
     renderStatInfoGrid();
@@ -355,6 +358,78 @@
       `;
       minFinalStatsBody.appendChild(cell);
     });
+  }
+
+  function updateFinalConstraintFeasibility() {
+    if (!finalConstraintReqdStart) return;
+    finalConstraintReqdStart.innerHTML = "";
+    const primeSet = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
+    const constraints = constraintsFromInputs();
+    const issues = [];
+    let baseSum = 0;
+
+    (data.stats || []).forEach((stat) => {
+      const key = stat.key;
+      const minFinal = getMinFinalTargetByKey(key);
+      const reqLevel0 = computeSuggestedStartForTarget(key, minFinal);
+      const shift = primeSet.has(key) ? 10 : 0;
+      const reqBase = Math.max(20, reqLevel0 - shift);
+      baseSum += reqBase;
+
+      const cell = document.createElement("div");
+      cell.className = "stat-constraint-cell";
+      const impossible = reqLevel0 > 100;
+      cell.textContent = impossible ? ">100*" : String(reqLevel0);
+      if (impossible) {
+        cell.style.color = "#b42318";
+        cell.style.fontWeight = "600";
+        issues.push(`${stat.abbr} requires start >100 to reach ${minFinal}`);
+      }
+      finalConstraintReqdStart.appendChild(cell);
+    });
+
+    if (baseSum > constraints.totalPoints) {
+      issues.push(`Required base total (${baseSum}) exceeds creation budget (${constraints.totalPoints})`);
+    }
+
+    if (finalConstraintWarning) {
+      if (issues.length) {
+        finalConstraintWarning.textContent = issues.join(". ") + ".";
+        finalConstraintWarning.style.color = "#b42318";
+      } else if (baseSum > 0) {
+        finalConstraintWarning.textContent = `Required base total: ${baseSum} of ${constraints.totalPoints}`;
+        finalConstraintWarning.style.color = "";
+      } else {
+        finalConstraintWarning.textContent = "";
+        finalConstraintWarning.style.color = "";
+      }
+    }
+  }
+
+  function checkFinalConstraintFeasibility() {
+    const primeSet = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
+    const constraints = constraintsFromInputs();
+    const impossible = [];
+    let baseSum = 0;
+
+    (data.stats || []).forEach((stat) => {
+      const key = stat.key;
+      const minFinal = getMinFinalTargetByKey(key);
+      const reqLevel0 = computeSuggestedStartForTarget(key, minFinal);
+      if (reqLevel0 > 100) {
+        impossible.push(`${stat.abbr} cannot reach ${minFinal}`);
+      }
+      const shift = primeSet.has(key) ? 10 : 0;
+      baseSum += Math.max(20, reqLevel0 - shift);
+    });
+
+    if (impossible.length) {
+      return { feasible: false, reason: `Infeasible final constraints: ${impossible.join(", ")}.` };
+    }
+    if (baseSum > constraints.totalPoints) {
+      return { feasible: false, reason: `Final constraints require base total ${baseSum}, which exceeds the creation budget of ${constraints.totalPoints}. Lower some final targets or change race/profession.` };
+    }
+    return { feasible: true };
   }
 
   function computeSuggestedStartForTarget(statKey, targetFinal, startFloor = 20) {
@@ -513,6 +588,7 @@
 
   function clearMinimumFinalStats() {
     renderMinimumFinalStatsInputs({ resetToDefaults: true });
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs({ resetToDefaults: true });
     if (finalAllMinStatInput) finalAllMinStatInput.value = "";
     updateStartConstraintWarning();
@@ -611,6 +687,7 @@
     const constraints = constraintsFromInputs();
     const primeSet = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
     const issues = [];
+    const conflictedStats = new Set();
     let minBaseSum = 0;
     let maxBaseSum = 0;
     let forcedAbove70 = 0;
@@ -628,6 +705,12 @@
       const maxL0 = maxRaw ? logic.toInt(maxRaw, 100) : 100;
       if (primeSet.has(key) && maxRaw && maxL0 < floorL0) {
         issues.push(`${stat.abbr} max ${maxL0} is below prime minimum ${floorL0}`);
+      }
+      const minFinal = getMinFinalTargetByKey(key);
+      const reqLevel0 = computeSuggestedStartForTarget(key, minFinal);
+      if (maxL0 < reqLevel0) {
+        issues.push(`${stat.abbr}* max ${maxL0} cannot reach final target ${minFinal} (needs ${reqLevel0})`);
+        conflictedStats.add(key);
       }
       const minBase = Math.max(20, minL0 - shift);
       const maxBase = Math.min(100, maxL0 - shift);
@@ -653,12 +736,57 @@
       issues.push(`forces ${forcedAbove90} stats above 90 (limit ${constraints.maxStatsAbove90})`);
     }
 
+    // Update stat abbreviation labels to highlight conflicts
+    if (startConstraintLabels) {
+      startConstraintLabels.querySelectorAll(".optimizer-stat-abbr").forEach((el) => {
+        const key = (data.stats || []).find((s) => s.abbr === el.textContent)?.key;
+        if (key && conflictedStats.has(key)) {
+          el.style.color = "#b42318";
+          el.style.fontWeight = "700";
+          el.textContent = el.textContent.replace(/\*$/, "") + "*";
+        } else {
+          el.style.color = "";
+          el.style.fontWeight = "";
+          el.textContent = el.textContent.replace(/\*$/, "");
+        }
+      });
+    }
+
     if (issues.length) {
       startConstraintWarning.textContent = `GS creation-limit warning: ${issues.join("; ")}.`;
       startConstraintWarning.style.color = "#b42318";
     } else {
       startConstraintWarning.textContent = "";
       startConstraintWarning.style.color = "";
+    }
+  }
+
+  function autoSelectConstraintSolverIfNeeded() {
+    if (!solverModeSelect) return;
+    if (solverModeSelect.value === "exact") return;
+    const hasNonDefaultFinal = (data.stats || []).some((stat) => {
+      const floor = getLevel0FloorByKey(stat.key);
+      const current = getMinFinalTargetByKey(stat.key);
+      return current !== floor;
+    });
+    const hasStartMin = !!(startConstraintMinBody?.querySelector("input[data-start-min]"));
+    const hasStartMax = !!(startConstraintMaxBody?.querySelector("input[data-start-max]"));
+    let hasNonDefaultStart = false;
+    if (hasStartMin) {
+      startConstraintMinBody.querySelectorAll("input[data-start-min]").forEach((input) => {
+        const key = input.dataset.startMin;
+        const floor = getLevel0FloorByKey(key);
+        if (logic.toInt(input.value, floor) !== floor) hasNonDefaultStart = true;
+      });
+    }
+    if (!hasNonDefaultStart && hasStartMax) {
+      startConstraintMaxBody.querySelectorAll("input[data-start-max]").forEach((input) => {
+        if (logic.toInt(input.value, 100) !== 100) hasNonDefaultStart = true;
+      });
+    }
+    if (hasNonDefaultFinal || hasNonDefaultStart) {
+      solverModeSelect.value = "exact";
+      updateSolverModeUI();
     }
   }
 
@@ -912,9 +1040,35 @@
 
   function minimumsFromInputs() {
     const { minStartStats, maxStartStats } = readStartStatBounds();
+    const minFinalStats = readMinimumFinalStats();
+    const primeSet = new Set(logic.getPrimeStatKeys(data, professionSelect?.value));
+
+    // Translate minFinalStats into implied start stat lower bounds so the
+    // solver starts from a feasible region instead of searching blindly.
+    const impliedMinStart = {};
+    (data.stats || []).forEach((stat) => {
+      const key = stat.key;
+      const minFinal = logic.toInt(minFinalStats[key], 0);
+      if (minFinal <= 0) return;
+      const reqLevel0 = computeSuggestedStartForTarget(key, minFinal);
+      if (reqLevel0 > 0) {
+        impliedMinStart[key] = reqLevel0;
+      }
+    });
+
+    // Merge: use the higher of explicit minStartStats and implied minimums
+    const mergedMinStart = { ...minStartStats };
+    logic.STAT_KEYS.forEach((key) => {
+      const implied = logic.toInt(impliedMinStart[key], 0);
+      const explicit = logic.toInt(mergedMinStart[key], 0);
+      if (implied > explicit) {
+        mergedMinStart[key] = implied;
+      }
+    });
+
     return {
-      minFinalStats: readMinimumFinalStats(),
-      minStartStats,
+      minFinalStats,
+      minStartStats: mergedMinStart,
       maxStartStats,
     };
   }
@@ -1641,6 +1795,13 @@
       setStatus("Select a profession first.", "error");
       return;
     }
+    if (!resume) {
+      const feasibility = checkFinalConstraintFeasibility();
+      if (!feasibility.feasible) {
+        setStatus(feasibility.reason, "error");
+        return;
+      }
+    }
     if (runningSolverState.active) {
       setStatus("Solver is already running. Stop it before starting a new run.", "error");
       return;
@@ -1865,6 +2026,7 @@
     renderMinimumFinalStatsInputs({ resetToDefaults: true });
     renderPrimeSummary();
     renderStatInfoGrid();
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -1872,6 +2034,7 @@
   });
   raceSelect?.addEventListener("change", () => {
     renderMinimumFinalStatsInputs({ resetToDefaults: true });
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs({ resetToDefaults: true });
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -1879,6 +2042,7 @@
   });
   targetLevelInput?.addEventListener("input", () => {
     updateTargetLevelLabels();
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs({ resetToDefaults: false });
     updateStartConstraintWarning();
     updateSajehnAvailability();
@@ -1909,6 +2073,7 @@
   initializeStaticInputs();
   minFinalStatsBody?.addEventListener("input", () => {
     autoSelectConstraintSolverIfNeeded();
+    updateFinalConstraintFeasibility();
     renderStartConstraintInputs();
     updateFinalFromCurrentBoundsRows();
     updateStartConstraintWarning();
