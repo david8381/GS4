@@ -5,6 +5,9 @@ if (!storage) throw new Error("GS4Storage is not loaded. Ensure shared.js is loa
 const bodyEl = document.getElementById("profileManagerBody");
 const statusEl = document.getElementById("profileManagerStatus");
 const newProfileBtn = document.getElementById("newProfileBtn");
+const importJsonBtn = document.getElementById("importJsonBtn");
+const importJsonFile = document.getElementById("importJsonFile");
+const importJsonStatus = document.getElementById("importJsonStatus");
 
 function loadProfiles() {
   return storage.loadProfiles();
@@ -84,6 +87,43 @@ function render() {
 }
 
 newProfileBtn?.addEventListener("click", () => openProfileEditor(""));
+
+importJsonBtn?.addEventListener("click", () => {
+  if (importJsonFile) importJsonFile.click();
+});
+
+importJsonFile?.addEventListener("change", () => {
+  const file = importJsonFile.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (!payload || typeof payload !== "object") {
+        throw new Error("File does not contain a valid JSON object.");
+      }
+      const blocks = payload.blocks;
+      if (!blocks || typeof blocks !== "object") {
+        throw new Error("JSON is missing a 'blocks' object. Expected a gs4tools capture file.");
+      }
+      sessionStorage.setItem("gs4toolsImportPayload", JSON.stringify(payload));
+      window.location.assign("./profile.html");
+    } catch (error) {
+      if (importJsonStatus) {
+        importJsonStatus.textContent = `Import failed: ${error.message || "unknown error"}`;
+        importJsonStatus.style.color = "var(--error, #b42318)";
+      }
+    }
+  };
+  reader.onerror = () => {
+    if (importJsonStatus) {
+      importJsonStatus.textContent = "Could not read the selected file.";
+      importJsonStatus.style.color = "var(--error, #b42318)";
+    }
+  };
+  reader.readAsText(file);
+  importJsonFile.value = "";
+});
 
 window.addEventListener("focus", render);
 

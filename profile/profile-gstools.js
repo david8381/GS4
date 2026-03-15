@@ -58,6 +58,31 @@
     return new TextDecoder("utf-8").decode(bytes);
   }
 
+  function resolvePayload(windowObject) {
+    const rawHash = String(windowObject.location.hash || "").replace(/^#/, "");
+    if (rawHash && rawHash.includes("=")) {
+      const hashParams = new URLSearchParams(rawHash);
+      const encoded = hashParams.get("gstools") || "";
+      const nextTarget = String(hashParams.get("next") || "").trim().toLowerCase();
+      if (encoded) {
+        const jsonText = decodeBase64UrlUtf8(encoded);
+        return { payload: JSON.parse(jsonText), nextTarget, source: "hash" };
+      }
+    }
+
+    try {
+      const pending = windowObject.sessionStorage?.getItem("gs4toolsImportPayload");
+      if (pending) {
+        windowObject.sessionStorage.removeItem("gs4toolsImportPayload");
+        return { payload: JSON.parse(pending), nextTarget: "", source: "session" };
+      }
+    } catch (error) {
+      // Ignore sessionStorage failures.
+    }
+
+    return null;
+  }
+
   async function importGstoolsPayloadFromHash({
     windowObject,
     stripMarkupTags,
@@ -74,8 +99,17 @@
     handleProfileSave,
     importStatus,
   }) {
-    const rawHash = String(windowObject.location.hash || "").replace(/^#/, "");
-    if (!rawHash) {
+    let resolved;
+    try {
+      resolved = resolvePayload(windowObject);
+    } catch (error) {
+      console.error("gstools payload resolve failed", error);
+      importStatus.textContent = `Could not read gstools payload: ${error?.message || "unknown error"}.`;
+      importStatus.style.color = "#b42318";
+      return;
+    }
+
+    if (!resolved) {
       try {
         const pendingNotice = String(windowObject.sessionStorage?.getItem("gs4toolsImportNotice") || "");
         if (pendingNotice && importStatus) {
@@ -89,20 +123,9 @@
       return;
     }
 
-    let encoded = "";
-    let nextTarget = "";
-    if (rawHash.includes("=")) {
-      const hashParams = new URLSearchParams(rawHash);
-      encoded = hashParams.get("gstools") || "";
-      nextTarget = String(hashParams.get("next") || "").trim().toLowerCase();
-    } else {
-      return;
-    }
-    if (!encoded) return;
+    const { payload, nextTarget } = resolved;
 
     try {
-      const jsonText = decodeBase64UrlUtf8(encoded);
-      const payload = JSON.parse(jsonText);
       const blocks = payload?.blocks || {};
       const volnTracking = payload?.voln || null;
       const payloadCharacterName = stripMarkupTags(payload?.character || "");
@@ -130,23 +153,23 @@
         });
       } catch (error) {
         saveError = error;
-        console.error("gstools hash import auto-save failed", error);
+        console.error("gstools import auto-save failed", error);
       }
 
       if (saveError) {
         const stackLine = String(saveError.stack || "").split("\n")[1]?.trim() || "";
-        importStatus.textContent = `Imported quick-start blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}${stackLine ? ` (${stackLine})` : ""}.`;
+        importStatus.textContent = `Imported blocks from gstools payload, but profile auto-save failed: ${saveError.message || "unknown error"}${stackLine ? ` (${stackLine})` : ""}.`;
         importStatus.style.color = "#b42318";
         return;
       }
 
       if (!savedProfile) {
-        importStatus.textContent = `Imported quick-start blocks from gstools payload, but could not save profile: enter a profile name.`;
+        importStatus.textContent = `Imported blocks from gstools payload, but could not save profile: enter a profile name.`;
         importStatus.style.color = "#b42318";
         return;
       }
 
-      const successMessage = `Imported quick-start blocks and automatically updated profile${payloadCharacterName ? `: ${payloadCharacterName}` : ""}.`;
+      const successMessage = `Imported and saved profile${payloadCharacterName ? `: ${payloadCharacterName}` : ""}.`;
       importStatus.textContent = successMessage;
       importStatus.style.color = "";
       const nextPageByKey = {
@@ -174,8 +197,8 @@
       }
       windowObject.location.replace(cleanUrl);
     } catch (error) {
-      console.error("gstools hash import failed", error);
-      importStatus.textContent = `Could not import gstools payload from URL hash: ${error?.message || "unknown error"}.`;
+      console.error("gstools import failed", error);
+      importStatus.textContent = `Could not import gstools payload: ${error?.message || "unknown error"}.`;
       importStatus.style.color = "#b42318";
     }
   }

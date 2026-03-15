@@ -26,7 +26,10 @@
         <section class="calc-panel">
           <div class="inline-actions">
             <button class="btn" id="newProfileBtn" type="button">New Profile</button>
+            <button class="btn ghost" id="importJsonBtn" type="button">Import from JSON</button>
+            <input type="file" id="importJsonFile" accept=".json,application/json" hidden />
           </div>
+          <div class="helper" id="importJsonStatus"></div>
         </section>
 
         <section class="calc-panel">
@@ -50,7 +53,7 @@
       </main>
     </div>
 
-    <script src="../shared.js?v=0.3.3"></script>
-    <script src="../site.js?v=0.3.3"></script>
+    <script src="../shared.js?v=0.3.4"></script>
+    <script src="../site.js?v=0.3.4"></script>
   </body>
 </html>
