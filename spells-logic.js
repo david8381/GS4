@@ -370,6 +370,43 @@
     };
   }
 
+  const MAX_LOADOUTS = 20;
+
+  function createLoadout(name, castModesByKey, activeSocietyKey, activeSocietyAbilityKeys) {
+    const compactModes = {};
+    Object.entries(castModesByKey || {}).forEach(([key, mode]) => {
+      if (mode && mode !== "off") compactModes[key] = mode;
+    });
+    return {
+      id: `loadout-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+      name: String(name || "").trim(),
+      castModesByKey: compactModes,
+      activeSocietyKey: String(activeSocietyKey || ""),
+      activeSocietyAbilityKeys: { ...(activeSocietyAbilityKeys || {}) },
+    };
+  }
+
+  function validateLoadoutName(name, existingLoadouts) {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) return "Name is required.";
+    if (trimmed.length > 40) return "Name must be 40 characters or fewer.";
+    const duplicate = (existingLoadouts || []).find(
+      (entry) => String(entry.name || "").trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (duplicate) return null;
+    if ((existingLoadouts || []).length >= MAX_LOADOUTS) return `Maximum of ${MAX_LOADOUTS} loadouts reached.`;
+    return null;
+  }
+
+  function applyLoadout(loadout) {
+    if (!loadout) return { castModesByKey: {}, activeSocietyKey: "", activeSocietyAbilityKeys: {} };
+    return {
+      castModesByKey: { ...(loadout.castModesByKey || {}) },
+      activeSocietyKey: String(loadout.activeSocietyKey || ""),
+      activeSocietyAbilityKeys: { ...(loadout.activeSocietyAbilityKeys || {}) },
+    };
+  }
+
   return {
     clamp,
     asInteger,
@@ -387,5 +424,9 @@
     collectRelevantFactors,
     seedSumBonus,
     calculateDynamicOnlyModifiers,
+    MAX_LOADOUTS,
+    createLoadout,
+    validateLoadoutName,
+    applyLoadout,
   };
 });

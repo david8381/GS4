@@ -32,6 +32,7 @@
 
     return {
       ...record,
+      spellLoadouts: existing.spellLoadouts || record?.spellLoadouts || [],
       society: record?.society || existing?.society || { key: null, rank: 0 },
       ascension: existing.ascension || record.ascension,
       enhancive: existing.enhancive || record.enhancive,
@@ -167,6 +168,7 @@
       },
       skills: mergedSkills.map((skill) => normalizeSkillForCompare(skill, normalizeSkillEntry, skillBonusFromRanks)),
       defaults,
+      spellLoadouts: Array.isArray(record?.spellLoadouts) ? record.spellLoadouts : [],
     };
   }
 

@@ -774,3 +774,61 @@ test("1609 Divine Shield gains melee DS from Paladin ranks above 18", () => {
   assert.equal(totals.non_bolt_ds, 20);
   assert.equal(totals.bolt_ds, 0);
 });
+
+// --- Loadout helpers ---
+
+test("createLoadout returns a well-formed loadout object", () => {
+  const loadout = logic.createLoadout(
+    "Hunting",
+    { "minor_spiritual:101": "self", "sorcerer:712": "self", "unused:999": "off" },
+    "voln",
+    { "voln:symbol_of_protection": true }
+  );
+  assert.ok(loadout.id.startsWith("loadout-"));
+  assert.equal(loadout.name, "Hunting");
+  assert.equal(loadout.castModesByKey["minor_spiritual:101"], "self");
+  assert.equal(loadout.castModesByKey["sorcerer:712"], "self");
+  assert.equal(loadout.castModesByKey["unused:999"], undefined, "off entries are stripped");
+  assert.equal(loadout.activeSocietyKey, "voln");
+  assert.equal(loadout.activeSocietyAbilityKeys["voln:symbol_of_protection"], true);
+});
+
+test("validateLoadoutName rejects empty name", () => {
+  assert.equal(logic.validateLoadoutName("", []), "Name is required.");
+  assert.equal(logic.validateLoadoutName("  ", []), "Name is required.");
+});
+
+test("validateLoadoutName rejects name over 40 chars", () => {
+  const long = "a".repeat(41);
+  assert.ok(logic.validateLoadoutName(long, [])?.includes("40 characters"));
+});
+
+test("validateLoadoutName allows duplicate name for overwrite", () => {
+  const existing = [{ name: "Hunting" }];
+  assert.equal(logic.validateLoadoutName("Hunting", existing), null);
+  assert.equal(logic.validateLoadoutName("hunting", existing), null);
+});
+
+test("validateLoadoutName rejects when at max loadouts and name is new", () => {
+  const loadouts = Array.from({ length: logic.MAX_LOADOUTS }, (_, i) => ({ name: `L${i}` }));
+  assert.ok(logic.validateLoadoutName("Brand New", loadouts)?.includes("Maximum"));
+});
+
+test("applyLoadout returns defensive copy", () => {
+  const original = {
+    castModesByKey: { "a:1": "self" },
+    activeSocietyKey: "voln",
+    activeSocietyAbilityKeys: { "voln:x": true },
+  };
+  const applied = logic.applyLoadout(original);
+  assert.deepEqual(applied.castModesByKey, { "a:1": "self" });
+  applied.castModesByKey["a:1"] = "off";
+  assert.equal(original.castModesByKey["a:1"], "self", "original not mutated");
+});
+
+test("applyLoadout handles null gracefully", () => {
+  const applied = logic.applyLoadout(null);
+  assert.deepEqual(applied.castModesByKey, {});
+  assert.equal(applied.activeSocietyKey, "");
+  assert.deepEqual(applied.activeSocietyAbilityKeys, {});
+});

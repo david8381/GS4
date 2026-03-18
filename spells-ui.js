@@ -64,6 +64,12 @@
     const otherTable = document.getElementById("spellOtherEffectTable");
     const spellEffectStatus = document.getElementById("spellEffectStatus");
     const clearButton = document.getElementById("spellSelectionClear");
+    const loadoutSelect = document.getElementById("loadoutSelect");
+    const loadoutApply = document.getElementById("loadoutApply");
+    const loadoutDelete = document.getElementById("loadoutDelete");
+    const loadoutName = document.getElementById("loadoutName");
+    const loadoutSave = document.getElementById("loadoutSave");
+    const loadoutStatus = document.getElementById("loadoutStatus");
 
     let profiles = [];
     let selectedProfile = null;
@@ -706,6 +712,7 @@
         societyCurrentRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
         societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
         renderProfileSummary();
+        renderLoadoutDropdown();
         setStatus("Select a profile to use profile-based spell rank factors.");
         renderAll();
         return;
@@ -713,6 +720,7 @@
       selectedProfile = storage.findProfile(profiles, selectedId);
       if (!selectedProfile) {
         renderProfileSummary();
+        renderLoadoutDropdown();
         setStatus("Selected profile not found.", "error");
         renderAll();
         return;
@@ -734,6 +742,7 @@
         societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0 };
       }
       renderProfileSummary();
+      renderLoadoutDropdown();
       setStatus(`Loaded profile: ${selectedProfile.name}`);
       renderAll();
     }
@@ -878,6 +887,138 @@
 
     societyRankCurrent?.addEventListener("input", () => updateSocietyRank(societyRankCurrent, societyCurrentRanks));
     societyRankWhatIf?.addEventListener("input", () => updateSocietyRank(societyRankWhatIf, societyWhatIfRanks));
+
+    function getProfileLoadouts() {
+      if (!selectedProfile) return [];
+      return Array.isArray(selectedProfile.spellLoadouts) ? selectedProfile.spellLoadouts : [];
+    }
+
+    function renderLoadoutDropdown() {
+      if (!loadoutSelect) return;
+      const loadouts = getProfileLoadouts();
+      const currentValue = loadoutSelect.value || "";
+      loadoutSelect.innerHTML = '<option value="">Select Loadout</option>';
+      loadouts.forEach((loadout) => {
+        const option = document.createElement("option");
+        option.value = loadout.id;
+        option.textContent = loadout.name;
+        loadoutSelect.appendChild(option);
+      });
+      if (currentValue && loadouts.some((l) => l.id === currentValue)) {
+        loadoutSelect.value = currentValue;
+      }
+      if (loadoutApply) loadoutApply.disabled = !loadoutSelect.value;
+      if (loadoutDelete) loadoutDelete.disabled = !loadoutSelect.value;
+    }
+
+    function saveLoadoutToProfile(loadout) {
+      if (!selectedProfile) return;
+      const loadouts = getProfileLoadouts();
+      const existingIndex = loadouts.findIndex(
+        (entry) => String(entry.name || "").trim().toLowerCase() === String(loadout.name || "").trim().toLowerCase()
+      );
+      if (existingIndex >= 0) {
+        loadouts[existingIndex] = loadout;
+      } else {
+        loadouts.push(loadout);
+      }
+      selectedProfile.spellLoadouts = loadouts;
+      const allProfiles = storage.loadProfiles();
+      const profileIndex = allProfiles.findIndex((p) => p.id === selectedProfile.id);
+      if (profileIndex >= 0) {
+        allProfiles[profileIndex].spellLoadouts = loadouts;
+        storage.saveProfiles(allProfiles);
+      }
+    }
+
+    function deleteLoadoutFromProfile(loadoutId) {
+      if (!selectedProfile) return;
+      const loadouts = getProfileLoadouts().filter((l) => l.id !== loadoutId);
+      selectedProfile.spellLoadouts = loadouts;
+      const allProfiles = storage.loadProfiles();
+      const profileIndex = allProfiles.findIndex((p) => p.id === selectedProfile.id);
+      if (profileIndex >= 0) {
+        allProfiles[profileIndex].spellLoadouts = loadouts;
+        storage.saveProfiles(allProfiles);
+      }
+    }
+
+    loadoutSelect?.addEventListener("change", () => {
+      if (loadoutApply) loadoutApply.disabled = !loadoutSelect.value;
+      if (loadoutDelete) loadoutDelete.disabled = !loadoutSelect.value;
+    });
+
+    loadoutApply?.addEventListener("click", () => {
+      const loadoutId = loadoutSelect?.value;
+      if (!loadoutId) return;
+      const loadout = getProfileLoadouts().find((l) => l.id === loadoutId);
+      if (!loadout) return;
+      const state = logic.applyLoadout(loadout);
+      castModesByKey = state.castModesByKey;
+      activeSocietyKey = state.activeSocietyKey;
+      activeSocietyAbilityKeys = state.activeSocietyAbilityKeys;
+      if (activeSocietyKey && societyConfig[activeSocietyKey]) {
+        const rankKey = societyConfig[activeSocietyKey].rankKey;
+        const profileRank = logic.asInteger(selectedProfile?.society?.rank, 0);
+        societyCurrentRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0, [rankKey]: profileRank };
+        societyWhatIfRanks = { col_rank: 0, voln_step: 0, sunfist_rank: 0, [rankKey]: profileRank };
+      }
+      renderAll();
+      if (loadoutStatus) {
+        loadoutStatus.textContent = `Applied loadout: ${loadout.name}`;
+        loadoutStatus.style.color = "";
+      }
+    });
+
+    loadoutSave?.addEventListener("click", () => {
+      if (!selectedProfile) {
+        if (loadoutStatus) {
+          loadoutStatus.textContent = "Select a profile first to save loadouts.";
+          loadoutStatus.style.color = "var(--error, #b42318)";
+        }
+        return;
+      }
+      const name = (loadoutName?.value || "").trim();
+      const loadouts = getProfileLoadouts();
+      const error = logic.validateLoadoutName(name, loadouts);
+      if (error) {
+        if (loadoutStatus) {
+          loadoutStatus.textContent = error;
+          loadoutStatus.style.color = "var(--error, #b42318)";
+        }
+        return;
+      }
+      const existing = loadouts.find(
+        (entry) => String(entry.name || "").trim().toLowerCase() === name.toLowerCase()
+      );
+      const loadout = logic.createLoadout(name, castModesByKey, activeSocietyKey, activeSocietyAbilityKeys);
+      if (existing) loadout.id = existing.id;
+      saveLoadoutToProfile(loadout);
+      renderLoadoutDropdown();
+      loadoutSelect.value = loadout.id;
+      if (loadoutApply) loadoutApply.disabled = false;
+      if (loadoutDelete) loadoutDelete.disabled = false;
+      if (loadoutName) loadoutName.value = "";
+      if (loadoutStatus) {
+        loadoutStatus.textContent = existing
+          ? `Updated loadout: ${loadout.name}`
+          : `Saved loadout: ${loadout.name}`;
+        loadoutStatus.style.color = "";
+      }
+    });
+
+    loadoutDelete?.addEventListener("click", () => {
+      const loadoutId = loadoutSelect?.value;
+      if (!loadoutId) return;
+      const loadout = getProfileLoadouts().find((l) => l.id === loadoutId);
+      if (!loadout) return;
+      deleteLoadoutFromProfile(loadoutId);
+      renderLoadoutDropdown();
+      if (loadoutStatus) {
+        loadoutStatus.textContent = `Deleted loadout: ${loadout.name}`;
+        loadoutStatus.style.color = "";
+      }
+    });
 
     refreshProfileSelect();
     renderProfileSummary();
