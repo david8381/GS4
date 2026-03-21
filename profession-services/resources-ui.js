@@ -1034,7 +1034,7 @@
 
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["Step", "Difficulty", "Cost", "Current Margin", "What-If Margin", "Success %"].forEach((label) => {
+    ["Step", "Difficulty", "Cost", "Margin", "Success % (w/wo Eonak)"].forEach((label) => {
       const th = document.createElement("th");
       th.textContent = label;
       headRow.appendChild(th);
@@ -1058,19 +1058,28 @@
       costCell.textContent = `${formatValue(row.resourceCost)} ${service.progression.resourceLabel || service.resourceName}`;
       tr.appendChild(costCell);
 
-      const currentMarginCell = document.createElement("td");
-      currentMarginCell.textContent = formatSignedValue(row.currentMargin);
-      tr.appendChild(currentMarginCell);
-
-      const whatIfMarginCell = document.createElement("td");
-      whatIfMarginCell.textContent = formatSignedValue(row.whatIfMargin);
-      tr.appendChild(whatIfMarginCell);
+      const marginCell = document.createElement("td");
+      marginCell.textContent = formatSignedValue(row.currentMargin);
+      if (row.whatIfMargin !== row.currentMargin) {
+        const span = document.createElement("span");
+        span.className = "path-whatif-val " + (row.whatIfMargin > row.currentMargin ? "path-up" : "path-down");
+        span.textContent = formatSignedValue(row.whatIfMargin);
+        marginCell.appendChild(span);
+      }
+      tr.appendChild(marginCell);
 
       const successCell = document.createElement("td");
       const curP = Math.min(99, Math.max(1, row.currentMargin));
       const curEonak = Math.round(100 * (1 - ((1 - curP / 100) * (1 - curP / 100))));
-      successCell.textContent = `${curP}%  /  ${curEonak}%`;
-      successCell.title = `Without / with Gift of Eonak`;
+      successCell.textContent = `${curP}% / ${curEonak}%`;
+      if (row.whatIfMargin !== row.currentMargin) {
+        const wiP = Math.min(99, Math.max(1, row.whatIfMargin));
+        const wiEonak = Math.round(100 * (1 - ((1 - wiP / 100) * (1 - wiP / 100))));
+        const span = document.createElement("span");
+        span.className = "path-whatif-val " + (wiP > curP ? "path-up" : "path-down");
+        span.textContent = `${wiP}% / ${wiEonak}%`;
+        successCell.appendChild(span);
+      }
       tr.appendChild(successCell);
 
       tbody.appendChild(tr);

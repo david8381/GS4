@@ -1746,7 +1746,7 @@ body[data-page="resources"] .resource-overview-detail-empty {
 body[data-page="resources"] .resource-overview-path-table {
   width: 100%;
   min-width: 0;
-  table-layout: auto;
+  table-layout: fixed;
   font-size: 0.8rem;
 }
 
@@ -1771,6 +1771,27 @@ body[data-page="resources"] .resource-overview-path-table td:nth-child(2),
 body[data-page="resources"] .resource-overview-path-table td:nth-child(4),
 body[data-page="resources"] .resource-overview-path-table td:nth-child(5) {
   text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-page="resources"] .resource-overview-path-table th:nth-child(1) { width: 15%; }
+body[data-page="resources"] .resource-overview-path-table th:nth-child(2) { width: 14%; }
+body[data-page="resources"] .resource-overview-path-table th:nth-child(3) { width: 28%; }
+body[data-page="resources"] .resource-overview-path-table th:nth-child(4) { width: 16%; }
+body[data-page="resources"] .resource-overview-path-table th:nth-child(5) { width: 27%; }
+
+body[data-page="resources"] .path-whatif-val {
+  font-size: 0.75em;
+  margin-left: 0.25rem;
+}
+
+body[data-page="resources"] .path-up {
+  color: var(--success, #1a7a4d);
+}
+
+body[data-page="resources"] .path-down {
+  color: var(--error, #b42318);
 }
 
 body[data-page="resources"] .resource-overview-input {
