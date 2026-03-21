@@ -2039,6 +2039,19 @@ body[data-page="spells"] .spell-circle-section + .spell-circle-section {
   margin-top: 8px;
 }
 
+body[data-page="spells"] .spell-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+body[data-page="spells"] .show-selected-only > .spell-circle-section > .collapsible-body > table > tbody > tr:not(.is-selected) {
+  display: none;
+}
+
 body[data-page="spells"] .spell-society-meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -2079,6 +2092,11 @@ body[data-page="spells"] .spell-mode-toggle .btn.is-active {
 body[data-page="spells"] #spellSelectionTable tr.is-selected td,
 body[data-page="spells"] #societySelectionTable tr.is-selected td {
   background: rgba(31, 78, 66, 0.06);
+}
+
+body[data-page="spells"] .spell-circle-section td:first-child {
+  min-width: 220px;
+  width: 30%;
 }
 
 body[data-page="spells"] .spell-entry {
@@ -2163,9 +2181,132 @@ body[data-page="spells"] .spell-scaling-tag {
   cursor: help;
 }
 
+body[data-page="spells"] .spell-active-summary {
+  margin-top: 10px;
+}
+
+body[data-page="spells"] .spell-active-total {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+body[data-page="spells"] .spell-active-total span {
+  font-weight: 700;
+  color: var(--text);
+}
+
+body[data-page="spells"] .spell-active-bins {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+body[data-page="spells"] .spell-bin {
+  background: var(--panel-soft, #faf8f5);
+  border: 1px solid var(--border, #d5cfc5);
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 48px;
+}
+
+body[data-page="spells"] .spell-bin-header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+body[data-page="spells"] .spell-bin-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 24px;
+}
+
+body[data-page="spells"] .spell-bin-dragover {
+  outline: 2px dashed var(--accent, #8a7d68);
+  outline-offset: -2px;
+}
+
+body[data-page="spells"] .spell-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--panel, #f3ede3);
+  border: 1px solid var(--border-input, #d5cfc5);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  cursor: grab;
+  white-space: nowrap;
+  user-select: none;
+}
+
+body[data-page="spells"] .society-chip {
+  background: var(--panel-soft, #eee8dc);
+  border-style: dashed;
+}
+
+body[data-page="spells"] .spell-chip-remove {
+  all: unset;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--muted);
+  padding: 0 1px;
+  margin-left: 1px;
+}
+
+body[data-page="spells"] .spell-chip-remove:hover {
+  color: var(--text);
+}
+
+body[data-page="spells"] .spell-loadout-block {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border, #d5cfc5);
+  border-radius: 8px;
+  background: var(--panel-soft, #faf8f5);
+}
+
+body[data-page="spells"] .spell-loadout-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px 16px;
+}
+
+body[data-page="spells"] .spell-scaling-block {
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--panel, #faf8f5);
+  border: 1px solid var(--border-input, #d5cfc5);
+}
+
 body[data-page="spells"] .spell-scaling-list {
   display: grid;
   gap: 4px;
+}
+
+body[data-page="spells"] .targeted-row td:first-child {
+  font-style: italic;
+}
+
+body[data-page="spells"] .spell-scaling-col-label {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  color: #8a7d68;
+  text-align: center;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+body[data-page="spells"] .spell-scaling-factor-header {
+  margin-bottom: 0;
 }
 
 body[data-page="spells"] .spell-scaling-factor {
@@ -2769,4 +2910,137 @@ body[data-page="sunfist"] .table-panel td strong {
 /* Header-profile-note */
 [data-theme="dark"] .header-profile-note.is-visible {
   color: var(--success);
+}
+
+/* ── CS / TD Calculator ── */
+
+.cs-td-status {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #555);
+  margin-left: 0.5rem;
+}
+
+.cs-td-loadout-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.cs-td-loadout-row label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.cs-td-loadout-row select {
+  max-width: 200px;
+}
+
+.cs-td-target-toggle {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.cs-td-target-toggle.cs-td-undead {
+  background: #3d1f1f;
+  color: #e8c4c4;
+  border-color: #6b3333;
+}
+
+.cs-td-input-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.cs-td-input-table th:nth-child(1) { width: 30%; }
+.cs-td-input-table th:nth-child(2) { width: 15%; text-align: center; }
+.cs-td-input-table th:nth-child(3) { width: 15%; text-align: center; }
+.cs-td-input-table th:nth-child(4) { width: 40%; }
+
+.cs-td-current-val {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-td-whatif-input {
+  width: 100%;
+  max-width: 80px;
+  text-align: center;
+  margin: 0 auto;
+  display: block;
+}
+
+.cs-td-affects {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #777);
+}
+
+.cs-td-output-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.cs-td-output-table th,
+.cs-td-output-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-td-output-table th:first-child {
+  width: 28%;
+}
+
+.cs-td-num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cs-td-total {
+  font-weight: 700;
+}
+
+.cs-td-whatif-val {
+  font-size: 0.75em;
+  margin-left: 0.15rem;
+}
+
+.cs-td-up {
+  color: var(--success, #1a7a4d);
+}
+
+.cs-td-down {
+  color: var(--error, #b42318);
+}
+
+.cs-td-empty {
+  text-align: center;
+  color: var(--text-secondary, #777);
+  font-style: italic;
+  padding: 1rem;
+}
+
+.cs-td-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #777);
+  font-style: italic;
+  padding-top: 0.75rem;
+}
+
+[data-theme="dark"] .cs-td-target-toggle {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+[data-theme="dark"] .cs-td-target-toggle.cs-td-undead {
+  background: #3d1f1f;
+  color: #e8c4c4;
+  border-color: #6b3333;
 }

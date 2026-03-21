@@ -168,7 +168,6 @@
       },
       skills: mergedSkills.map((skill) => normalizeSkillForCompare(skill, normalizeSkillEntry, skillBonusFromRanks)),
       defaults,
-      spellLoadouts: Array.isArray(record?.spellLoadouts) ? record.spellLoadouts : [],
     };
   }
 

@@ -162,6 +162,7 @@
     effect_text,
     cast_scope = "sharable",
     stack_mode = "stackable",
+    temporary = false,
     modifiers = {},
     notes = [],
     scaling_notes = [],
@@ -181,6 +182,7 @@
       effect_text,
       cast_scope,
       stack_mode,
+      temporary: Boolean(temporary),
       modifiers: normalizedModifiers,
       notes,
       scaling_notes,
@@ -199,9 +201,9 @@
     spell({ id: 107, circle: "Minor Spiritual", name: "Spirit Warding II", effect_text: "+15 spiritual TD, +25 bolt DS", modifiers: { bolt_ds: 25, td_spiritual: 15 } }),
     spell({ id: 112, circle: "Minor Spiritual", name: "Water Walking", effect_text: "Walk on water, marsh utility" }),
     spell({ id: 115, circle: "Minor Spiritual", name: "Fasthr's Reward", effect_text: "Second chance vs failed warding", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense", "warding"], scaling_notes: ["Religion Lore improves the chance to trigger the second warding attempt."] }),
-    spell({ id: 117, circle: "Minor Spiritual", name: "Spirit Strike", effect_text: "+75 AS (single strike / short duration)", stack_mode: "not_stackable", modifiers: { as_physical: 75, as_bolt: 75 } }),
+    spell({ id: 117, circle: "Minor Spiritual", name: "Spirit Strike", effect_text: "+75 AS (single strike / short duration)", stack_mode: "not_stackable", temporary: true, modifiers: { as_physical: 75, as_bolt: 75 } }),
     spell({ id: 120, circle: "Minor Spiritual", name: "Lesser Shroud", effect_text: "+15 DS, +20 spiritual TD", cast_scope: "self_only", modifiers: { non_bolt_ds: 15, bolt_ds: 15, td_spiritual: 20 } }),
-    spell({ id: 140, circle: "Minor Spiritual", name: "Wall of Force", effect_text: "+100 DS, short duration", stack_mode: "refreshable", modifiers: { non_bolt_ds: 100, bolt_ds: 100 } }),
+    spell({ id: 140, circle: "Minor Spiritual", name: "Wall of Force", effect_text: "+100 DS, short duration", stack_mode: "refreshable", temporary: true, modifiers: { non_bolt_ds: 100, bolt_ds: 100 } }),
 
     // Major Spiritual
     spell({ id: 202, circle: "Major Spiritual", name: "Spirit Shield", effect_text: "+10 DS", modifiers: { non_bolt_ds: 10, bolt_ds: 10 } }),
@@ -215,7 +217,7 @@
     // Cleric Base
     spell({ id: 303, circle: "Cleric", name: "Prayer of Protection", effect_text: "+10 DS", cast_scope: "self_only", modifiers: { non_bolt_ds: 10, bolt_ds: 10 } }),
     spell({ id: 307, circle: "Cleric", name: "Benediction", effect_text: "+5 physical AS, +5 bolt AS, +5 DS", cast_scope: "self_or_group", modifiers: { as_physical: 5, as_bolt: 5, non_bolt_ds: 5, bolt_ds: 5 } }),
-    spell({ id: 310, circle: "Cleric", name: "Warding Sphere", effect_text: "+10 DS, +10 TD", cast_scope: "self_or_group", modifiers: { non_bolt_ds: 10, bolt_ds: 10, td_spiritual: 10, td_elemental: 10, td_mental: 10 } }),
+    spell({ id: 310, circle: "Cleric", name: "Warding Sphere", effect_text: "+10 DS, +10 spiritual TD (crosses over to other spheres)", cast_scope: "self_or_group", modifiers: { non_bolt_ds: 10, bolt_ds: 10, td_spiritual: 10 } }),
     spell({ id: 313, circle: "Cleric", name: "Prayer", effect_text: "+10 spiritual TD, maneuver defense; DS increases at higher Cleric ranks", cast_scope: "self_only", modifiers: { td_spiritual: 10 } }),
     spell({ id: 314, circle: "Cleric", name: "Relieve Burden", effect_text: "Reduces silver encumbrance", cast_scope: "self_limited" }),
     spell({ id: 319, circle: "Cleric", name: "Soul Ward", effect_text: "Defensive flares", calculator_relevant: true, calculator_tags: ["special_defense"] }),
@@ -255,35 +257,35 @@
     spell({ id: 540, circle: "Major Elemental", name: "Temporal Reversion", effect_text: "Additional physical defense chance", calculator_relevant: true, calculator_tags: ["special_defense"] }),
 
     // Ranger Base
-    spell({ id: 601, circle: "Ranger", name: "Natural Colors", effect_text: "+10 DS with hiding bonus", cast_scope: "self_or_group", modifiers: { non_bolt_ds: 10, bolt_ds: 10 }, scaling_notes: ["Blessings Lore adds extra flat DS by seed 5 summation."] }),
+    spell({ id: 601, circle: "Ranger", name: "Natural Colors", effect_text: "+10 DS with hiding bonus", cast_scope: "outside", modifiers: { non_bolt_ds: 10, bolt_ds: 10 }, scaling_notes: ["Blessings Lore adds extra flat DS by seed 5 summation."] }),
     spell({ id: 602, circle: "Ranger", name: "Resist Elements", effect_text: "+15 bolt DS vs fire/ice/steam/lightning", cast_scope: "self_or_target", modifiers: { bolt_ds: 15 }, scaling_notes: ["Blessings Lore adds extra flat bolt DS by seed 5 summation."] }),
     spell({ id: 604, circle: "Ranger", name: "Nature's Bounty", effect_text: "Skinning/foraging bonus" }),
     spell({ id: 605, circle: "Ranger", name: "Barkskin", effect_text: "Chance to block, non-stackable", stack_mode: "not_stackable", calculator_relevant: true, calculator_tags: ["special_defense"], scaling_notes: ["Summoning Lore increases the bark endurance/block-style defense behavior."] }),
     spell({ id: 606, circle: "Ranger", name: "Phoen's Strength", effect_text: "+10 strength bonus (AS comes from strength bonus)", modifiers: { strength_bonus: 10 } }),
-    spell({ id: 608, circle: "Ranger", name: "Camouflage", effect_text: "+30 AS while hidden, +18 spiritual CS", modifiers: { as_physical: 30, as_bolt: 30, cs_spiritual: 18 } }),
+    spell({ id: 608, circle: "Ranger", name: "Camouflage", effect_text: "+30 AS while hidden, +18 spiritual CS", temporary: true, modifiers: { as_physical: 30, as_bolt: 30, cs_spiritual: 18 } }),
     spell({ id: 612, circle: "Ranger", name: "Breeze", effect_text: "Roundtime flare utility" }),
     spell({ id: 613, circle: "Ranger", name: "Self Control", effect_text: "+20 DS (melee), +20 spiritual TD", modifiers: { non_bolt_ds: 20, td_spiritual: 20 } }),
     spell({ id: 617, circle: "Ranger", name: "Sneaking", effect_text: "Stalking/hiding movement style" }),
     spell({ id: 618, circle: "Ranger", name: "Mobility", effect_text: "+20 dodge ranks", cast_scope: "self_or_target", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Ranger Base ranks above 18 add phantom Dodge ranks for rangers, capped by level and 100 ranks. Ranger-only CML support is future calculator work."] }),
     spell({ id: 620, circle: "Ranger", name: "Resist Nature", effect_text: "Element resistance utility", cast_scope: "self_or_group" }),
     spell({ id: 625, circle: "Ranger", name: "Nature's Touch", effect_text: "+1 spiritual TD up to +12 (scales with Ranger ranks)", modifiers: { td_spiritual: 1 }, notes: ["Minimum listed base +1 spiritual TD; scales by Ranger spell ranks."] }),
-    spell({ id: 640, circle: "Ranger", name: "Wall of Thorns", effect_text: "+20 DS and block chance", modifiers: { non_bolt_ds: 20 } }),
+    spell({ id: 640, circle: "Ranger", name: "Wall of Thorns", effect_text: "+20 DS and block chance", temporary: true, modifiers: { non_bolt_ds: 20 } }),
     spell({ id: 650, circle: "Ranger", name: "Assume Aspect", effect_text: "Aspect-dependent buffs", calculator_relevant: true, calculator_tags: ["special_offense", "special_defense"] }),
 
     // Sorcerer Base
     spell({ id: 704, circle: "Sorcerer", name: "Phase", effect_text: "SMR defense utility", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
-    spell({ id: 712, circle: "Sorcerer", name: "Cloak of Shadows", effect_text: "+25 DS, +20 TD", cast_scope: "self_only", modifiers: { non_bolt_ds: 25, bolt_ds: 25, td_spiritual: 20, td_elemental: 20, td_mental: 20 }, scaling_notes: ["Sorcerer Base ranks add +1 DS per rank above 12, capped by level, and +1 TD per 10 ranks above 12, capped by level."] }),
+    spell({ id: 712, circle: "Sorcerer", name: "Cloak of Shadows", effect_text: "+25 DS, +15 TD (all), Spr/Ele TD scales", cast_scope: "self_only", modifiers: { non_bolt_ds: 25, bolt_ds: 25, td_spiritual: 15, td_elemental: 15, td_mental: 15 }, scaling_notes: ["Sorcerer Base ranks add +1 DS per rank above 12, capped by level, and +1 Spr/Ele TD per 10 ranks above 12, capped by level."] }),
     spell({ id: 715, circle: "Sorcerer", name: "Curse (Star)", effect_text: "+10 bolt AS after cursed targets die", cast_scope: "self_only", modifiers: { as_bolt: 10 }, notes: ["Star is a curse mode of 715, not spell 703."], scaling_notes: ["Sorcerer Base ranks above 15 add +1 bolt AS per 3 ranks, capped by level. The AS bonus only applies after the cursed target dies."] }),
     spell({ id: 716, circle: "Sorcerer", name: "Pestilence", effect_text: "+25% chance to disease attacker", cast_scope: "self_only" }),
-    spell({ id: 735, circle: "Sorcerer", name: "Ensorcell", effect_text: "Life channeling flares", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_offense"] }),
+    spell({ id: 735, circle: "Sorcerer", name: "Ensorcell", effect_text: "Life channeling flares", cast_scope: "self_only" }),
 
     // Wizard Base
     spell({ id: 902, circle: "Wizard", name: "Minor Elemental Edge", effect_text: "+10 enhancive skill bonus to weapon", calculator_relevant: true, calculator_tags: ["weapon_support"] }),
     spell({ id: 905, circle: "Wizard", name: "Prismatic Guard", effect_text: "+5 DS, +20 bolt DS", cast_scope: "self_only", modifiers: { non_bolt_ds: 5, bolt_ds: 20 }, scaling_notes: ["Wizard Base ranks add +1 DS per 4 ranks above 5. Earth Lore adds extra DS by seed 5 summation."] }),
     spell({ id: 909, circle: "Wizard", name: "Tremors", effect_text: "Charge/STOMP utility" }),
-    spell({ id: 911, circle: "Wizard", name: "Mass Blur", effect_text: "+20 dodge ranks", cast_scope: "self_or_group", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Air Lore adds +1 Dodge rank by seed 1 summation to the caster only."] }),
+    spell({ id: 911, circle: "Wizard", name: "Mass Blur", effect_text: "+20 dodge ranks", cast_scope: "outside", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Air Lore adds +1 Dodge rank by seed 1 summation to the caster only."] }),
     spell({ id: 913, circle: "Wizard", name: "Melgorehn's Aura", effect_text: "+10 DS, +20 elemental TD", cast_scope: "self_only", modifiers: { non_bolt_ds: 10, bolt_ds: 10, td_elemental: 20 }, scaling_notes: ["Wizard Base ranks above 13 add flat DS and elemental TD."] }),
-    spell({ id: 919, circle: "Wizard", name: "Wizard's Shield", effect_text: "+50 DS, 60s, not stackable", cast_scope: "self_only", stack_mode: "not_stackable", modifiers: { non_bolt_ds: 50 } }),
+    spell({ id: 919, circle: "Wizard", name: "Wizard's Shield", effect_text: "+50 DS, 60s, not stackable", cast_scope: "self_only", stack_mode: "not_stackable", temporary: true, modifiers: { non_bolt_ds: 50 } }),
 
     // Bard Base
     spell({ id: 1003, circle: "Bard", name: "Fortitude Song", effect_text: "+10 DS against melee/ranged/bolt", cast_scope: "self_only", stack_mode: "song_not_stackable", modifiers: { non_bolt_ds: 10, bolt_ds: 10 } }),
@@ -291,14 +293,14 @@
     spell({ id: 1007, circle: "Bard", name: "Kai's Triumph Song", effect_text: "+10 AS", cast_scope: "self_or_group", stack_mode: "song_not_stackable", modifiers: { as_physical: 10, as_bolt: 10 }, scaling_notes: ["Bard Base ranks above 7 add +1 AS each, up to +20 total from songs known. Telepathy Lore adds +1 AS per seed 3 summation, up to +11 additional AS."] }),
     spell({ id: 1010, circle: "Bard", name: "Song of Valor", effect_text: "+10 DS against melee/ranged/bolt, +15 elemental TD", cast_scope: "self_only", stack_mode: "song_not_stackable", modifiers: { non_bolt_ds: 10, bolt_ds: 10, td_elemental: 15 } }),
     spell({ id: 1019, circle: "Bard", name: "Song of Mirrors", effect_text: "+20 dodge", cast_scope: "self_only", stack_mode: "song_not_stackable", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Bard Base ranks add +1 Dodge rank per 2 ranks above 19."] }),
-    spell({ id: 1035, circle: "Bard", name: "Song of Tonis", effect_text: "+20 dodge ranks, -1s RT, 60s refreshable", cast_scope: "self_or_group", stack_mode: "refreshable", modifiers: { dodge_ranks: 20 }, scaling_notes: ["Air Lore adds threshold-based Dodge rank increases up to +20 over base. Haste scaling remains note-only for now."] }),
+    spell({ id: 1035, circle: "Bard", name: "Song of Tonis", effect_text: "+20 dodge ranks, -1s RT, 60s refreshable", cast_scope: "self_or_group", stack_mode: "refreshable", temporary: true, modifiers: { dodge_ranks: 20 }, scaling_notes: ["Air Lore adds threshold-based Dodge rank increases up to +20 over base. Haste scaling remains note-only for now."] }),
 
     // Empath Base
     spell({ id: 1109, circle: "Empath", name: "Empathic Focus", effect_text: "+15 spiritual TD, +25 DS, +15 physical AS", cast_scope: "self_only", modifiers: { td_spiritual: 15, non_bolt_ds: 25, bolt_ds: 25, as_physical: 15 } }),
     spell({ id: 1119, circle: "Empath", name: "Strength of Will", effect_text: "+12 spiritual TD, +12 DS", cast_scope: "self_only", modifiers: { td_spiritual: 12, non_bolt_ds: 12, bolt_ds: 12 }, scaling_notes: ["Empath Base ranks add +1 DS and +1 spiritual TD per 3 ranks above 19, up to +25 total DS/TD at 58 ranks."] }),
     spell({ id: 1125, circle: "Empath", name: "Troll's Blood", effect_text: "Healing/regen utility", cast_scope: "self_or_group", calculator_relevant: true, calculator_tags: ["regen"] }),
     spell({ id: 1130, circle: "Empath", name: "Intensity", effect_text: "+20 AS, +20 DS", cast_scope: "self_only", modifiers: { as_physical: 20, as_bolt: 20, non_bolt_ds: 20, bolt_ds: 20 }, scaling_notes: ["Empath Base ranks add +1 AS and +1 DS per 2 ranks above 30, capped by level."] }),
-    spell({ id: 1150, circle: "Empath", name: "Regeneration", effect_text: "Heal + crit reduction, 30s, not stackable", cast_scope: "self_only", stack_mode: "not_stackable", calculator_relevant: true, calculator_tags: ["special_defense", "regen"] }),
+    spell({ id: 1150, circle: "Empath", name: "Regeneration", effect_text: "Heal + crit reduction, 30s, not stackable", cast_scope: "self_only", stack_mode: "not_stackable", temporary: true, calculator_relevant: true, calculator_tags: ["special_defense", "regen"] }),
 
     // Minor Mental
     spell({ id: 1202, circle: "Minor Mental", name: "Iron Skin", effect_text: "Armor-like defense", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
@@ -323,7 +325,7 @@
     spell({ id: 1616, circle: "Paladin", name: "Vigor", effect_text: "+4 CON", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["stat_support"] }),
     spell({ id: 1617, circle: "Paladin", name: "Zealot", effect_text: "+30 AS, aura", cast_scope: "self_or_group", modifiers: { as_physical: 30 }, scaling_notes: ["Religion Lore adds +1 AS by seed 1 summation."] }),
     spell({ id: 1618, circle: "Paladin", name: "Fervor", effect_text: "Damage weighting/flaring aura", cast_scope: "self_or_group" }),
-    spell({ id: 1619, circle: "Paladin", name: "Faith Shield", effect_text: "+50 spiritual TD, 30s duration", cast_scope: "self_only", stack_mode: "cooldown", modifiers: { td_spiritual: 50 }, scaling_notes: ["Religion Lore adds +3 spiritual TD by seed 5 summation, up to +74 total spiritual TD."] }),
+    spell({ id: 1619, circle: "Paladin", name: "Faith Shield", effect_text: "+50 spiritual TD, 30s duration", cast_scope: "self_only", stack_mode: "cooldown", temporary: true, modifiers: { td_spiritual: 50 }, scaling_notes: ["Religion Lore adds +3 spiritual TD by seed 5 summation, up to +74 total spiritual TD."] }),
 
     // Arcane
     spell({ id: 1701, circle: "Arcane", name: "Arcane Decoy", effect_text: "Dispel decoy spell", cast_scope: "self_only", calculator_relevant: true, calculator_tags: ["special_defense"] }),
@@ -404,11 +406,10 @@
           type: "ranks_above_threshold",
           factor: "cleric_spell_ranks",
           threshold: 10,
-          divisor: 1,
+          divisor: 2,
           maxExtra: 10,
-          cap_factor: "level",
-          modifierKeys: ["non_bolt_ds", "bolt_ds", "td_spiritual", "td_elemental", "td_mental"],
-          note: "+1 DS (all) and +1 TD per Cleric rank above 10, capped by level, max +20 total",
+          modifierKeys: ["non_bolt_ds", "bolt_ds", "td_spiritual"],
+          note: "+1 DS (all) and +1 spiritual TD per 2 Cleric ranks above 10, max +20 total",
         },
       ],
     },
@@ -738,8 +739,8 @@
           divisor: 10,
           cap_factor: "level",
           maxExtra: 8,
-          modifierKeys: ["td_spiritual", "td_elemental", "td_mental"],
-          note: "+1 TD per 10 Sorcerer ranks above 12, capped by level",
+          modifierKeys: ["td_spiritual", "td_elemental"],
+          note: "+1 Spr/Ele TD per 10 Sorcerer ranks above 12, capped by level",
         },
       ],
     },

@@ -340,7 +340,7 @@
       return { currentServices: 0, baseItemDifficulty: 0, itemType: defaultItemType };
     }
     if (progression.type === "enchant_bonus_steps") {
-      return { currentBonus: 0, baseItemDifficulty: 0 };
+      return { currentBonus: 0, projectDifficulty: 0 };
     }
     return {};
   }
@@ -579,7 +579,9 @@
 
     if (progression.type === "enchant_bonus_steps") {
       let currentBonus = clamp(asInteger(progressionState?.currentBonus, 0), 0, progression.maxBonus);
-      const baseItemDifficulty = asNumber(progressionState?.baseItemDifficulty, 0);
+      // User enters project difficulty at current bonus; derive base by subtracting current offset
+      const projectDifficulty = asNumber(progressionState?.projectDifficulty ?? progressionState?.baseItemDifficulty, 0);
+      const baseItemDifficulty = projectDifficulty - getEnchantDifficultyOffset(currentBonus);
 
       for (let step = 0; step < asInteger(progression.rowCount, 0) && currentBonus < progression.maxBonus; step += 1) {
         const targetBonus = currentBonus + 1;

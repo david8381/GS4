@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CS / TD Calculator</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="cs-td" data-root="../" data-page-scripts="../data/gs4-data.js,../data/cs-td-data.js,../data/spells.js,../data/societies/col.js,../data/societies/voln.js,../data/societies/sunfist.js,../spells-logic.js,../cs-td/cs-td-logic.js,cs-td-ui.js,cs-td.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Combat Analysis</p>
+          <h1>CS / TD Calculator</h1>
+          <p>
+            View your base Casting Strength per spell circle and Target Defense per sphere.
+            Load a spell loadout from the Spell Effect Calculator to include buff contributions.
+          </p>
+        </section>
+
+        <section class="calc-panel">
+          <div class="header-bridge" aria-hidden="true">
+            <select id="cstdProfileSelect">
+              <option value="">Select Profile</option>
+            </select>
+            <button id="cstdProfileLoad" type="button">Reload</button>
+            <span id="cstdProfileStatus" class="cs-td-status"></span>
+          </div>
+
+          <div class="input-block">
+            <h2>Inputs</h2>
+            <div class="cs-td-loadout-row">
+              <label for="cstdLoadoutSelect">Spell Loadout</label>
+              <select id="cstdLoadoutSelect">
+                <option value="">No Loadout</option>
+              </select>
+              <button id="cstdLoadoutApply" type="button" disabled>Apply</button>
+              <button id="cstdTargetToggle" type="button" class="cs-td-target-toggle">Living</button>
+            </div>
+            <table class="data-table cs-td-input-table">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Current</th>
+                  <th>What-If</th>
+                  <th>Affects</th>
+                </tr>
+              </thead>
+              <tbody id="cstdInputBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <h2>Casting Strength (CS)</h2>
+            <table class="data-table cs-td-output-table">
+              <thead>
+                <tr>
+                  <th>Circle</th>
+                  <th>Level</th>
+                  <th>Primary</th>
+                  <th>Secondary</th>
+                  <th>Stat</th>
+                  <th>Buffs</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="cstdCSBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="calc-panel">
+          <div class="input-block">
+            <h2>Target Defense (TD)</h2>
+            <table class="data-table cs-td-output-table">
+              <thead>
+                <tr>
+                  <th>Sphere</th>
+                  <th>TD</th>
+                  <th>CvA</th>
+                  <th>Final</th>
+                  <th>Racial</th>
+                  <th>Effective</th>
+                </tr>
+              </thead>
+              <tbody id="cstdTDBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <div data-footer></div>
+    </div>
+    <script src="../shared.js?v=0.3.7"></script>
+    <script src="../site.js?v=0.3.7"></script>
+  </body>
+</html>

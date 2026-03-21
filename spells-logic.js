@@ -349,20 +349,52 @@
       totals: calculateSocietyAbilityModifiers(ability, enabled, whatIfFactorValues, spellsData),
     }));
 
+    const currentUniversalSociety = currentSocietyRows.filter((row) => !row.ability.target);
+    const currentTargetedSociety = currentSocietyRows.filter((row) => row.ability.target);
+    const whatIfUniversalSociety = whatIfSocietyRows.filter((row) => !row.ability.target);
+    const whatIfTargetedSociety = whatIfSocietyRows.filter((row) => row.ability.target);
+
+    const currentTotals = sumModifierTotals(
+      [...currentSpellRows.map((row) => row.totals), ...currentUniversalSociety.map((row) => row.totals)],
+      spellsData
+    );
+    const whatIfTotals = sumModifierTotals(
+      [...whatIfSpellRows.map((row) => row.totals), ...whatIfUniversalSociety.map((row) => row.totals)],
+      spellsData
+    );
+
+    const targetedTotalsByTarget = {};
+    const whatIfTargetedTotalsByTarget = {};
+    currentTargetedSociety.forEach((row) => {
+      const t = row.ability.target;
+      if (!targetedTotalsByTarget[t]) targetedTotalsByTarget[t] = [];
+      targetedTotalsByTarget[t].push(row.totals);
+    });
+    whatIfTargetedSociety.forEach((row) => {
+      const t = row.ability.target;
+      if (!whatIfTargetedTotalsByTarget[t]) whatIfTargetedTotalsByTarget[t] = [];
+      whatIfTargetedTotalsByTarget[t].push(row.totals);
+    });
+
+    const currentTargetedTotals = {};
+    const whatIfTargetedTotals = {};
+    Object.entries(targetedTotalsByTarget).forEach(([t, maps]) => {
+      currentTargetedTotals[t] = sumModifierTotals(maps, spellsData);
+    });
+    Object.entries(whatIfTargetedTotalsByTarget).forEach(([t, maps]) => {
+      whatIfTargetedTotals[t] = sumModifierTotals(maps, spellsData);
+    });
+
     return {
       activeSpellEntries,
       activeSocietyEntries,
       relevantFactors,
       currentFactorValues,
       whatIfFactorValues,
-      currentTotals: sumModifierTotals(
-        [...currentSpellRows.map((row) => row.totals), ...currentSocietyRows.map((row) => row.totals)],
-        spellsData
-      ),
-      whatIfTotals: sumModifierTotals(
-        [...whatIfSpellRows.map((row) => row.totals), ...whatIfSocietyRows.map((row) => row.totals)],
-        spellsData
-      ),
+      currentTotals,
+      whatIfTotals,
+      currentTargetedTotals,
+      whatIfTargetedTotals,
       currentSpellRows,
       whatIfSpellRows,
       currentSocietyRows,

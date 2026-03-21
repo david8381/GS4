@@ -797,6 +797,7 @@
       let record = {
         id: "",
         ...currentRecord,
+        spellLoadouts: existing?.spellLoadouts || [],
         race: racePayload,
         profession: professionPayload,
         society: societyPayload,
@@ -808,7 +809,7 @@
 
       if (preserveUnsyncedFromExisting && existing) {
         saveStage = "merge existing profile state";
-        record = profileState.mergeImportedProfileState({
+        const merged = profileState.mergeImportedProfileState({
           existing,
           record,
           preserveUnsyncedFromExisting,
@@ -816,10 +817,11 @@
           normalizeEnhanciveEquipmentState,
         });
         saveStage = "rebuild merged profile state";
-        applyProfile(record);
+        applyProfile(merged);
         record = {
           id,
           ...buildCurrentProfileRecord(name),
+          spellLoadouts: merged.spellLoadouts || [],
           race: racePayload,
           profession: professionPayload,
           society: societyPayload,

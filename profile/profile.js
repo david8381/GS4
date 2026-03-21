@@ -1481,6 +1481,14 @@ try {
     }
   }
 
+  // Clear the profile dropdown before gstools import so it matches by name
+  // instead of overwriting the previously-selected profile.
+  const hasPendingImport = window.location.hash.includes("gstools")
+    || sessionStorage.getItem("gs4toolsImportPayload");
+  if (hasPendingImport) {
+    profileSelect.value = "";
+  }
+
   profileGstools.importGstoolsPayloadFromHash({
     windowObject: window,
     stripMarkupTags,

@@ -960,14 +960,15 @@
       );
       appendOverviewLabeledInput(
         wrap,
-        "Base Diff",
+        "Proj Diff",
         createOverviewNumberInput(
           `overview-${service.id}-difficulty`,
-          progressionState.baseItemDifficulty,
+          progressionState.projectDifficulty ?? progressionState.baseItemDifficulty ?? 0,
           0,
           undefined,
           () => {
-            progressionState.baseItemDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            progressionState.projectDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            delete progressionState.baseItemDifficulty;
             renderAll(true);
           }
         )

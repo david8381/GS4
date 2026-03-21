@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
   </head>
-  <body data-page="spells" data-page-scripts="data/gs4-data.js,data/spells.js,data/societies/col.js,data/societies/voln.js,data/societies/sunfist.js,spells-logic.js,spells-ui.js,spells.js">
+  <body data-page="spells" data-page-scripts="data/gs4-data.js,data/spells.js,data/cs-td-data.js,data/societies/col.js,data/societies/voln.js,data/societies/sunfist.js,spells-logic.js,cs-td/cs-td-logic.js,spells-ui.js,cs-td-section.js,spells.js">
     <div class="page">
       <div data-header></div>
 
@@ -87,49 +87,44 @@
                 <div class="helper" id="spellProfileStatus">Select a profile to use profile-based spell rank factors.</div>
               </div>
 
-              <div class="summary-block">
-                <div class="summary-card">
-                  <div class="summary-title">Active Spells</div>
-                  <div class="summary-value" id="activeSpellCount">0</div>
-                  <div class="summary-sub">Outside + self-cast selections</div>
-                </div>
-                <div class="summary-card">
-                  <div class="summary-title">Self-Cast</div>
-                  <div class="summary-value" id="selfCastCount">0</div>
-                  <div class="summary-sub">Selections using self-cast scaling when modeled</div>
-                </div>
-                <div class="summary-card">
-                  <div class="summary-title">Modeled Scaling</div>
-                  <div class="summary-value" id="scalingCoverage">0</div>
-                  <div class="summary-sub">Self-cast spells with explicit factor rules</div>
+              <div class="spell-active-summary">
+                <div class="spell-active-total"><span id="activeSpellCount">0</span> active spells</div>
+                <div class="spell-active-bins">
+                  <div class="spell-bin" id="selfCastBin">
+                    <div class="spell-bin-header">Self-Cast</div>
+                    <div class="spell-bin-items" id="selfCastItems" data-bin="self"></div>
+                  </div>
+                  <div class="spell-bin" id="outsideBin">
+                    <div class="spell-bin-header">Outside / Group</div>
+                    <div class="spell-bin-items" id="outsideItems" data-bin="outside"></div>
+                  </div>
                 </div>
               </div>
+
             </section>
+            <div class="spell-loadout-block">
+              <div class="spell-bin-header">Loadouts</div>
+              <div class="spell-loadout-controls">
+                <div class="input-group compact-field">
+                  <label for="loadoutSelect">Saved</label>
+                  <div class="input-row">
+                    <select id="loadoutSelect"><option value="">Select Loadout</option></select>
+                    <button class="btn tiny" id="loadoutApply" type="button" disabled>Apply</button>
+                    <button class="btn ghost tiny" id="loadoutDelete" type="button" disabled>Delete</button>
+                  </div>
+                </div>
+                <div class="input-group compact-field">
+                  <label for="loadoutName">Save as</label>
+                  <div class="input-row">
+                    <input id="loadoutName" type="text" placeholder="Loadout name" maxlength="40" />
+                    <button class="btn tiny" id="loadoutSave" type="button">Save</button>
+                  </div>
+                </div>
+              </div>
+              <div class="helper" id="loadoutStatus"></div>
+            </div>
           </div>
         </details>
-
-        <section class="calc-panel">
-          <div class="input-block">
-            <h2>Spell Loadouts</h2>
-            <div class="helper">Save your current spell and society selections as a named loadout for quick switching.</div>
-            <div class="input-group compact-field">
-              <label for="loadoutSelect">Saved</label>
-              <div class="input-row">
-                <select id="loadoutSelect"><option value="">Select Loadout</option></select>
-                <button class="btn tiny" id="loadoutApply" type="button" disabled>Apply</button>
-                <button class="btn ghost tiny" id="loadoutDelete" type="button" disabled>Delete</button>
-              </div>
-            </div>
-            <div class="input-group compact-field">
-              <label for="loadoutName">Save as</label>
-              <div class="input-row">
-                <input id="loadoutName" type="text" placeholder="Loadout name" maxlength="40" />
-                <button class="btn tiny" id="loadoutSave" type="button">Save</button>
-              </div>
-            </div>
-            <div class="helper" id="loadoutStatus"></div>
-          </div>
-        </section>
 
         <details class="collapsible-section" open id="spellHelperSection">
           <summary>Quick Select</summary>
@@ -144,6 +139,7 @@
                 <button class="btn ghost" type="button" data-helper-action="invoker">Invoker</button>
                 <button class="btn ghost" type="button" data-helper-action="advanced_spellup_pills">Advanced Spellup Pills</button>
                 <button class="btn ghost" type="button" data-helper-action="dreavening">Dreavening</button>
+                <button class="btn ghost" type="button" data-helper-action="add_temporary">Add Temporary</button>
                 <button class="btn ghost" type="button" data-helper-action="clear">Clear Helper Selections</button>
               </div>
               <div class="helper" id="spellHelperStatus">No helper preset applied.</div>
@@ -205,6 +201,10 @@
           <summary>Spell Selection</summary>
           <div class="collapsible-body">
             <section class="table-panel">
+              <label class="spell-filter-toggle">
+                <input type="checkbox" id="spellShowSelected" />
+                Show selected only
+              </label>
               <div id="spellSelectionTable"></div>
             </section>
           </div>
@@ -280,6 +280,60 @@
           </div>
         </details>
 
+        <details class="collapsible-section" id="cstdSection">
+          <summary>CS / TD Breakdown</summary>
+          <div class="collapsible-body">
+            <section class="table-panel">
+              <table class="data-table cs-td-input-table">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Current</th>
+                    <th>What-If</th>
+                    <th>Affects</th>
+                  </tr>
+                </thead>
+                <tbody id="cstdInputBody"></tbody>
+              </table>
+            </section>
+
+            <section class="table-panel">
+              <h3>Casting Strength (CS)</h3>
+              <table class="data-table cs-td-output-table">
+                <thead>
+                  <tr>
+                    <th>Circle</th>
+                    <th>Level</th>
+                    <th>Primary</th>
+                    <th>Secondary</th>
+                    <th>Stat</th>
+                    <th>Buffs</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="cstdCSBody"></tbody>
+              </table>
+            </section>
+
+            <section class="table-panel">
+              <h3>Target Defense (TD)</h3>
+              <table class="data-table cs-td-output-table">
+                <thead>
+                  <tr>
+                    <th>Sphere</th>
+                    <th>TD</th>
+                    <th>CvA</th>
+                    <th>Final</th>
+                    <th>Racial</th>
+                    <th>Effective</th>
+                  </tr>
+                </thead>
+                <tbody id="cstdTDBody"></tbody>
+              </table>
+            </section>
+          </div>
+        </details>
+
         <details class="collapsible-section">
           <summary>References</summary>
           <div class="collapsible-body">
@@ -300,7 +354,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.3.5"></script>
-    <script src="site.js?v=0.3.5"></script>
+    <script src="shared.js?v=0.3.6"></script>
+    <script src="site.js?v=0.3.6"></script>
   </body>
 </html>

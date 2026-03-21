@@ -563,7 +563,7 @@ serviceScoreCases.forEach((scoreCase) => {
 const progressionCases = [
   {
     serviceId: "enchant",
-    state: { currentBonus: 8, baseItemDifficulty: 100 },
+    state: { currentBonus: 8, projectDifficulty: 104 },
     currentTotal: 203,
     whatIfTotal: 210,
     expectedFirstRow: {
@@ -578,7 +578,7 @@ const progressionCases = [
   },
   {
     serviceId: "enchant",
-    state: { currentBonus: 25, baseItemDifficulty: 78 },
+    state: { currentBonus: 25, projectDifficulty: 136 },
     currentTotal: 250,
     whatIfTotal: 250,
     expectedFirstRow: {

@@ -25,19 +25,31 @@ function buildProfile(skillRanks = {}) {
   };
 }
 
-test("outside cast uses only fixed modifiers", () => {
+test("outside cast uses fixed modifiers only for non-group-scaling spells", () => {
+  // Use a non-group-scaling spell (e.g., 101 Spirit Warding I)
+  const spiritWarding = spellsData.buff_spells.find((spell) => spell.id === 101);
+  const totals = logic.calculateSpellModifiers(
+    spiritWarding,
+    "outside",
+    {},
+    spellsData
+  );
+  assert.equal(totals.bolt_ds, 10);
+  assert.equal(totals.td_spiritual, 10);
+});
+
+test("outside cast returns base-only for Warding Sphere (310)", () => {
   const wardingSphere = spellsData.buff_spells.find((spell) => spell.id === 310);
   const totals = logic.calculateSpellModifiers(
     wardingSphere,
     "outside",
-    { cleric_spell_ranks: 40 },
+    { cleric_spell_ranks: 30 },
     spellsData
   );
 
+  // Outside/group: base only, no scaling (caster's ranks unknown)
   assert.equal(totals.non_bolt_ds, 10);
   assert.equal(totals.td_spiritual, 10);
-  assert.equal(totals.td_elemental, 10);
-  assert.equal(totals.td_mental, 10);
 });
 
 test("self cast applies modeled scaling for Warding Sphere", () => {
@@ -49,10 +61,14 @@ test("self cast applies modeled scaling for Warding Sphere", () => {
     spellsData
   );
 
+  // DS: base 10 + floor((30-10)/1) capped at 10 = +20
+  // TD: base 10 + floor((30-10)/2) capped at 10 = +20
+  // 310 only contributes spiritual TD directly; crossover to other spheres
+  // is handled by applyTDBuffCrossover in the CS/TD calculator.
   assert.equal(totals.non_bolt_ds, 20);
   assert.equal(totals.td_spiritual, 20);
-  assert.equal(totals.td_elemental, 20);
-  assert.equal(totals.td_mental, 20);
+  assert.equal(totals.td_elemental, 0);
+  assert.equal(totals.td_mental, 0);
 });
 
 test("calculateTotals resolves factor values from profile and applies what-if overrides", () => {
@@ -190,6 +206,8 @@ test("calculateTotals sums spell and society modifiers together", () => {
     whatIfFactorOverrides: { col_rank: 7 },
   });
 
+  // 310 outside: base only = 10 DS, 10 TD (no scaling for outside/group)
+  // + Sign of Defending: +10 DS
   assert.equal(results.currentTotals.non_bolt_ds, 20);
   assert.equal(results.currentTotals.td_spiritual, 10);
 });
@@ -424,9 +442,9 @@ test("712 Cloak of Shadows scales DS and TD from Sorcerer ranks", () => {
 
   assert.equal(totals.non_bolt_ds, 93);
   assert.equal(totals.bolt_ds, 93);
-  assert.equal(totals.td_spiritual, 26);
-  assert.equal(totals.td_elemental, 26);
-  assert.equal(totals.td_mental, 26);
+  assert.equal(totals.td_spiritual, 21);
+  assert.equal(totals.td_elemental, 21);
+  assert.equal(totals.td_mental, 15);
 });
 
 test("715 Curse (Star) gains bolt AS from Sorcerer ranks", () => {

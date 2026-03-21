@@ -15,6 +15,15 @@
   if (!logic) throw new Error("SpellsLogic is not loaded. Ensure spells-logic.js loads before spells.js.");
   if (!ui) throw new Error("SpellsUI is not loaded. Ensure spells-ui.js loads before spells.js.");
 
+  // Initialize CS/TD section before SpellsUI so update() is ready for the first render
+  const csTdSection = globalThis.CsTdSection;
+  const gs4Data = globalThis.GS4_DATA;
+  const csTdData = globalThis.GS4_CS_TD_DATA;
+  const csTdLogic = globalThis.CsTdLogic;
+  if (csTdSection && gs4Data && csTdData && csTdLogic) {
+    csTdSection.init({ gs4Data, csTdData, logic: csTdLogic });
+  }
+
   ui.init({
     storage,
     spellsData,
