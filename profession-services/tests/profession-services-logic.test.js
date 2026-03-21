@@ -573,7 +573,6 @@ const progressionCases = [
       resourceCost: 2500,
       currentMargin: 98,
       whatIfMargin: 105,
-      note: "Offset +5",
     },
   },
   {
@@ -588,7 +587,6 @@ const progressionCases = [
       resourceCost: 15000,
       currentMargin: 108,
       whatIfMargin: 108,
-      note: "Offset +64",
     },
   },
   {
@@ -701,7 +699,6 @@ const progressionCases = [
       resourceCost: 25000,
       currentMargin: 142,
       whatIfMargin: 154,
-      note: "CER 2.00",
     },
   },
   {
@@ -716,7 +713,6 @@ const progressionCases = [
       resourceCost: 25000,
       currentMargin: 46,
       whatIfMargin: 55,
-      note: "CER 5.00",
     },
   },
 ];

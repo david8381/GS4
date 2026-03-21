@@ -1034,7 +1034,7 @@
 
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
-    ["Step", "Difficulty", "Cost", "Current Margin", "What-If Margin", "Note"].forEach((label) => {
+    ["Step", "Difficulty", "Cost", "Current Margin", "What-If Margin", "Success %"].forEach((label) => {
       const th = document.createElement("th");
       th.textContent = label;
       headRow.appendChild(th);
@@ -1066,9 +1066,12 @@
       whatIfMarginCell.textContent = formatSignedValue(row.whatIfMargin);
       tr.appendChild(whatIfMarginCell);
 
-      const noteCell = document.createElement("td");
-      noteCell.textContent = row.note || "—";
-      tr.appendChild(noteCell);
+      const successCell = document.createElement("td");
+      const curP = Math.min(99, Math.max(1, row.currentMargin));
+      const curEonak = Math.round(100 * (1 - ((1 - curP / 100) * (1 - curP / 100))));
+      successCell.textContent = `${curP}%  /  ${curEonak}%`;
+      successCell.title = `Without / with Gift of Eonak`;
+      tr.appendChild(successCell);
 
       tbody.appendChild(tr);
     });

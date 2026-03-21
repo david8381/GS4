@@ -570,7 +570,6 @@
           resourceCost,
           currentMargin: asNumber(currentTotal, 0) - difficulty,
           whatIfMargin: asNumber(whatIfTotal, 0) - difficulty,
-          note: "CER " + cer.toFixed(2),
         });
         serviceCount += 1;
       }
@@ -593,7 +592,6 @@
           resourceCost: getEnchantEssenceCost(currentBonus),
           currentMargin: asNumber(currentTotal, 0) - difficulty,
           whatIfMargin: asNumber(whatIfTotal, 0) - difficulty,
-          note: "Offset +" + getEnchantDifficultyOffset(targetBonus),
         });
         currentBonus += 1;
       }
