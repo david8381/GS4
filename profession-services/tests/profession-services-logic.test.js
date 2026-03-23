@@ -127,22 +127,22 @@ test("Ensorcell projections use sequential current tiers", () => {
   assert.deepEqual(rows[0], {
     fromLabel: "T3",
     toLabel: "T4",
-    difficulty: 600,
+    difficulty: 650,
     resourceCost: 125000,
-    currentMargin: -188,
-    whatIfMargin: -150,
+    currentMargin: -238,
+    whatIfMargin: -200,
   });
   assert.deepEqual(rows[1], {
     fromLabel: "T4",
     toLabel: "T5",
-    difficulty: 650,
+    difficulty: 700,
     resourceCost: 150000,
-    currentMargin: -238,
-    whatIfMargin: -200,
+    currentMargin: -288,
+    whatIfMargin: -250,
   });
 });
 
-test("item-tier services include the first-step offset at tier zero", () => {
+test("item-tier services add static penalty on top of entered item difficulty", () => {
   const ensorcell = logic.findServiceDefinition(servicesData, "ensorcell");
   const sanctify = logic.findServiceDefinition(servicesData, "sanctify");
 
@@ -155,8 +155,8 @@ test("item-tier services include the first-step offset at tier zero", () => {
     currentStage: 0,
   }, 0, 0);
 
-  assert.equal(ensorcellRows[0].difficulty, 350);
-  assert.equal(sanctifyRows[0].difficulty, 320);
+  assert.equal(ensorcellRows[0].difficulty, 400);
+  assert.equal(sanctifyRows[0].difficulty, 340);
 });
 
 test("service charge models distinguish resource recharge from imbedded charges", () => {
@@ -611,10 +611,10 @@ const progressionCases = [
     expectedFirstRow: {
       fromLabel: "S5",
       toLabel: "Holy Fire",
-      difficulty: 250,
+      difficulty: 270,
       resourceCost: 200000,
-      currentMargin: -55,
-      whatIfMargin: -25,
+      currentMargin: -75,
+      whatIfMargin: -45,
     },
   },
   {

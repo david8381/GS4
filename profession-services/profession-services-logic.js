@@ -457,11 +457,11 @@
 
     if (progression.type === "item_tiered_property") {
       let currentStage = clamp(asInteger(progressionState?.currentStage, 0), 0, progression.maxStage);
-      // User enters project difficulty at current tier; derive base by subtracting tier offset
-      const projectDifficulty = asNumber(progressionState?.projectDifficulty ?? progressionState?.baseItemDifficulty, 0);
-      const currentTierOffset = asNumber(progression.staticPenalty, 0) +
-        (asNumber(progression.perCurrentStagePenalty, 0) * currentStage);
-      const baseItemDifficulty = projectDifficulty - currentTierOffset;
+      // User enters the item's displayed difficulty; derive base by subtracting only the
+      // per-stage offset (the static penalty is a roll overhead not included in the displayed value).
+      const itemDifficulty = asNumber(progressionState?.projectDifficulty ?? progressionState?.baseItemDifficulty, 0);
+      const perStageOffset = asNumber(progression.perCurrentStagePenalty, 0) * currentStage;
+      const baseItemDifficulty = itemDifficulty - perStageOffset;
       for (let targetStage = currentStage + 1; targetStage <= progression.maxStage; targetStage += 1) {
         const difficulty = calculateItemTierDifficulty(baseItemDifficulty, currentStage, progression);
         rows.push({
