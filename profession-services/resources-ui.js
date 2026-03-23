@@ -314,9 +314,13 @@
     state.chargeByServiceId = {};
     state.expandedPathByServiceId = {};
 
-    getServicesForProfession(state.profession).forEach((service) => {
+    const services = getServicesForProfession(state.profession);
+    services.forEach((service) => {
       state.progressionByServiceId[service.id] = serviceLogic.getDefaultProgressionState(service);
     });
+    if (services.length <= 2) {
+      services.forEach((service) => { state.expandedPathByServiceId[service.id] = true; });
+    }
     ensureActiveService();
   }
 
@@ -334,6 +338,9 @@
     services.forEach((service) => {
       state.progressionByServiceId[service.id] = serviceLogic.getDefaultProgressionState(service);
     });
+    if (services.length <= 2) {
+      services.forEach((service) => { state.expandedPathByServiceId[service.id] = true; });
+    }
   }
 
   function updateLoadButtonState() {
