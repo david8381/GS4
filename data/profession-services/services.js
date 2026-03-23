@@ -348,6 +348,12 @@
       profileSource: null,
       defaultValue: 0,
     },
+    suffused_energy: {
+      label: "Suffused Energy",
+      inputType: "integer",
+      profileSource: null,
+      defaultValue: 0,
+    },
   };
 
   const professionServices = {
@@ -372,6 +378,7 @@
           "elemental_mana_control_ranks",
           "spiritual_mana_control_ranks",
           "magical_workshop_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -402,6 +409,7 @@
             roundingMode: "floor_each",
           },
           { id: "workshop", label: "Workshop Bonus", type: "direct", factor: "magical_workshop_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "item_tiered_property",
@@ -451,6 +459,7 @@
           "elemental_mana_control_ranks",
           "wizard_workshop_bonus",
           "familiar_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -471,6 +480,7 @@
           { id: "elemental_mana_control", label: "Elemental Mana Control", type: "direct_multiplier", factor: "elemental_mana_control_ranks", multiplier: 0.5 },
           { id: "workshop", label: "Workshop Bonus", type: "direct", factor: "wizard_workshop_bonus" },
           { id: "familiar", label: "Familiar Bonus", type: "direct", factor: "familiar_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "enchant_bonus_steps",
@@ -520,6 +530,7 @@
           "elemental_mana_control_ranks",
           "magic_item_use_ranks",
           "bard_location_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -538,6 +549,7 @@
           { id: "elemental_mana_control", label: "Elemental Mana Control", type: "direct", factor: "elemental_mana_control_ranks" },
           { id: "magic_item_use", label: "Magic Item Use", type: "direct", factor: "magic_item_use_ranks" },
           { id: "location", label: "Location Bonus", type: "direct", factor: "bard_location_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers",
@@ -585,6 +597,7 @@
           "magic_item_use_ranks",
           "arcane_symbols_ranks",
           "cleric_shrine_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -604,6 +617,7 @@
           { id: "magic_item_use", label: "Magic Item Use", type: "direct_multiplier", factor: "magic_item_use_ranks", multiplier: 0.1 },
           { id: "arcane_symbols", label: "Arcane Symbols", type: "direct_multiplier", factor: "arcane_symbols_ranks", multiplier: 0.1 },
           { id: "shrine", label: "Shrine Bonus", type: "direct", factor: "cleric_shrine_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "item_tiered_property",
@@ -668,6 +682,7 @@
           "arcane_symbols_ranks",
           "physical_fitness_ranks",
           "first_aid_ranks",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -700,6 +715,7 @@
           { id: "arcane_symbols", label: "Arcane Symbols", type: "direct_multiplier", factor: "arcane_symbols_ranks", multiplier: 0.1 },
           { id: "physical_fitness", label: "Physical Fitness", type: "direct_multiplier", factor: "physical_fitness_ranks", multiplier: 0.05 },
           { id: "first_aid", label: "First Aid", type: "direct_multiplier", factor: "first_aid_ranks", multiplier: 0.05 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers",
@@ -750,6 +766,7 @@
           "mental_mana_control_ranks",
           "spiritual_mana_control_ranks",
           "mental_lore_transformation_ranks",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -762,6 +779,7 @@
           { id: "mental_mana_control", label: "Mental Mana Control", type: "direct", factor: "mental_mana_control_ranks" },
           { id: "spiritual_mana_control", label: "Spirit Mana Control", type: "direct", factor: "spiritual_mana_control_ranks" },
           { id: "mental_lore", label: "Mental Lore - Transformation", type: "direct", factor: "mental_lore_transformation_ranks" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers",
@@ -809,6 +827,7 @@
           "mental_mana_control_ranks",
           "spiritual_mana_control_ranks",
           "mental_lore_telepathy_ranks",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -821,6 +840,7 @@
           { id: "mental_mana_control", label: "Mental Mana Control", type: "direct", factor: "mental_mana_control_ranks" },
           { id: "spiritual_mana_control", label: "Spirit Mana Control", type: "direct", factor: "spiritual_mana_control_ranks" },
           { id: "mental_lore", label: "Mental Lore - Telepathy", type: "direct", factor: "mental_lore_telepathy_ranks" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers",
@@ -874,6 +894,7 @@
           "magic_item_use_ranks",
           "arcane_symbols_ranks",
           "paladin_shrine_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -893,6 +914,7 @@
           { id: "magic_item_use", label: "Magic Item Use", type: "direct_multiplier", factor: "magic_item_use_ranks", multiplier: 1.5 },
           { id: "arcane_symbols", label: "Arcane Symbols", type: "direct_multiplier", factor: "arcane_symbols_ranks", multiplier: 1.5 },
           { id: "shrine", label: "Shrine Bonus", type: "direct", factor: "paladin_shrine_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers",
@@ -945,6 +967,7 @@
           "spiritual_mana_control_ranks",
           "spiritual_lore_blessings_ranks",
           "ranger_outside_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -957,6 +980,7 @@
           { id: "spiritual_mana_control", label: "Spirit Mana Control", type: "direct", factor: "spiritual_mana_control_ranks" },
           { id: "blessings_lore", label: "Spiritual Lore - Blessings", type: "direct", factor: "spiritual_lore_blessings_ranks" },
           { id: "outside", label: "Outside Bonus", type: "direct", factor: "ranger_outside_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "fixed_tiers_with_existing_count",
@@ -1009,6 +1033,7 @@
           "pickpocketing_ranks",
           "dodging_ranks",
           "discipline_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1018,6 +1043,7 @@
           { id: "pickpocketing", label: "Picking Pockets", type: "direct_multiplier", factor: "pickpocketing_ranks", multiplier: 0.5 },
           { id: "art_skill", label: "Dodging", type: "direct", factor: "dodging_ranks" },
           { id: "art_stat", label: "Discipline Bonus", type: "direct_multiplier", factor: "discipline_bonus", multiplier: 2 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "ranked_training",
@@ -1068,6 +1094,7 @@
           "pickpocketing_ranks",
           "perception_ranks",
           "intuition_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1077,6 +1104,7 @@
           { id: "pickpocketing", label: "Picking Pockets", type: "direct_multiplier", factor: "pickpocketing_ranks", multiplier: 0.5 },
           { id: "art_skill", label: "Perception", type: "direct", factor: "perception_ranks" },
           { id: "art_stat", label: "Intuition Bonus", type: "direct_multiplier", factor: "intuition_bonus", multiplier: 2 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "ranked_training",
@@ -1127,6 +1155,7 @@
           "pickpocketing_ranks",
           "combat_maneuvers_ranks",
           "agility_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1136,6 +1165,7 @@
           { id: "pickpocketing", label: "Picking Pockets", type: "direct_multiplier", factor: "pickpocketing_ranks", multiplier: 0.5 },
           { id: "art_skill", label: "Combat Maneuvers", type: "direct", factor: "combat_maneuvers_ranks" },
           { id: "art_stat", label: "Agility Bonus", type: "direct_multiplier", factor: "agility_bonus", multiplier: 2 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "ranked_training",
@@ -1186,6 +1216,7 @@
           "pickpocketing_ranks",
           "physical_fitness_ranks",
           "constitution_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1195,6 +1226,7 @@
           { id: "pickpocketing", label: "Picking Pockets", type: "direct_multiplier", factor: "pickpocketing_ranks", multiplier: 0.5 },
           { id: "art_skill", label: "Physical Fitness", type: "direct", factor: "physical_fitness_ranks" },
           { id: "art_stat", label: "Constitution Bonus", type: "direct_multiplier", factor: "constitution_bonus", multiplier: 2 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "ranked_training",
@@ -1245,6 +1277,7 @@
           "pickpocketing_ranks",
           "survival_ranks",
           "dexterity_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1254,6 +1287,7 @@
           { id: "pickpocketing", label: "Picking Pockets", type: "direct_multiplier", factor: "pickpocketing_ranks", multiplier: 0.5 },
           { id: "art_skill", label: "Survival", type: "direct", factor: "survival_ranks" },
           { id: "art_stat", label: "Dexterity Bonus", type: "direct_multiplier", factor: "dexterity_bonus", multiplier: 2 },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "ranked_training",
@@ -1299,6 +1333,7 @@
           "secondary_weapon_skill_one_ranks",
           "secondary_weapon_skill_two_ranks",
           "warrior_guild_workshop_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1317,6 +1352,7 @@
           { id: "secondary_weapon_skill_one", label: "Secondary Weapon Skill #1", type: "direct_multiplier", factor: "secondary_weapon_skill_one_ranks", multiplier: 0.5 },
           { id: "secondary_weapon_skill_two", label: "Secondary Weapon Skill #2", type: "direct_multiplier", factor: "secondary_weapon_skill_two_ranks", multiplier: 0.5 },
           { id: "workshop", label: "Warrior Guild Workshop Bonus", type: "direct", factor: "warrior_guild_workshop_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "wps_services",
@@ -1345,6 +1381,7 @@
           "physical_fitness_ranks",
           "shield_use_ranks",
           "warrior_guild_workshop_bonus",
+          "suffused_energy",
         ],
         contributions: [
           { id: "level", label: "Level", type: "direct", factor: "level" },
@@ -1362,6 +1399,7 @@
           { id: "physical_fitness", label: "Physical Fitness", type: "direct_multiplier", factor: "physical_fitness_ranks", multiplier: 0.1 },
           { id: "shield_use", label: "Shield Use", type: "direct_multiplier", factor: "shield_use_ranks", multiplier: 1 / 3 },
           { id: "workshop", label: "Warrior Guild Workshop Bonus", type: "direct", factor: "warrior_guild_workshop_bonus" },
+          { id: "suffused_energy", label: "Suffused Energy", type: "direct", factor: "suffused_energy" },
         ],
         progression: {
           type: "wps_services",
