@@ -324,7 +324,7 @@
     if (!progression) return {};
 
     if (progression.type === "item_tiered_property") {
-      return { baseItemDifficulty: 0, currentStage: 0 };
+      return { projectDifficulty: 0, currentStage: 0 };
     }
     if (progression.type === "fixed_tiers") {
       return { currentStage: 0 };
@@ -337,7 +337,7 @@
     }
     if (progression.type === "wps_services") {
       const defaultItemType = progression.itemTypes?.[0]?.value || "";
-      return { currentServices: 0, baseItemDifficulty: 0, itemType: defaultItemType };
+      return { currentServices: 0, projectDifficulty: 0, itemType: defaultItemType };
     }
     if (progression.type === "enchant_bonus_steps") {
       return { currentBonus: 0, projectDifficulty: 0 };
@@ -456,8 +456,12 @@
     const rows = [];
 
     if (progression.type === "item_tiered_property") {
-      const baseItemDifficulty = asNumber(progressionState?.baseItemDifficulty, 0);
       let currentStage = clamp(asInteger(progressionState?.currentStage, 0), 0, progression.maxStage);
+      // User enters project difficulty at current tier; derive base by subtracting tier offset
+      const projectDifficulty = asNumber(progressionState?.projectDifficulty ?? progressionState?.baseItemDifficulty, 0);
+      const currentTierOffset = asNumber(progression.staticPenalty, 0) +
+        (asNumber(progression.perCurrentStagePenalty, 0) * currentStage);
+      const baseItemDifficulty = projectDifficulty - currentTierOffset;
       for (let targetStage = currentStage + 1; targetStage <= progression.maxStage; targetStage += 1) {
         const difficulty = calculateItemTierDifficulty(baseItemDifficulty, currentStage, progression);
         rows.push({
@@ -551,7 +555,10 @@
 
     if (progression.type === "wps_services") {
       const currentServices = Math.max(0, asInteger(progressionState?.currentServices, 0));
-      const baseItemDifficulty = asNumber(progressionState?.baseItemDifficulty, 0);
+      // User enters project difficulty at current service count; derive base by adding back CER offset
+      const projectDifficulty = asNumber(progressionState?.projectDifficulty ?? progressionState?.baseItemDifficulty, 0);
+      const currentCerOffset = -Math.round(getWpsCer(currentServices) * getWpsCer(currentServices));
+      const baseItemDifficulty = projectDifficulty - currentCerOffset;
       const itemType = String(progressionState?.itemType || "");
       const resourceCost = asNumber(
         (progression.itemTypes || []).find((entry) => entry.value === itemType)?.resourceCost,

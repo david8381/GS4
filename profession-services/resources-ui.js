@@ -723,14 +723,15 @@
       );
       appendOverviewLabeledInput(
         wrap,
-        "Base Diff",
+        "Proj Diff",
         createOverviewNumberInput(
           `overview-${service.id}-difficulty`,
-          progressionState.baseItemDifficulty,
+          progressionState.projectDifficulty ?? progressionState.baseItemDifficulty ?? 0,
           0,
           undefined,
           () => {
-            progressionState.baseItemDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            progressionState.projectDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            delete progressionState.baseItemDifficulty;
             renderAll(true);
           }
         )
@@ -890,14 +891,15 @@
       );
       appendOverviewLabeledInput(
         wrap,
-        "Base Diff",
+        "Proj Diff",
         createOverviewNumberInput(
           `overview-${service.id}-difficulty`,
-          progressionState.baseItemDifficulty,
+          progressionState.projectDifficulty ?? progressionState.baseItemDifficulty ?? 0,
           0,
           undefined,
           () => {
-            progressionState.baseItemDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            progressionState.projectDifficulty = Math.max(0, Number(document.getElementById(`overview-${service.id}-difficulty`).value) || 0);
+            delete progressionState.baseItemDifficulty;
             renderAll(true);
           }
         )
@@ -1411,18 +1413,18 @@
   function runResourcesSelfTests() {
     const tests = [
       {
-        name: "T1 Ensorcell base 300 at T0 projects 350 next difficulty",
+        name: "T1 Ensorcell proj 350 at T0 projects 350 next difficulty",
         run: () => {
           const service = serviceLogic.findServiceDefinition(servicesData, "ensorcell");
-          return serviceLogic.calculateProjectionRows(service, { baseItemDifficulty: 300, currentStage: 0 }, 0, 0)[0];
+          return serviceLogic.calculateProjectionRows(service, { projectDifficulty: 350, currentStage: 0 }, 0, 0)[0];
         },
         check: (got) => got?.difficulty === 350,
       },
       {
-        name: "T2 Sanctify base 300 at S0 projects 320 next difficulty",
+        name: "T2 Sanctify proj 320 at S0 projects 320 next difficulty",
         run: () => {
           const service = serviceLogic.findServiceDefinition(servicesData, "sanctify");
-          return serviceLogic.calculateProjectionRows(service, { baseItemDifficulty: 300, currentStage: 0 }, 0, 0)[0];
+          return serviceLogic.calculateProjectionRows(service, { projectDifficulty: 320, currentStage: 0 }, 0, 0)[0];
         },
         check: (got) => got?.difficulty === 320,
       },

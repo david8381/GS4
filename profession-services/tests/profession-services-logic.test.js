@@ -119,7 +119,7 @@ test("stat bonus factors include racial and explicit stat-bonus adjustments", ()
 test("Ensorcell projections use sequential current tiers", () => {
   const service = logic.findServiceDefinition(servicesData, "ensorcell");
   const rows = logic.calculateProjectionRows(service, {
-    baseItemDifficulty: 400,
+    projectDifficulty: 600,
     currentStage: 3,
   }, 412, 450);
 
@@ -147,11 +147,11 @@ test("item-tier services include the first-step offset at tier zero", () => {
   const sanctify = logic.findServiceDefinition(servicesData, "sanctify");
 
   const ensorcellRows = logic.calculateProjectionRows(ensorcell, {
-    baseItemDifficulty: 300,
+    projectDifficulty: 350,
     currentStage: 0,
   }, 0, 0);
   const sanctifyRows = logic.calculateProjectionRows(sanctify, {
-    baseItemDifficulty: 300,
+    projectDifficulty: 320,
     currentStage: 0,
   }, 0, 0);
 
@@ -605,7 +605,7 @@ const progressionCases = [
   },
   {
     serviceId: "sanctify",
-    state: { baseItemDifficulty: 100, currentStage: 5 },
+    state: { projectDifficulty: 220, currentStage: 5 },
     currentTotal: 195,
     whatIfTotal: 225,
     expectedFirstRow: {
@@ -689,7 +689,7 @@ const progressionCases = [
   },
   {
     serviceId: "wps_weapon",
-    state: { currentServices: 20, baseItemDifficulty: 100, itemType: "weapon" },
+    state: { currentServices: 20, projectDifficulty: 96, itemType: "weapon" },
     currentTotal: 238,
     whatIfTotal: 250,
     expectedFirstRow: {
@@ -703,7 +703,7 @@ const progressionCases = [
   },
   {
     serviceId: "wps_armor",
-    state: { currentServices: 50, baseItemDifficulty: 200, itemType: "torso" },
+    state: { currentServices: 50, projectDifficulty: 175, itemType: "torso" },
     currentTotal: 221,
     whatIfTotal: 230,
     expectedFirstRow: {
