@@ -1089,6 +1089,11 @@
     table.appendChild(tbody);
     shell.appendChild(table);
 
+    const note = document.createElement("p");
+    note.className = "path-table-note";
+    note.textContent = "Note: All services have a minimum 1% fumble chance and 1% open-roll (automatic success) chance per attempt, regardless of margin.";
+    shell.appendChild(note);
+
     detailCell.appendChild(shell);
     detailRow.appendChild(detailCell);
     return detailRow;

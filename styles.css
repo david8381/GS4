@@ -1794,6 +1794,13 @@ body[data-page="resources"] .path-down {
   color: var(--error, #b42318);
 }
 
+body[data-page="resources"] .path-table-note {
+  font-size: 0.8em;
+  color: var(--text-muted, #666);
+  margin: 0.5rem 0 0;
+  font-style: italic;
+}
+
 body[data-page="resources"] .resource-overview-input {
   width: 54px;
   min-width: 0;
