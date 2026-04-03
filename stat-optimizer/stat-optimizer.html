@@ -193,6 +193,32 @@
           <div class="helper" id="resultEditStatus"></div>
         </section>
 
+        <details class="collapsible-section" id="statGrowthSection">
+          <summary>Stat Growth Chart</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="helper" id="growthChartHelper">Select a build above to chart stat growth from level 0 to 100.</div>
+              <div class="growth-chart-row1" id="growthStatToggles"></div>
+              <div class="growth-chart-row2">
+                <div class="growth-custom-track">
+                  <label for="growthCustomInput">Track</label>
+                  <input id="growthCustomInput" type="text" placeholder="e.g. DEX+AGI" />
+                  <button type="button" class="btn ghost btn tiny" id="growthCustomAdd">Add</button>
+                </div>
+                <div class="growth-chart-mode">
+                  <button type="button" class="ambush-toggle active" id="growthShowStat" data-growth-mode="stat">Show Stat</button>
+                  <button type="button" class="ambush-toggle" id="growthShowBonus" data-growth-mode="bonus">Show Bonus</button>
+                </div>
+              </div>
+              <div class="growth-chart-wrap" id="growthChartWrap">
+                <canvas id="growthChart" width="800" height="400"></canvas>
+                <div class="growth-chart-cursor" id="growthChartCursor"></div>
+                <div class="growth-chart-tooltip" id="growthChartTooltip"></div>
+              </div>
+            </section>
+          </div>
+        </details>
+
         <details class="collapsible-section">
           <summary>References</summary>
           <div class="collapsible-body">
@@ -211,7 +237,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="../shared.js?v=0.3.16"></script>
-    <script src="../site.js?v=0.3.16"></script>
+    <script src="../shared.js?v=0.3.32"></script>
+    <script src="../site.js?v=0.3.32"></script>
   </body>
 </html>

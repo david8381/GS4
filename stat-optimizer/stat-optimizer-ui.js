@@ -58,6 +58,35 @@
   const addManualRunBtn = document.getElementById("addManualRun");
   const addProfileRunBtn = document.getElementById("addProfileRun");
   const runHistory = [];
+  let selectedRunIndex = -1;
+
+  const growthStatToggles = document.getElementById("growthStatToggles");
+  const growthChart = document.getElementById("growthChart");
+  const growthChartWrap = document.getElementById("growthChartWrap");
+  const growthChartTooltip = document.getElementById("growthChartTooltip");
+  const growthChartCursor = document.getElementById("growthChartCursor");
+  const growthChartHelper = document.getElementById("growthChartHelper");
+  const growthShowStatBtn = document.getElementById("growthShowStat");
+  const growthShowBonusBtn = document.getElementById("growthShowBonus");
+  const growthCustomInput = document.getElementById("growthCustomInput");
+  const growthCustomAddBtn = document.getElementById("growthCustomAdd");
+  let growthShowBonus = false;
+  const growthEnabledStats = new Set();
+  const growthCustomTracks = [];
+
+  const STAT_COLORS = {
+    str: "#e74c3c",
+    con: "#e67e22",
+    dex: "#2ecc71",
+    agi: "#1abc9c",
+    dis: "#3498db",
+    aur: "#9b59b6",
+    log: "#f1c40f",
+    int: "#e91e63",
+    wis: "#00bcd4",
+    inf: "#795548",
+  };
+
   let floatingTooltipEl = null;
   let floatingTooltipTarget = null;
   const inlineEditState = {
@@ -907,6 +936,11 @@
         inlineEditState.runIndex -= 1;
       }
     }
+    if (selectedRunIndex === index) {
+      selectedRunIndex = -1;
+    } else if (selectedRunIndex > index) {
+      selectedRunIndex -= 1;
+    }
     return true;
   }
 
@@ -941,13 +975,17 @@
     const existingIndex = runHistory.findIndex((entry) => entry.sourceKind === "profile_baseline");
     if (existingIndex >= 0) {
       runHistory[existingIndex] = baselineEntry;
+      if (selectedRunIndex < 0) selectedRunIndex = existingIndex;
     } else {
       runHistory.unshift(baselineEntry);
       if (inlineEditState.active && inlineEditState.runIndex >= 0) {
         inlineEditState.runIndex += 1;
       }
+      if (selectedRunIndex >= 0) selectedRunIndex += 1;
+      else selectedRunIndex = 0;
     }
     renderResultTable();
+    renderGrowthChart();
     if (runHistory.length === 1) {
       resultSummary.textContent = "Selected profile baseline added from INFO START level-0 stats.";
       resultTotals.textContent = "";
@@ -1100,6 +1138,7 @@
             ${editing
               ? `<button type="button" class="btn ghost btn tiny optimizer-inline-done" data-run-index="${index}">Done</button>`
               : `<button type="button" class="btn ghost btn tiny optimizer-copy-run" data-run-index="${index}">Adjust</button>`}
+            <button type="button" class="btn ghost btn tiny optimizer-select-run${selectedRunIndex === index ? " active" : ""}" data-run-index="${index}">${selectedRunIndex === index ? "Selected" : "Select"}</button>
             <button type="button" class="btn ghost btn tiny optimizer-delete-run" data-run-index="${index}">Delete</button>
           </div>
         </div>
@@ -1469,7 +1508,9 @@
       sourceKind: result.sourceKind || (result.status === "failed_constraints" ? "constraints" : "auto"),
       createdTargetLevel: result.createdTargetLevel ?? getTargetLevelValue(),
     });
+    selectedRunIndex = runHistory.length - 1;
     renderResultTable();
+    renderGrowthChart();
 
     const build = result.build;
     const statusText = result.provenOptimal
@@ -1983,6 +2024,333 @@
     setTimeout(runSajehnStep, 0);
   }
 
+  function computeGrowthCurves(level0Stats) {
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    const profession = professionSelect?.value || "";
+    const stats = data.stats || [];
+    const curves = {};
+    stats.forEach((stat) => {
+      const rate = profileLogic?.getGrowthRate
+        ? profileLogic.getGrowthRate(data.baseGrowthRates, data.raceGrowthModifiers, raceName, profession, stat.key)
+        : null;
+      if (!rate || level0Stats?.[stat.key] == null) return;
+      const values = new Array(101);
+      let value = level0Stats[stat.key];
+      values[0] = value;
+      for (let lvl = 1; lvl <= 100; lvl += 1) {
+        const gi = Math.max(Math.trunc(value / rate), 1);
+        if (lvl % gi === 0) value = Math.min(100, value + 1);
+        values[lvl] = value;
+      }
+      curves[stat.key] = values;
+    });
+    return curves;
+  }
+
+  function statToBonus(statValue) {
+    return Math.floor((Number(statValue) - 50) / 2);
+  }
+
+  function initGrowthStatToggles() {
+    if (!growthStatToggles) return;
+    growthStatToggles.innerHTML = "";
+    (data.stats || []).forEach((stat) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "growth-stat-toggle" + (growthEnabledStats.has(stat.key) ? " active" : "");
+      btn.style.setProperty("--stat-color", STAT_COLORS[stat.key] || "#888");
+      btn.textContent = stat.abbr;
+      btn.dataset.growthStat = stat.key;
+      btn.addEventListener("click", () => {
+        if (growthEnabledStats.has(stat.key)) {
+          growthEnabledStats.delete(stat.key);
+          btn.classList.remove("active");
+        } else {
+          growthEnabledStats.add(stat.key);
+          btn.classList.add("active");
+        }
+        renderGrowthChart();
+      });
+      growthStatToggles.appendChild(btn);
+    });
+    renderCustomTrackPills();
+  }
+
+  function parseCustomTrackExpr(expr) {
+    const clean = expr.toUpperCase().replace(/\s+/g, "");
+    const statMap = {};
+    (data.stats || []).forEach((s) => { statMap[s.abbr] = s.key; });
+    const parts = clean.split("+").filter(Boolean);
+    const keys = [];
+    for (const part of parts) {
+      const key = statMap[part];
+      if (!key) return null;
+      keys.push(key);
+    }
+    return keys.length > 0 ? keys : null;
+  }
+
+  function addCustomTrack(expr) {
+    const keys = parseCustomTrackExpr(expr);
+    if (!keys) return false;
+    const label = keys.map((k) => (data.stats || []).find((s) => s.key === k)?.abbr || k.toUpperCase()).join("+");
+    if (growthCustomTracks.some((t) => t.label === label)) return false;
+    growthCustomTracks.push({ label, keys });
+    renderCustomTrackPills();
+    renderGrowthChart();
+    return true;
+  }
+
+  function removeCustomTrack(index) {
+    growthCustomTracks.splice(index, 1);
+    renderCustomTrackPills();
+    renderGrowthChart();
+  }
+
+  function renderCustomTrackPills() {
+    if (!growthStatToggles) return;
+    growthStatToggles.querySelectorAll(".growth-custom-pill").forEach((el) => el.remove());
+    growthCustomTracks.forEach((track, idx) => {
+      const pill = document.createElement("span");
+      pill.className = "growth-custom-pill";
+      pill.innerHTML = `${track.label} <button type="button" data-custom-track-idx="${idx}">&times;</button>`;
+      pill.querySelector("button").addEventListener("click", () => removeCustomTrack(idx));
+      growthStatToggles.appendChild(pill);
+    });
+  }
+
+  function selectRun(runIndex) {
+    if (runIndex === selectedRunIndex) {
+      selectedRunIndex = -1;
+    } else {
+      selectedRunIndex = runIndex;
+    }
+    renderResultTable();
+    renderGrowthChart();
+  }
+
+  function renderGrowthChart() {
+    if (!growthChart) return;
+    const ctx = growthChart.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = growthChartWrap?.clientWidth || 800;
+    const cssHeight = 400;
+    growthChart.style.width = cssWidth + "px";
+    growthChart.style.height = cssHeight + "px";
+    growthChart.width = cssWidth * dpr;
+    growthChart.height = cssHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    if (selectedRunIndex < 0 || selectedRunIndex >= runHistory.length) {
+      if (growthChartHelper) growthChartHelper.textContent = "Select a build above, then toggle stats to chart their growth from level 0 to 100.";
+      return;
+    }
+
+    const entry = runHistory[selectedRunIndex];
+    const build = getDisplayBuildForRun(entry, selectedRunIndex);
+    if (!build?.level0Stats) return;
+
+    if (growthChartHelper) growthChartHelper.textContent = `Showing growth for: ${entry.label}`;
+
+    const curves = computeGrowthCurves(build.level0Stats);
+    const targetLevel = getTargetLevelValue();
+
+    const pad = { top: 30, right: 20, bottom: 40, left: 50 };
+    const plotW = cssWidth - pad.left - pad.right;
+    const plotH = cssHeight - pad.top - pad.bottom;
+
+    let yMin, yMax;
+    if (growthShowBonus) {
+      yMin = statToBonus(20);
+      yMax = statToBonus(100);
+    } else {
+      yMin = 20;
+      yMax = 100;
+    }
+    // Expand range for custom tracks
+    if (growthCustomTracks.length > 0) {
+      growthCustomTracks.forEach((track) => {
+        for (let lvl = 0; lvl <= 100; lvl += 1) {
+          let sum = 0;
+          track.keys.forEach((k) => { sum += (curves[k] ? curves[k][lvl] : 0); });
+          const val = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+          if (val < yMin) yMin = val;
+          if (val > yMax) yMax = val;
+        }
+      });
+      const range = yMax - yMin;
+      yMin = Math.floor(yMin - range * 0.05);
+      yMax = Math.ceil(yMax + range * 0.05);
+    }
+
+    function xPos(level) { return pad.left + (level / 100) * plotW; }
+    function yPos(val) { return pad.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH; }
+
+    // Grid
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const gridColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
+    const textColor = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)";
+    ctx.font = "11px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    // X-axis grid + labels
+    for (let lvl = 0; lvl <= 100; lvl += 10) {
+      const x = xPos(lvl);
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, pad.top + plotH);
+      ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.fillText(String(lvl), x, pad.top + plotH + 6);
+    }
+    ctx.fillStyle = textColor;
+    ctx.fillText("Level", pad.left + plotW / 2, cssHeight - 8);
+
+    // Y-axis grid + labels
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    const yRange = yMax - yMin;
+    const yStep = yRange > 150 ? 20 : yRange > 60 ? 10 : 5;
+    for (let v = yMin; v <= yMax; v += yStep) {
+      const y = yPos(v);
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(pad.left + plotW, y);
+      ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.fillText(String(v), pad.left - 6, y);
+    }
+
+    // Target level vertical line
+    if (targetLevel > 0 && targetLevel < 100) {
+      const tx = xPos(targetLevel);
+      ctx.strokeStyle = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(tx, pad.top);
+      ctx.lineTo(tx, pad.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`L${targetLevel}`, tx, pad.top - 4);
+    }
+
+    // Plot stat lines
+    const statKeys = (data.stats || []).map((s) => s.key);
+    statKeys.forEach((key) => {
+      if (!growthEnabledStats.has(key)) return;
+      const curve = curves[key];
+      if (!curve) return;
+      ctx.strokeStyle = STAT_COLORS[key] || "#888";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let lvl = 0; lvl <= 100; lvl += 1) {
+        const val = growthShowBonus ? statToBonus(curve[lvl]) : curve[lvl];
+        const x = xPos(lvl);
+        const y = yPos(val);
+        if (lvl === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    });
+
+    // Plot custom tracks
+    const customColors = ["#ff6b6b", "#ffa502", "#7bed9f", "#70a1ff", "#a29bfe", "#fd79a8"];
+    growthCustomTracks.forEach((track, ti) => {
+      const color = customColors[ti % customColors.length];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 3]);
+      ctx.beginPath();
+      for (let lvl = 0; lvl <= 100; lvl += 1) {
+        let sum = 0;
+        track.keys.forEach((k) => { sum += (curves[k] ? curves[k][lvl] : 0); });
+        const val = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+        const y = yPos(Math.max(yMin, Math.min(yMax, val)));
+        const x = xPos(lvl);
+        if (lvl === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // Store curves for tooltip
+    growthChart._curves = curves;
+    growthChart._padLeft = pad.left;
+    growthChart._padRight = pad.right;
+    growthChart._plotW = plotW;
+  }
+
+  function handleGrowthChartHover(event) {
+    if (!growthChart || !growthChartTooltip) return;
+    if (selectedRunIndex < 0 || selectedRunIndex >= runHistory.length) {
+      growthChartTooltip.style.display = "none";
+      if (growthChartCursor) growthChartCursor.style.display = "none";
+      return;
+    }
+    const curves = growthChart._curves;
+    if (!curves) return;
+
+    const rect = growthChart.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const padLeft = growthChart._padLeft || 50;
+    const plotW = growthChart._plotW || (rect.width - padLeft - 20);
+
+    const frac = (mouseX - padLeft) / plotW;
+    if (frac < 0 || frac > 1) {
+      growthChartTooltip.style.display = "none";
+      if (growthChartCursor) growthChartCursor.style.display = "none";
+      return;
+    }
+
+    if (growthChartCursor) {
+      growthChartCursor.style.display = "block";
+      growthChartCursor.style.left = mouseX + "px";
+    }
+    const level = Math.round(frac * 100);
+    const statKeys = (data.stats || []).map((s) => s.key);
+
+    const customColors = ["#ff6b6b", "#ffa502", "#7bed9f", "#70a1ff", "#a29bfe", "#fd79a8"];
+    let lines = [`<strong>Level ${level}</strong>`];
+    statKeys.forEach((key) => {
+      if (!growthEnabledStats.has(key)) return;
+      const curve = curves[key];
+      if (!curve) return;
+      const abbr = (data.stats || []).find((s) => s.key === key)?.abbr || key.toUpperCase();
+      const raw = curve[level];
+      const display = growthShowBonus ? statToBonus(raw) : raw;
+      const color = STAT_COLORS[key] || "#888";
+      lines.push(`<span style="color:${color}">${abbr}: ${display}</span>`);
+    });
+    growthCustomTracks.forEach((track, ti) => {
+      let sum = 0;
+      track.keys.forEach((k) => { sum += (curves[k] ? curves[k][level] : 0); });
+      const display = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+      const color = customColors[ti % customColors.length];
+      lines.push(`<span style="color:${color}">${track.label}: ${display}</span>`);
+    });
+
+    growthChartTooltip.innerHTML = lines.join("<br>");
+    growthChartTooltip.style.display = "block";
+
+    const tipW = growthChartTooltip.offsetWidth;
+    let tipLeft = mouseX + 12;
+    if (tipLeft + tipW > rect.width - 4) tipLeft = mouseX - tipW - 12;
+    growthChartTooltip.style.left = tipLeft + "px";
+    growthChartTooltip.style.top = "8px";
+  }
+
   function deleteRun(runIndex) {
     if (runIndex < 0 || runIndex >= runHistory.length) return;
     const [removed] = runHistory.splice(runIndex, 1);
@@ -1996,7 +2364,13 @@
         inlineEditState.runIndex -= 1;
       }
     }
+    if (selectedRunIndex === runIndex) {
+      selectedRunIndex = -1;
+    } else if (selectedRunIndex > runIndex) {
+      selectedRunIndex -= 1;
+    }
     renderResultTable();
+    renderGrowthChart();
     if (runHistory.length === 0) {
       resultSummary.textContent = "Run optimizer to see a recommended start stat layout.";
       resultTotals.textContent = "";
@@ -2125,6 +2499,14 @@
       return;
     }
 
+    const selectButton = event.target.closest(".optimizer-select-run");
+    if (selectButton) {
+      const runIndex = logic.toInt(selectButton.dataset.runIndex, -1);
+      if (runIndex < 0) return;
+      selectRun(runIndex);
+      return;
+    }
+
     const deleteButton = event.target.closest(".optimizer-delete-run");
     if (deleteButton) {
       const runIndex = logic.toInt(deleteButton.dataset.runIndex, -1);
@@ -2160,4 +2542,41 @@
   updateSajehnAvailability();
   updateResumeAvailability();
   bindFloatingTooltips();
+  initGrowthStatToggles();
+
+  growthShowStatBtn?.addEventListener("click", () => {
+    growthShowBonus = false;
+    growthShowStatBtn.classList.add("active");
+    growthShowBonusBtn?.classList.remove("active");
+    renderGrowthChart();
+  });
+  growthShowBonusBtn?.addEventListener("click", () => {
+    growthShowBonus = true;
+    growthShowBonusBtn.classList.add("active");
+    growthShowStatBtn?.classList.remove("active");
+    renderGrowthChart();
+  });
+  growthCustomAddBtn?.addEventListener("click", () => {
+    const val = growthCustomInput?.value || "";
+    if (val && addCustomTrack(val)) {
+      growthCustomInput.value = "";
+    }
+  });
+  growthCustomInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const val = growthCustomInput?.value || "";
+      if (val && addCustomTrack(val)) {
+        growthCustomInput.value = "";
+      }
+    }
+  });
+  growthChart?.addEventListener("mousemove", handleGrowthChartHover);
+  growthChart?.addEventListener("mouseleave", () => {
+    if (growthChartTooltip) growthChartTooltip.style.display = "none";
+    if (growthChartCursor) growthChartCursor.style.display = "none";
+  });
+  window.addEventListener("resize", () => {
+    if (selectedRunIndex >= 0) renderGrowthChart();
+  });
 })();
