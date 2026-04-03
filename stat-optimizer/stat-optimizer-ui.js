@@ -2047,8 +2047,13 @@
     return curves;
   }
 
-  function statToBonus(statValue) {
-    return Math.floor((Number(statValue) - 50) / 2);
+  function statToBonus(statValue, racialMod) {
+    return Math.floor((Number(statValue) - 50) / 2) + (racialMod || 0);
+  }
+
+  function getRacialBonusMods() {
+    const raceName = (data.races || []).find((entry) => entry.key === raceSelect?.value)?.name || "Human";
+    return data.raceStatBonusModifiers?.[raceName] || {};
   }
 
   function initGrowthStatToggles() {
@@ -2155,6 +2160,7 @@
     if (growthChartHelper) growthChartHelper.textContent = `Showing growth for: ${entry.label}`;
 
     const curves = computeGrowthCurves(build.level0Stats);
+    const racialMods = getRacialBonusMods();
     const targetLevel = getTargetLevelValue();
 
     const pad = { top: 30, right: 20, bottom: 40, left: 50 };
@@ -2163,8 +2169,9 @@
 
     let yMin, yMax;
     if (growthShowBonus) {
-      yMin = statToBonus(20);
-      yMax = statToBonus(100);
+      const allRacial = (data.stats || []).map((s) => racialMods[s.key] || 0);
+      yMin = statToBonus(20, Math.min(...allRacial));
+      yMax = statToBonus(100, Math.max(...allRacial));
     } else {
       yMin = 20;
       yMax = 100;
@@ -2173,9 +2180,12 @@
     if (growthCustomTracks.length > 0) {
       growthCustomTracks.forEach((track) => {
         for (let lvl = 0; lvl <= 100; lvl += 1) {
-          let sum = 0;
-          track.keys.forEach((k) => { sum += (curves[k] ? curves[k][lvl] : 0); });
-          const val = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+          let val = 0;
+          if (growthShowBonus) {
+            track.keys.forEach((k) => { val += statToBonus(curves[k] ? curves[k][lvl] : 0, racialMods[k] || 0); });
+          } else {
+            track.keys.forEach((k) => { val += (curves[k] ? curves[k][lvl] : 0); });
+          }
           if (val < yMin) yMin = val;
           if (val > yMax) yMax = val;
         }
@@ -2255,7 +2265,7 @@
       ctx.lineWidth = 2;
       ctx.beginPath();
       for (let lvl = 0; lvl <= 100; lvl += 1) {
-        const val = growthShowBonus ? statToBonus(curve[lvl]) : curve[lvl];
+        const val = growthShowBonus ? statToBonus(curve[lvl], racialMods[key] || 0) : curve[lvl];
         const x = xPos(lvl);
         const y = yPos(val);
         if (lvl === 0) ctx.moveTo(x, y);
@@ -2273,9 +2283,12 @@
       ctx.setLineDash([6, 3]);
       ctx.beginPath();
       for (let lvl = 0; lvl <= 100; lvl += 1) {
-        let sum = 0;
-        track.keys.forEach((k) => { sum += (curves[k] ? curves[k][lvl] : 0); });
-        const val = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+        let val = 0;
+        if (growthShowBonus) {
+          track.keys.forEach((k) => { val += statToBonus(curves[k] ? curves[k][lvl] : 0, racialMods[k] || 0); });
+        } else {
+          track.keys.forEach((k) => { val += (curves[k] ? curves[k][lvl] : 0); });
+        }
         const y = yPos(Math.max(yMin, Math.min(yMax, val)));
         const x = xPos(lvl);
         if (lvl === 0) ctx.moveTo(x, y);
@@ -2321,6 +2334,7 @@
     const level = Math.round(frac * 100);
     const statKeys = (data.stats || []).map((s) => s.key);
 
+    const racialMods = getRacialBonusMods();
     const customColors = ["#ff6b6b", "#ffa502", "#7bed9f", "#70a1ff", "#a29bfe", "#fd79a8"];
     let lines = [`<strong>Level ${level}</strong>`];
     statKeys.forEach((key) => {
@@ -2329,14 +2343,17 @@
       if (!curve) return;
       const abbr = (data.stats || []).find((s) => s.key === key)?.abbr || key.toUpperCase();
       const raw = curve[level];
-      const display = growthShowBonus ? statToBonus(raw) : raw;
+      const display = growthShowBonus ? statToBonus(raw, racialMods[key] || 0) : raw;
       const color = STAT_COLORS[key] || "#888";
       lines.push(`<span style="color:${color}">${abbr}: ${display}</span>`);
     });
     growthCustomTracks.forEach((track, ti) => {
-      let sum = 0;
-      track.keys.forEach((k) => { sum += (curves[k] ? curves[k][level] : 0); });
-      const display = growthShowBonus ? Math.floor((sum - 50 * track.keys.length) / 2) : sum;
+      let display = 0;
+      if (growthShowBonus) {
+        track.keys.forEach((k) => { display += statToBonus(curves[k] ? curves[k][level] : 0, racialMods[k] || 0); });
+      } else {
+        track.keys.forEach((k) => { display += (curves[k] ? curves[k][level] : 0); });
+      }
       const color = customColors[ti % customColors.length];
       lines.push(`<span style="color:${color}">${track.label}: ${display}</span>`);
     });
