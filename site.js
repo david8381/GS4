@@ -232,9 +232,10 @@ function renderFooter() {
   const footerSlot = document.querySelector("[data-footer]");
   if (!footerSlot) return;
 
+  const root = document.body.dataset.root || "";
   footerSlot.innerHTML = `
     <footer class="site-footer">
-      <span>Something so important it belongs at the bottom of every page.</span>
+      <a href="${root}feedback.html">Feedback</a>
     </footer>
   `;
 }
