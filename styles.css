@@ -3082,35 +3082,6 @@ body[data-page="sunfist"] .table-panel td strong {
   border-color: #6b3333;
 }
 
-/* ─── Feedback ─── */
-
-.feedback-panel {
-  display: block;
-  max-width: 560px;
-}
-
-.feedback-form textarea {
-  width: 100%;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 0.9rem;
-  padding: 8px;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--text);
-}
-
-.feedback-sent {
-  text-align: center;
-  padding: 2rem 0;
-}
-
-.feedback-sent p {
-  margin-bottom: 1rem;
-  font-size: 1.05rem;
-}
-
 /* ─── Stat Growth Chart ─── */
 
 #statGrowthSection .calc-panel {
