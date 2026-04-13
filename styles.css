@@ -3332,3 +3332,114 @@ select.ambush-whatif-input {
 .ambush-toggle.active + .ambush-toggle {
   border-left-color: var(--accent, #1a7a4d);
 }
+
+/* ─── Weight Reduction Calculator ─────────────────────────────────── */
+
+.wr-inputs-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.wr-charts-section {
+  padding: 0 1rem 1rem;
+}
+
+.wr-chart-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 680px) {
+  .wr-chart-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wr-chart-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wr-chart-box h3 {
+  margin: 0 0 0.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.wr-chart-wrap {
+  position: relative;
+  width: 100%;
+  background: var(--surface-alt, #f7f7f7);
+  border: 1px solid var(--border, #ccc);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .wr-chart-wrap {
+  background: var(--surface-alt, #1e1e1e);
+}
+
+.wr-chart-wrap canvas {
+  display: block;
+  width: 100%;
+}
+
+.wr-chart-cursor {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-muted, rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+  z-index: 5;
+}
+
+[data-theme="dark"] .wr-chart-cursor {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.wr-chart-tooltip {
+  display: none;
+  position: absolute;
+  top: 6px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #ccc);
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] .wr-chart-tooltip {
+  background: var(--surface, #252525);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.wr-fill-display {
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 3ch;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.wr-summary-table {
+  width: 100%;
+}
+
+.wr-row-reached td {
+  color: var(--text-muted, #888);
+}
+
+.wr-enc-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}

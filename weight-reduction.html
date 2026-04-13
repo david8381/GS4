@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weight Reduction Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="weight-reduction" data-root="./"
+    data-page-scripts="data/gs4-data.js,data/weight-reduction-data.js,weight-reduction/weight-reduction-logic.js,weight-reduction/weight-reduction-ui.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">Rumor Woods</p>
+          <h1>Weight Reduction Calculator</h1>
+          <p>Model the cost and benefit of container weight reduction tiers.</p>
+        </section>
+
+        <!-- ─── Inputs ─── -->
+        <section class="calc-panel wr-inputs-panel">
+          <div class="input-block">
+            <div class="header-bridge" aria-hidden="true">
+              <select id="profileSelect">
+                <option value="">Select from Profile</option>
+              </select>
+              <button id="profileLoad" type="button">Load</button>
+            </div>
+
+            <h2>Container</h2>
+            <div class="input-group compact-field">
+              <label for="wrCapacity">Capacity</label>
+              <div class="input-row">
+                <select id="wrCapacity"></select>
+              </div>
+            </div>
+            <div class="input-group compact-field">
+              <label for="wrCurrentPct">Current WR</label>
+              <div class="input-row">
+                <select id="wrCurrentPct"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-block">
+            <h2>Usage</h2>
+            <div class="input-group compact-field">
+              <label for="wrFillSlider">Typical fill</label>
+              <div class="input-row">
+                <input id="wrFillSlider" type="range" min="0" max="100" step="5" value="70" />
+                <span id="wrFillDisplay" class="wr-fill-display">70%</span>
+              </div>
+            </div>
+            <div class="helper">How full do you typically keep the container? Used to estimate weight savings.</div>
+          </div>
+        </section>
+
+        <!-- ─── Charts ─── -->
+        <section class="wr-charts-section">
+          <div class="wr-chart-pair">
+            <div class="wr-chart-box">
+              <h3>Cost to Reach Each Tier</h3>
+              <p class="helper">Cumulative raikhen from your current WR level. Shaded region = already purchased.</p>
+              <div class="wr-chart-wrap" id="wrCostWrap">
+                <canvas id="wrCostChart"></canvas>
+                <div class="wr-chart-cursor" id="wrCostCursor"></div>
+                <div class="wr-chart-tooltip" id="wrCostTooltip"></div>
+              </div>
+            </div>
+            <div class="wr-chart-box">
+              <h3>Weight Saved</h3>
+              <p class="helper">Pounds saved vs no WR, at your typical fill level.</p>
+              <div class="wr-chart-wrap" id="wrWeightWrap">
+                <canvas id="wrWeightChart"></canvas>
+                <div class="wr-chart-cursor" id="wrWeightCursor"></div>
+                <div class="wr-chart-tooltip" id="wrWeightTooltip"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── Summary table ─── -->
+        <details class="collapsible-section" open>
+          <summary>Tier Summary</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="table-scroll">
+                <table class="data-table wr-summary-table" id="wrSummaryTable"></table>
+              </div>
+              <p class="helper">~ = extrapolated (not documented on wiki). Effective Wt = how much the filled container contributes to your carried weight at each WR level.</p>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── Encumbrance impact ─── -->
+        <details class="collapsible-section" id="wrEncSection">
+          <summary>Encumbrance Impact (Optional)</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel wr-enc-panel">
+              <div class="input-block">
+                <h2>Character</h2>
+                <p class="helper">Enter your stats to see how WR affects your encumbrance. Loads from profile if selected above.</p>
+                <div class="input-group compact-field">
+                  <label for="wrRace">Race</label>
+                  <div class="input-row"><select id="wrRace"></select></div>
+                </div>
+                <div class="input-group compact-field">
+                  <label for="wrStr">STR</label>
+                  <div class="input-row"><input id="wrStr" type="number" min="1" max="200" value="60" /></div>
+                </div>
+                <div class="input-group compact-field">
+                  <label for="wrCon">CON</label>
+                  <div class="input-row"><input id="wrCon" type="number" min="1" max="200" value="60" /></div>
+                </div>
+                <div class="input-group compact-field">
+                  <label for="wrPf">Physical Fitness bonus</label>
+                  <div class="input-row"><input id="wrPf" type="number" min="0" value="0" /></div>
+                </div>
+                <div class="input-group compact-field">
+                  <label for="wrOtherWeight">Other carried weight (lb)</label>
+                  <div class="input-row"><input id="wrOtherWeight" type="number" min="0" value="0" /></div>
+                </div>
+              </div>
+              <div>
+                <h2>Encumbrance at Each WR Tier</h2>
+                <div class="table-scroll">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>WR%</th>
+                        <th>Total Carried</th>
+                        <th>Enc%</th>
+                        <th>Band</th>
+                      </tr>
+                    </thead>
+                    <tbody id="wrEncBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── References ─── -->
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Weight_reduction" target="_blank" rel="noopener noreferrer">GSWiki: Weight Reduction</a></li>
+                <li>Costs sourced from wiki. Missing tier data for 50 lb and 250 lb containers is extrapolated: each tier costs N × the previous tier.</li>
+              </ul>
+            </section>
+          </div>
+        </details>
+
+      </main>
+      <div data-footer></div>
+    </div>
+
+    <script src="shared.js?v=0.3.34"></script>
+    <script src="site.js?v=0.3.34"></script>
+  </body>
+</html>
