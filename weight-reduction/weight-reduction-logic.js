@@ -11,42 +11,38 @@
     return containers.find((c) => c.capacity === capacity) || null;
   }
 
-  // currentWRPct must be a multiple of 20 in [0, 80].
-  // Returns an array of 6 entries, one per WR_LEVEL (0,20,40,60,80,100).
-  // Each entry: { wrPct, cumulativeCost, isReached, hasExtrapolated }
+  // Returns an array of 101 entries, one per integer WR% from 0 to 100.
+  // tierCosts are per 1% — each 1% increment adds tierCosts[tierIdx] to cost.
+  // Tier boundaries: 1-20 → idx 0, 21-40 → idx 1, 41-60 → idx 2, 61-80 → idx 3, 81-100 → idx 4.
   function getCostCurve(container, currentWRPct) {
-    const WR_LEVELS = [0, 20, 40, 60, 80, 100];
-    const currentTier = Math.round(currentWRPct / 20); // 0-4
     let runningCost = 0;
-    return WR_LEVELS.map((wrPct, i) => {
-      const tierIndex = i - 1; // tier needed to reach this level (tier 0 = 1-20%)
-      if (i === 0) {
-        return { wrPct: 0, cumulativeCost: 0, isReached: true, hasExtrapolated: false };
+    const points = [];
+    for (let t = 0; t <= 100; t++) {
+      if (t === 0 || t <= currentWRPct) {
+        points.push({ wrPct: t, cumulativeCost: 0, isReached: true, hasExtrapolated: false });
+      } else {
+        const tierIdx = Math.floor((t - 1) / 20); // 1-20→0, 21-40→1, …
+        runningCost += container.tierCosts[tierIdx];
+        points.push({
+          wrPct: t,
+          cumulativeCost: runningCost,
+          isReached: false,
+          hasExtrapolated: container.extrapolated[tierIdx],
+        });
       }
-      const tierIdx = i - 1;
-      if (tierIdx < currentTier) {
-        // Already purchased — cost to user is 0 (already paid), show 0 delta
-        return { wrPct, cumulativeCost: 0, isReached: true, hasExtrapolated: container.extrapolated[tierIdx] };
-      }
-      runningCost += container.tierCosts[tierIdx];
-      return {
-        wrPct,
-        cumulativeCost: runningCost,
-        isReached: false,
-        hasExtrapolated: container.extrapolated[tierIdx],
-      };
-    });
+    }
+    return points;
   }
 
-  // Weight saved (lbs) at a given WR% vs 0% WR, given container capacity and fill fraction.
+  // Returns 101 entries, one per integer WR% from 0 to 100.
   // fillPct: 0-100 (typical % of capacity that is filled)
   function getWeightSavedCurve(capacity, fillPct) {
-    const WR_LEVELS = [0, 20, 40, 60, 80, 100];
     const typicalWeight = capacity * (fillPct / 100);
-    return WR_LEVELS.map((wrPct) => ({
-      wrPct,
-      weightSaved: typicalWeight * (wrPct / 100),
-    }));
+    const points = [];
+    for (let t = 0; t <= 100; t++) {
+      points.push({ wrPct: t, weightSaved: typicalWeight * (t / 100) });
+    }
+    return points;
   }
 
   // Effective weight of container contents at a given WR%.

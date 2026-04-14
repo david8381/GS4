@@ -177,14 +177,16 @@ Sajehn, the following Ascension Abilities are available:
   -------------------------------------------------------------------------------------
   Agility              agility         5/40  Passive        Common          Stat
   Aura                 aura            5/40  Passive        Common          Stat
-  Strength             strength        5/40  Passive        Common          Stat
+  Strength             strength        10/40 Passive        Common          Stat
+  Porter               porter          1/50  Passive        Common          Other
   Transcend Destiny    trandest        0/10  Passive        Elite           Other
   `);
 
   assert.deepEqual(parsed, [
     { name: "Agility", mnemonic: "agility", ranks: 5, cap: 40, category: "Common", subcategory: "Stat" },
     { name: "Aura", mnemonic: "aura", ranks: 5, cap: 40, category: "Common", subcategory: "Stat" },
-    { name: "Strength", mnemonic: "strength", ranks: 5, cap: 40, category: "Common", subcategory: "Stat" },
+    { name: "Strength", mnemonic: "strength", ranks: 10, cap: 40, category: "Common", subcategory: "Stat" },
+    { name: "Porter", mnemonic: "porter", ranks: 1, cap: 50, category: "Common", subcategory: "Other" },
     { name: "Transcend Destiny", mnemonic: "trandest", ranks: 0, cap: 10, category: "Elite", subcategory: "Other" },
   ]);
 });

@@ -3430,8 +3430,49 @@ select.ambush-whatif-input {
   font-family: 'IBM Plex Mono', monospace;
 }
 
-.wr-summary-table {
+.data-table {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border, #ddd);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.data-table th {
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  border-bottom-width: 2px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+
+.data-table td:first-child,
+.data-table th:first-child {
+  text-align: left;
+}
+
+/* Encumbrance table: Band column is text */
+#wrEncBody td:last-child {
+  text-align: left;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--surface-alt, #f7f7f7);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .wr-row-reached td {

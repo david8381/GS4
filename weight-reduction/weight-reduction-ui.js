@@ -32,7 +32,7 @@
   const encTableBody    = document.getElementById("wrEncBody");
 
   // ─── State ───────────────────────────────────────────────────────
-  let hoveredTierIndex = -1; // 0-5 corresponding to WR_LEVELS
+  let hoveredWRPct = -1; // 0-100 integer, -1 = none
   const CHART_COLOR_COST   = "#e74c3c";
   const CHART_COLOR_WEIGHT = "#3498db";
   const CHART_COLOR_CURSOR = "rgba(0,0,0,0.25)";
@@ -49,14 +49,8 @@
     });
     capacitySelect.value = "100";
 
-    // Current WR options
-    [0, 20, 40, 60, 80].forEach((pct) => {
-      const opt = document.createElement("option");
-      opt.value = String(pct);
-      opt.textContent = `${pct}%`;
-      currentWRSelect.appendChild(opt);
-    });
-    currentWRSelect.value = "0";
+    // currentWRSelect is a number input; just ensure default
+    if (currentWRSelect) currentWRSelect.value = "0";
 
     // Race options for encumbrance section
     if (encRaceSelect && data) {
@@ -190,6 +184,7 @@
   }
 
   function formatRaikhen(v) {
+    if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`;
     if (v >= 1000) return `${(v / 1000).toFixed(0)}k`;
     return String(v);
   }
@@ -249,7 +244,8 @@
     const plotH = cssH - pad.top - pad.bottom;
 
     const maxCost = Math.max(...costCurve.map((p) => p.cumulativeCost), 1);
-    const yMax = Math.ceil(maxCost / 1000) * 1000 || 1000;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(maxCost)));
+    const yMax = Math.ceil(maxCost / magnitude) * magnitude || 1000;
     const yMin = 0;
     const ySteps = 5;
 
@@ -262,46 +258,42 @@
     ctx.fillStyle = isDark() ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
     ctx.fillRect(pad.left, pad.top, currentX - pad.left, plotH);
 
-    // Step cost bars
-    costCurve.forEach((pt, i) => {
-      if (i === 0 || pt.isReached) return;
-      const prevPt = costCurve[i - 1];
-      const x0 = xForWR(prevPt.wrPct, pad, plotW);
-      const x1 = xForWR(pt.wrPct, pad, plotW);
-      const y0 = yPos(prevPt.cumulativeCost);
-      const y1 = yPos(pt.cumulativeCost);
-      // Draw step: horizontal then vertical
-      ctx.strokeStyle = CHART_COLOR_COST;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(x0, y0);
-      ctx.lineTo(x1, y0);
-      ctx.lineTo(x1, y1);
-      ctx.stroke();
-      // Fill under curve
-      ctx.fillStyle = isDark() ? "rgba(231,76,60,0.12)" : "rgba(231,76,60,0.08)";
-      ctx.beginPath();
-      ctx.moveTo(x0, pad.top + plotH);
-      ctx.lineTo(x0, y0);
-      ctx.lineTo(x1, y0);
-      ctx.lineTo(x1, y1);
-      ctx.lineTo(x1, pad.top + plotH);
-      ctx.closePath();
-      ctx.fill();
+    // Fill under cost curve
+    ctx.fillStyle = isDark() ? "rgba(231,76,60,0.12)" : "rgba(231,76,60,0.08)";
+    ctx.beginPath();
+    ctx.moveTo(xForWR(0, pad, plotW), pad.top + plotH);
+    costCurve.forEach((pt) => ctx.lineTo(xForWR(pt.wrPct, pad, plotW), yPos(pt.cumulativeCost)));
+    ctx.lineTo(xForWR(100, pad, plotW), pad.top + plotH);
+    ctx.closePath();
+    ctx.fill();
 
-      // Dot at tier top
+    // Cost line (piecewise-linear through 101 points)
+    ctx.strokeStyle = CHART_COLOR_COST;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    costCurve.forEach((pt, i) => {
+      const x = xForWR(pt.wrPct, pad, plotW);
+      const y = yPos(pt.cumulativeCost);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Dots + "~" at tier boundaries (20, 40, 60, 80, 100)
+    [20, 40, 60, 80, 100].forEach((boundary) => {
+      const pt = costCurve[boundary];
+      if (!pt || pt.isReached) return;
+      const x = xForWR(pt.wrPct, pad, plotW);
+      const y = yPos(pt.cumulativeCost);
       ctx.fillStyle = CHART_COLOR_COST;
       ctx.beginPath();
-      ctx.arc(x1, y1, 4, 0, Math.PI * 2);
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fill();
-
-      // Extrapolated marker
       if (pt.hasExtrapolated) {
         ctx.fillStyle = colors.text;
         ctx.textAlign = "center";
         ctx.textBaseline = "bottom";
         ctx.font = "10px 'IBM Plex Mono', monospace";
-        ctx.fillText("~", x1, y1 - 4);
+        ctx.fillText("~", x, y - 5);
       }
     });
 
@@ -319,14 +311,12 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
       ctx.font = "10px 'IBM Plex Mono', monospace";
-      ctx.fillText(`current`, currentX, pad.top - 2);
+      ctx.fillText("current", currentX, pad.top - 2);
     }
 
     // Hover cursor
-    if (hoveredTierIndex >= 0) {
-      const hpt = costCurve[hoveredTierIndex];
-      const hx = xForWR(hpt.wrPct, pad, plotW);
-      drawCursorLine(ctx, pad, plotH, hx, colors);
+    if (hoveredWRPct >= 0) {
+      drawCursorLine(ctx, pad, plotH, xForWR(hoveredWRPct, pad, plotW), colors);
     }
 
     costCanvas._pad = pad;
@@ -409,10 +399,8 @@
     }
 
     // Hover cursor
-    if (hoveredTierIndex >= 0) {
-      const hpt = weightCurve[hoveredTierIndex];
-      const hx = xForWR(hpt.wrPct, pad, plotW);
-      drawCursorLine(ctx, pad, plotH, hx, colors);
+    if (hoveredWRPct >= 0) {
+      drawCursorLine(ctx, pad, plotH, xForWR(hoveredWRPct, pad, plotW), colors);
     }
 
     weightCanvas._pad = pad;
@@ -434,14 +422,15 @@
         </tr>
       </thead>
       <tbody>
-        ${costCurve.map((cp, i) => {
-          const wp = weightCurve[i];
+        ${[0, 20, 40, 60, 80, 100].map((pct) => {
+          const cp = costCurve[pct];
+          const wp = weightCurve[pct];
           const capacity = Number(capacitySelect.value);
-          const effWt = capacity * (fillPct / 100) * (1 - cp.wrPct / 100);
+          const effWt = capacity * (fillPct / 100) * (1 - pct / 100);
           const reached = cp.isReached;
           return `<tr class="${reached ? "wr-row-reached" : ""}">
-            <td>${cp.wrPct}%${reached ? " ✓" : ""}</td>
-            <td>${cp.cumulativeCost === 0 && cp.wrPct > 0 ? "—" : cp.cumulativeCost.toLocaleString()}</td>
+            <td>${pct}%${reached ? " ✓" : ""}</td>
+            <td>${cp.cumulativeCost === 0 && pct > 0 ? "—" : cp.cumulativeCost.toLocaleString()}</td>
             <td>${wp.weightSaved.toFixed(1)} lb${cp.hasExtrapolated ? " ~" : ""}</td>
             <td>${effWt.toFixed(1)} lb</td>
           </tr>`;
@@ -475,25 +464,23 @@
   }
 
   // ─── Hover / cursor ───────────────────────────────────────────────
-  function tierIndexFromX(canvas, mouseX) {
+  function wrPctFromX(canvas, mouseX) {
     const pad = canvas._pad;
     const plotW = canvas._plotW;
     if (!pad || !plotW) return -1;
     const frac = (mouseX - pad.left) / plotW;
     if (frac < 0 || frac > 1) return -1;
-    return Math.min(5, Math.round(frac * 5)); // snap to 0-5
+    return Math.min(100, Math.max(0, Math.round(frac * 100)));
   }
 
-  function updateTooltip(tooltip, cursor, canvas, tierIndex, lines, mouseX) {
+  function updateTooltip(tooltip, cursor, canvas, wrPct, lines, mouseX) {
     if (!tooltip || !canvas) return;
-    if (tierIndex < 0) {
+    if (wrPct < 0) {
       tooltip.style.display = "none";
       if (cursor) cursor.style.display = "none";
       return;
     }
     const pad = canvas._pad || { left: 52 };
-    const wrLevels = [0, 20, 40, 60, 80, 100];
-    const wrPct = wrLevels[tierIndex];
     const plotW = canvas._plotW || (canvas.clientWidth - pad.left - 16);
     const x = pad.left + (wrPct / 100) * plotW;
 
@@ -514,14 +501,14 @@
   function handleHover(event, canvas) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
-    const ti = tierIndexFromX(canvas, mouseX);
-    if (ti !== hoveredTierIndex) {
-      hoveredTierIndex = ti;
+    const wPct = wrPctFromX(canvas, mouseX);
+    if (wPct !== hoveredWRPct) {
+      hoveredWRPct = wPct;
       render();
     }
 
     const container = logic.getContainer(wrData.containers, Number(capacitySelect.value));
-    if (!container || ti < 0) {
+    if (!container || wPct < 0) {
       if (costTooltip) costTooltip.style.display = "none";
       if (weightTooltip) weightTooltip.style.display = "none";
       if (costCursor) costCursor.style.display = "none";
@@ -532,36 +519,28 @@
     const fillPct = Number(fillSlider.value);
     const costCurve = logic.getCostCurve(container, currentWR);
     const weightCurve = logic.getWeightSavedCurve(container.capacity, fillPct);
-    const wrLevels = [0, 20, 40, 60, 80, 100];
-    const wrPct = wrLevels[ti];
-    const cp = costCurve[ti];
-    const wp = weightCurve[ti];
+    const cp = costCurve[wPct]; // direct index into 101-point array
+    const wp = weightCurve[wPct];
 
     const costLines = [
-      `<strong>${wrPct}% WR</strong>`,
-      cp.isReached && wrPct > 0 ? "Already purchased" : `Cost: ${cp.cumulativeCost.toLocaleString()} raikhen${cp.hasExtrapolated ? " (est.)" : ""}`,
+      `<strong>${wPct}% WR</strong>`,
+      cp.isReached && wPct > 0 ? "Already purchased" : `${cp.cumulativeCost.toLocaleString()} raikhen${cp.hasExtrapolated ? " (~)" : ""}`,
     ];
     const weightLines = [
-      `<strong>${wrPct}% WR</strong>`,
+      `<strong>${wPct}% WR</strong>`,
       `Saved: ${wp.weightSaved.toFixed(1)} lb`,
-      `Effective: ${(container.capacity * (fillPct / 100) * (1 - wrPct / 100)).toFixed(1)} lb`,
+      `Effective: ${(container.capacity * (fillPct / 100) * (1 - wPct / 100)).toFixed(1)} lb`,
     ];
 
-    // Position both tooltips at same WR x
-    updateTooltip(costTooltip, costCursor, costCanvas, ti, costLines, mouseX);
-    // For weight chart tooltip, compute the equivalent x on that canvas
-    const weightMouseX = costCanvas === canvas
-      ? (() => {
-          const wPad = weightCanvas?._pad || { left: 52 };
-          const wPlotW = weightCanvas?._plotW || ((weightCanvas?.clientWidth || 400) - wPad.left - 16);
-          return wPad.left + (wrPct / 100) * wPlotW;
-        })()
-      : mouseX;
-    updateTooltip(weightTooltip, weightCursor, weightCanvas, ti, weightLines, weightMouseX);
+    updateTooltip(costTooltip, costCursor, costCanvas, wPct, costLines, mouseX);
+    const wPad = weightCanvas?._pad || { left: 52 };
+    const wPlotW = weightCanvas?._plotW || ((weightCanvas?.clientWidth || 400) - wPad.left - 16);
+    const weightMouseX = canvas === costCanvas ? wPad.left + (wPct / 100) * wPlotW : mouseX;
+    updateTooltip(weightTooltip, weightCursor, weightCanvas, wPct, weightLines, weightMouseX);
   }
 
   function handleLeave() {
-    hoveredTierIndex = -1;
+    hoveredWRPct = -1;
     render();
     if (costTooltip) costTooltip.style.display = "none";
     if (weightTooltip) weightTooltip.style.display = "none";
@@ -571,7 +550,7 @@
 
   // ─── Events ───────────────────────────────────────────────────────
   capacitySelect?.addEventListener("change", render);
-  currentWRSelect?.addEventListener("change", render);
+  currentWRSelect?.addEventListener("input", render);
   fillSlider?.addEventListener("input", () => { syncFillDisplay(); render(); });
 
   costCanvas?.addEventListener("mousemove", (e) => handleHover(e, costCanvas));

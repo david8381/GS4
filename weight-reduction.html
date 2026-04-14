@@ -44,7 +44,8 @@
             <div class="input-group compact-field">
               <label for="wrCurrentPct">Current WR</label>
               <div class="input-row">
-                <select id="wrCurrentPct"></select>
+                <input id="wrCurrentPct" type="number" min="0" max="99" step="1" value="0" />
+                <span class="wr-fill-display">%</span>
               </div>
             </div>
           </div>
@@ -155,7 +156,7 @@
             <section class="notes">
               <ul>
                 <li><a href="https://gswiki.play.net/Weight_reduction" target="_blank" rel="noopener noreferrer">GSWiki: Weight Reduction</a></li>
-                <li>Costs sourced from wiki. Missing tier data for 50 lb and 250 lb containers is extrapolated: each tier costs N × the previous tier.</li>
+                <li>Wiki costs are per 1% of WR; full tier cost = wiki value × 20. Missing tier data for 50 lb and 250 lb containers is extrapolated using the N × previous-tier rule.</li>
               </ul>
             </section>
           </div>
@@ -165,7 +166,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.3.34"></script>
-    <script src="site.js?v=0.3.34"></script>
+    <script src="shared.js?v=0.3.35"></script>
+    <script src="site.js?v=0.3.35"></script>
   </body>
 </html>

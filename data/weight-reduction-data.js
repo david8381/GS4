@@ -1,6 +1,7 @@
 (function (root) {
-  // Cost per 20% tier for each container capacity.
+  // Cost PER 1% of weight reduction within each tier, for each container capacity.
   // Tiers: [1-20%, 21-40%, 41-60%, 61-80%, 81-100%]
+  // Full tier cost = tierCosts[i] × 20 (since each tier covers 20 percentage points).
   // Costs sourced from GemStone Wiki (Rumor Woods service).
   // Tier N costs N × Tier (N-1), so the escalation is factorial.
   // Missing wiki entries are extrapolated using that rule and flagged.

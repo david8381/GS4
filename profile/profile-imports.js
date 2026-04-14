@@ -142,7 +142,7 @@
         if (!trimmed) return;
         if (/^Skill\s+Mnemonic/i.test(trimmed)) return;
         if (/^[-]{5,}/.test(trimmed)) return;
-        const match = trimmed.match(/^(.*?)\s{2,}([a-z][a-z0-9-]*)\s{2,}(\d+)\s*\/\s*(40|50|10)\s{2,}(\S+)\s{2,}(\S+)\s{2,}(.+)$/i);
+        const match = trimmed.match(/^(.*?)\s{2,}([a-z][a-z0-9-]*)\s{2,}(\d+)\s*\/\s*(40|50|10)\s+(\S+)\s{2,}(\S+)\s{2,}(.+)$/i);
         if (!match) return;
         const name = match[1].trim().replace(/\s{2,}/g, " ");
         const category = match[6].trim();

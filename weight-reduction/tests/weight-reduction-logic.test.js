@@ -26,40 +26,53 @@ describe("getContainer", () => {
 });
 
 describe("getCostCurve", () => {
-  it("at 0% current WR, cumulative costs build from tier 1", () => {
+  it("returns 101 points (0–100%)", () => {
     const c = logic.getContainer(containers, 100);
     const curve = logic.getCostCurve(c, 0);
-    assert.equal(curve[0].cumulativeCost, 0);     // 0% WR
-    assert.equal(curve[1].cumulativeCost, 850);   // 20% WR: T1
-    assert.equal(curve[2].cumulativeCost, 2551);  // 40% WR: T1+T2
-    assert.equal(curve[3].cumulativeCost, 7653);  // 60% WR: T1+T2+T3
-    assert.equal(curve[4].cumulativeCost, 28056); // 80% WR: T1+T2+T3+T4
-    assert.equal(curve[5].cumulativeCost, 130060);// 100% WR: all 5 tiers
+    assert.equal(curve.length, 101);
+    assert.equal(curve[0].wrPct, 0);
+    assert.equal(curve[100].wrPct, 100);
   });
 
-  it("at 40% current WR, already-bought tiers show 0 cost", () => {
+  it("at 0% current WR, per-1% costs accumulate correctly", () => {
+    const c = logic.getContainer(containers, 100);
+    const curve = logic.getCostCurve(c, 0);
+    assert.equal(curve[0].cumulativeCost, 0);        // 0% WR
+    assert.equal(curve[1].cumulativeCost, 850);      // 1% into tier 1
+    assert.equal(curve[20].cumulativeCost, 17000);   // 20×850
+    assert.equal(curve[21].cumulativeCost, 18701);   // 17000+1701
+    assert.equal(curve[40].cumulativeCost, 51020);   // 17000+20×1701
+    assert.equal(curve[60].cumulativeCost, 153060);  // +20×5102
+    assert.equal(curve[80].cumulativeCost, 561120);  // +20×20403
+    assert.equal(curve[100].cumulativeCost, 2601200);// +20×102004
+  });
+
+  it("at 40% current WR, already-bought % show 0 cost", () => {
     const c = logic.getContainer(containers, 100);
     const curve = logic.getCostCurve(c, 40);
-    assert.equal(curve[0].cumulativeCost, 0);  // 0% (already past)
-    assert.equal(curve[1].cumulativeCost, 0);  // 20% (already past)
-    assert.equal(curve[2].cumulativeCost, 0);  // 40% (already there)
-    assert.equal(curve[3].cumulativeCost, 5102);   // 60% WR: T3
-    assert.equal(curve[4].cumulativeCost, 25505);  // 80% WR: T3+T4
-    assert.equal(curve[5].cumulativeCost, 127509); // 100% WR: T3+T4+T5
+    assert.equal(curve[0].cumulativeCost, 0);        // already reached
+    assert.equal(curve[40].cumulativeCost, 0);       // already reached
+    assert.equal(curve[41].cumulativeCost, 5102);    // first unbought 1%
+    assert.equal(curve[60].cumulativeCost, 102040);  // 20×5102
+    assert.equal(curve[80].cumulativeCost, 510100);  // +20×20403
+    assert.equal(curve[100].cumulativeCost, 2550180);// +20×102004
   });
 
-  it("marks tiers as isReached correctly", () => {
+  it("marks isReached correctly", () => {
     const c = logic.getContainer(containers, 100);
     const curve = logic.getCostCurve(c, 40);
     assert.equal(curve[0].isReached, true);
-    assert.equal(curve[1].isReached, true);
-    assert.equal(curve[2].isReached, true);
-    assert.equal(curve[3].isReached, false);
-    assert.equal(curve[4].isReached, false);
+    assert.equal(curve[40].isReached, true);
+    assert.equal(curve[41].isReached, false);
+    assert.equal(curve[100].isReached, false);
   });
 });
 
 describe("getWeightSavedCurve", () => {
+  it("returns 101 points", () => {
+    assert.equal(logic.getWeightSavedCurve(100, 50).length, 101);
+  });
+
   it("at 0% fill, always saves 0 lbs", () => {
     const curve = logic.getWeightSavedCurve(100, 0);
     curve.forEach((pt) => assert.equal(pt.weightSaved, 0));
@@ -68,15 +81,15 @@ describe("getWeightSavedCurve", () => {
   it("at 100% fill, 100lb container: saves capacity × WR%", () => {
     const curve = logic.getWeightSavedCurve(100, 100);
     assert.equal(curve[0].weightSaved, 0);
-    assert.equal(curve[1].weightSaved, 20);
-    assert.equal(curve[3].weightSaved, 60);
-    assert.equal(curve[5].weightSaved, 100);
+    assert.equal(curve[20].weightSaved, 20);
+    assert.equal(curve[60].weightSaved, 60);
+    assert.equal(curve[100].weightSaved, 100);
   });
 
   it("at 50% fill, 200lb container: saves half × WR%", () => {
     const curve = logic.getWeightSavedCurve(200, 50);
-    assert.equal(curve[5].weightSaved, 100); // 200 * 0.5 * 1.0
-    assert.equal(curve[3].weightSaved, 60);  // 200 * 0.5 * 0.6
+    assert.equal(curve[100].weightSaved, 100); // 200 * 0.5 * 1.0
+    assert.equal(curve[60].weightSaved, 60);   // 200 * 0.5 * 0.6
   });
 });
 
