@@ -497,8 +497,8 @@
 
     if (!Array.isArray(profile.ascensionAbilities) || !profile.ascensionAbilities.length) {
       populateAbilitiesFromAscensionState();
-      syncAscensionStateFromAbilities();
     }
+    syncAscensionStateFromAbilities();
 
     setSkillsImportUnmatchedKeys(new Set());
     updateSkillsImportFlags();

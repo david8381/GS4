@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aiming &amp; Ambushing</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Besley:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body data-page="ambush" data-root="../" data-page-scripts="../data/gs4-data.js,../data/ambush-data.js,ambush-logic.js,ambush-ui.js">
+    <div class="page">
+      <div data-header></div>
+
+      <main class="calculator">
+        <section class="calc-intro">
+          <p class="eyebrow">GS4 Combat</p>
+          <h1>Aiming &amp; Ambushing</h1>
+          <p>
+            Calculate aimed-attack success rates and roundtime breakdowns.
+          </p>
+        </section>
+
+        <!-- ─── Character Inputs ─── -->
+        <section class="calc-panel">
+          <div class="header-bridge" aria-hidden="true">
+            <select id="profileSelect">
+              <option value="">Select from Profile</option>
+            </select>
+            <button id="profileLoad" type="button">Load</button>
+          </div>
+
+          <div class="input-block">
+            <h2>Character</h2>
+            <table class="data-table ambush-input-table">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Current</th>
+                  <th>What-If</th>
+                  <th>Affects</th>
+                </tr>
+              </thead>
+              <tbody id="charInputBody"></tbody>
+            </table>
+            <div class="helper">What-if values affect this page only. They do not update the saved profile.</div>
+
+            <div class="input-group compact-field" style="margin-top: 0.75rem">
+              <label for="attackType">Attack Type</label>
+              <div class="input-row ambush-toggle-row" id="attackTypeToggle">
+                <button type="button" class="ambush-toggle active" data-value="melee">Melee</button>
+                <button type="button" class="ambush-toggle" data-value="ucs">UCS</button>
+                <button type="button" class="ambush-toggle" data-value="bow">Bow</button>
+                <button type="button" class="ambush-toggle" data-value="crossbow">Crossbow</button>
+                <button type="button" class="ambush-toggle" data-value="hurl">Hurl</button>
+              </div>
+              <input type="hidden" id="attackType" value="melee" />
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── Equipment / Attack ─── -->
+        <details class="collapsible-section" id="equipmentSection" open>
+          <summary>Equipment / Attack</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <div class="input-group compact-field" id="meleeWeaponGroup">
+                  <label for="meleeWeapon">Melee Weapon</label>
+                  <div class="input-row">
+                    <select id="meleeWeapon"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="ucsAttackGroup" style="display:none">
+                  <label for="ucsAttack">UCS Attack</label>
+                  <div class="input-row">
+                    <select id="ucsAttack"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="bowWeaponGroup" style="display:none">
+                  <label for="bowWeapon">Bow</label>
+                  <div class="input-row">
+                    <select id="bowWeapon"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="crossbowWeaponGroup" style="display:none">
+                  <label for="crossbowWeapon">Crossbow</label>
+                  <div class="input-row">
+                    <select id="crossbowWeapon"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="crossbowStanceGroup" style="display:none">
+                  <label for="crossbowStance">Crossbow Stance</label>
+                  <div class="input-row">
+                    <select id="crossbowStance"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="thrownWeaponGroup" style="display:none">
+                  <label for="thrownWeapon">Thrown Weapon</label>
+                  <div class="input-row">
+                    <select id="thrownWeapon"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="silentStrikeGroup">
+                  <label for="silentStrikeRank">Silent Strike Rank (0 = none)</label>
+                  <div class="input-row">
+                    <input id="silentStrikeRank" type="number" min="0" max="5" step="1" value="0" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── Target / Creature ─── -->
+        <details class="collapsible-section" id="targetSection">
+          <summary>Target</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="input-block">
+                <div class="input-group compact-field">
+                  <label for="targetLevel">Target Level</label>
+                  <div class="input-row">
+                    <input id="targetLevel" type="number" min="0" max="200" step="1" value="50" />
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="bodyPart">Body Part</label>
+                  <div class="input-row">
+                    <select id="bodyPart"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field" id="targetSizeGroup">
+                  <label for="targetSize">Target Size</label>
+                  <div class="input-row">
+                    <select id="targetSize"></select>
+                  </div>
+                </div>
+
+                <div class="input-group compact-field">
+                  <label for="targetStatus">Target Status</label>
+                  <div class="input-row">
+                    <select id="targetStatus"></select>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── Attack Comparison ─── -->
+        <details class="collapsible-section" id="attackCompSection" open>
+          <summary>Attack Comparison</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <div class="table-scroll">
+                <table class="data-table ambush-comparison-table">
+                  <colgroup>
+                    <col />
+                    <col span="4" class="col-aim" />
+                    <col span="6" class="col-rt" />
+                  </colgroup>
+                  <thead id="attackCompHead"></thead>
+                  <tbody id="attackCompBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── Result: Ranged Bonus AS ─── -->
+        <details class="collapsible-section" id="rangedASSection">
+          <summary>Ranged Bonus AS</summary>
+          <div class="collapsible-body">
+            <section class="calc-panel">
+              <p class="helper">Perception and Ambush ranks above 40 contribute bonus Attack Strength for ranged weapons.</p>
+              <div class="table-panel">
+                <table class="data-table">
+                  <tbody id="bonusASBody"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <!-- ─── References ─── -->
+        <details class="collapsible-section">
+          <summary>References</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <ul>
+                <li><a href="https://gswiki.play.net/Aim" target="_blank" rel="noopener noreferrer">GSWiki: Aim</a> (melee/hurling aim formulas, weapon modifiers)</li>
+                <li><a href="https://gswiki.play.net/Ambush_(verb)" target="_blank" rel="noopener noreferrer">GSWiki: Ambush</a> (aimed attack from hiding)</li>
+<li><a href="https://gswiki.play.net/Silent_Strike" target="_blank" rel="noopener noreferrer">GSWiki: Silent Strike</a> (aiming penalty by rank)</li>
+                <li><a href="https://gswiki.play.net/Roundtime" target="_blank" rel="noopener noreferrer">GSWiki: Roundtime</a> (weapon speeds, AGI/DEX reduction, ambush RT penalty)</li>
+                <li><a href="https://gswiki.play.net/Unarmed_Combat_System" target="_blank" rel="noopener noreferrer">GSWiki: Unarmed Combat System</a> (UAF, UCS aim modifiers, RT)</li>
+              </ul>
+            </section>
+          </div>
+        </details>
+      </main>
+
+      <div data-footer></div>
+    </div>
+
+    <script src="../shared.js?v=0.3.32"></script>
+    <script src="../site.js?v=0.3.32"></script>
+  </body>
+</html>
