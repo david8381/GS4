@@ -100,55 +100,6 @@
           </div>
         </details>
 
-        <!-- ─── Encumbrance impact ─── -->
-        <details class="collapsible-section" id="wrEncSection">
-          <summary>Encumbrance Impact (Optional)</summary>
-          <div class="collapsible-body">
-            <section class="calc-panel wr-enc-panel">
-              <div class="input-block">
-                <h2>Character</h2>
-                <p class="helper">Enter your stats to see how WR affects your encumbrance. Loads from profile if selected above.</p>
-                <div class="input-group compact-field">
-                  <label for="wrRace">Race</label>
-                  <div class="input-row"><select id="wrRace"></select></div>
-                </div>
-                <div class="input-group compact-field">
-                  <label for="wrStr">STR</label>
-                  <div class="input-row"><input id="wrStr" type="number" min="1" max="200" value="60" /></div>
-                </div>
-                <div class="input-group compact-field">
-                  <label for="wrCon">CON</label>
-                  <div class="input-row"><input id="wrCon" type="number" min="1" max="200" value="60" /></div>
-                </div>
-                <div class="input-group compact-field">
-                  <label for="wrPf">Physical Fitness bonus</label>
-                  <div class="input-row"><input id="wrPf" type="number" min="0" value="0" /></div>
-                </div>
-                <div class="input-group compact-field">
-                  <label for="wrOtherWeight">Other carried weight (lb)</label>
-                  <div class="input-row"><input id="wrOtherWeight" type="number" min="0" value="0" /></div>
-                </div>
-              </div>
-              <div>
-                <h2>Encumbrance at Each WR Tier</h2>
-                <div class="table-scroll">
-                  <table class="data-table">
-                    <thead>
-                      <tr>
-                        <th>WR%</th>
-                        <th>Total Carried</th>
-                        <th>Enc%</th>
-                        <th>Band</th>
-                      </tr>
-                    </thead>
-                    <tbody id="wrEncBody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
-          </div>
-        </details>
-
         <!-- ─── References ─── -->
         <details class="collapsible-section">
           <summary>References</summary>
@@ -166,7 +117,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.3.36"></script>
-    <script src="site.js?v=0.3.36"></script>
+    <script src="shared.js?v=0.3.37"></script>
+    <script src="site.js?v=0.3.37"></script>
   </body>
 </html>

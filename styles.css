@@ -3361,6 +3361,7 @@ select.ambush-whatif-input {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
 }
 
 .wr-chart-box h3 {
@@ -3458,10 +3459,6 @@ select.ambush-whatif-input {
   text-align: left;
 }
 
-/* Encumbrance table: Band column is text */
-#wrEncBody td:last-child {
-  text-align: left;
-}
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
@@ -3479,8 +3476,3 @@ select.ambush-whatif-input {
   color: var(--text-muted, #888);
 }
 
-.wr-enc-panel {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
-}

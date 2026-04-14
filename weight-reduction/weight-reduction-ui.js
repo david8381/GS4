@@ -1,6 +1,5 @@
 (() => {
   const storage = window.GS4Storage;
-  const data = window.GS4_DATA;
   const wrData = window.WEIGHT_REDUCTION_DATA;
   const logic = window.WeightReductionLogic;
 
@@ -23,13 +22,6 @@
   const costCursor      = document.getElementById("wrCostCursor");
   const weightCursor    = document.getElementById("wrWeightCursor");
   const summaryTable    = document.getElementById("wrSummaryTable");
-  const encSection      = document.getElementById("wrEncSection");
-  const encRaceSelect   = document.getElementById("wrRace");
-  const encStrInput     = document.getElementById("wrStr");
-  const encConInput     = document.getElementById("wrCon");
-  const encPfInput      = document.getElementById("wrPf");
-  const encOtherInput   = document.getElementById("wrOtherWeight");
-  const encTableBody    = document.getElementById("wrEncBody");
 
   // ─── State ───────────────────────────────────────────────────────
   let hoveredWRPct = -1; // 0-100 integer, -1 = none
@@ -49,35 +41,7 @@
     });
     capacitySelect.value = "100";
 
-    // currentWRSelect is a number input; just ensure default
     if (currentWRSelect) currentWRSelect.value = "0";
-
-    // Race options for encumbrance section
-    if (encRaceSelect && data) {
-      const encRaces = [
-        { key: "burghal", name: "Burghal Gnome", baseWeight: 40, weightFactor: 0.4, maxWeight: 120, encFactor: 0.5 },
-        { key: "halfling", name: "Halfling", baseWeight: 45.3333, weightFactor: 0.4533, maxWeight: 136, encFactor: 0.5 },
-        { key: "forest-gnome", name: "Forest Gnome", baseWeight: 47.6667, weightFactor: 0.4767, maxWeight: 143, encFactor: 0.6 },
-        { key: "aelotoi", name: "Aelotoi", baseWeight: 67.6667, weightFactor: 0.6767, maxWeight: 203, encFactor: 0.75 },
-        { key: "elf", name: "Elf", baseWeight: 70, weightFactor: 0.7, maxWeight: 210, encFactor: 0.78 },
-        { key: "erithian", name: "Erithian", baseWeight: 72.3333, weightFactor: 0.7233, maxWeight: 217, encFactor: 0.85 },
-        { key: "sylvankind", name: "Sylvankind", baseWeight: 72.3333, weightFactor: 0.7233, maxWeight: 217, encFactor: 0.81 },
-        { key: "dark-elf", name: "Dark Elf", baseWeight: 77.6667, weightFactor: 0.7767, maxWeight: 233, encFactor: 0.84 },
-        { key: "dwarf", name: "Dwarf", baseWeight: 77.6667, weightFactor: 0.7767, maxWeight: 233, encFactor: 0.8 },
-        { key: "half-elf", name: "Half-Elf", baseWeight: 82.3333, weightFactor: 0.8233, maxWeight: 247, encFactor: 0.92 },
-        { key: "human", name: "Human", baseWeight: 90, weightFactor: 0.9, maxWeight: 270, encFactor: 1.0 },
-        { key: "half-krolvin", name: "Half-Krolvin", baseWeight: 100, weightFactor: 1.0, maxWeight: 300, encFactor: 1.1 },
-        { key: "giantman", name: "Giantman", baseWeight: 120, weightFactor: 1.2, maxWeight: 360, encFactor: 1.33 },
-      ];
-      encRaceSelect._raceData = encRaces;
-      encRaces.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.key;
-        opt.textContent = r.name;
-        encRaceSelect.appendChild(opt);
-      });
-      encRaceSelect.value = "human";
-    }
 
     fillSlider.value = "70";
     syncFillDisplay();
@@ -103,42 +67,12 @@
     });
     if (selected && profiles.some((p) => p.id === selected)) {
       profileSelect.value = selected;
-      applyProfile();
     }
     window.addEventListener("gs4:selected-profile-changed", (e) => {
       const id = e.detail?.profileId || "";
       if (id) profileSelect.value = id;
       else profileSelect.value = "";
-      applyProfile();
     });
-  }
-
-  function applyProfile() {
-    if (!profileSelect?.value) return;
-    const profiles = storage.loadProfiles();
-    const profile = storage.findProfile(profiles, profileSelect.value);
-    if (!profile) return;
-    localStorage.setItem(storage.SELECTED_PROFILE_KEY, profileSelect.value);
-    if (encRaceSelect && profile.race) {
-      const norm = (profile.race || "").toLowerCase().replace(/\s+/g, "-");
-      const match = encRaceSelect._raceData?.find(
-        (r) => r.key === norm || r.name.toLowerCase() === profile.race.toLowerCase()
-      );
-      if (match) encRaceSelect.value = match.key;
-    }
-    if (encStrInput) {
-      const v = profile.stats?.str?.enhanced ?? profile.stats?.str?.base ?? profile.strEnhanced ?? profile.strBase;
-      if (v != null) encStrInput.value = String(v);
-    }
-    if (encConInput) {
-      const v = profile.stats?.con?.enhanced ?? profile.stats?.con?.base ?? profile.conEnhanced ?? profile.conBase;
-      if (v != null) encConInput.value = String(v);
-    }
-    if (encPfInput) {
-      const pfSkill = profile.skills?.find((s) => s.name.toLowerCase() === "physical fitness");
-      if (pfSkill?.bonus != null) encPfInput.value = String(pfSkill.bonus);
-    }
-    renderEncumbranceTable();
   }
 
   // ─── Main render ─────────────────────────────────────────────────
@@ -153,7 +87,6 @@
     renderCostChart(costCurve, container, currentWR);
     renderWeightChart(weightCurve, container.capacity, fillPct, currentWR);
     renderSummaryTable(costCurve, weightCurve);
-    renderEncumbranceTable();
   }
 
   // ─── Chart drawing helpers ────────────────────────────────────────
@@ -373,14 +306,6 @@
     ctx.closePath();
     ctx.fill();
 
-    // Dots
-    weightCurve.forEach((pt) => {
-      ctx.fillStyle = CHART_COLOR_WEIGHT;
-      ctx.beginPath();
-      ctx.arc(xForWR(pt.wrPct, pad, plotW), yPos(pt.weightSaved), 4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
     // Current WR line
     if (currentWR > 0) {
       ctx.strokeStyle = colors.cursor;
@@ -436,31 +361,6 @@
           </tr>`;
         }).join("")}
       </tbody>`;
-  }
-
-  // ─── Encumbrance table ─────────────────────────────────────────────
-  function renderEncumbranceTable() {
-    if (!encTableBody || !encRaceSelect) return;
-    const raceData = encRaceSelect._raceData || [];
-    const race = raceData.find((r) => r.key === encRaceSelect.value);
-    if (!race) return;
-    const str = Number(encStrInput?.value) || 60;
-    const con = Number(encConInput?.value) || 60;
-    const pf = Number(encPfInput?.value) || 0;
-    const otherWeight = Number(encOtherInput?.value) || 0;
-    const capacity = Number(capacitySelect.value);
-    const fillPct = Number(fillSlider.value);
-
-    const curve = logic.getEncumbranceCurve(race, str, con, pf, capacity, fillPct, otherWeight);
-    const { bodyWeight } = logic.computeCarryCapacity(race, str, con, pf);
-
-    encTableBody.innerHTML = curve.map((pt) => `
-      <tr>
-        <td>${pt.wrPct}%</td>
-        <td>${pt.totalCarried.toFixed(1)} lb</td>
-        <td>${pt.encPct.toFixed(1)}%</td>
-        <td>${pt.encLabel}</td>
-      </tr>`).join("");
   }
 
   // ─── Hover / cursor ───────────────────────────────────────────────
@@ -519,7 +419,7 @@
     const fillPct = Number(fillSlider.value);
     const costCurve = logic.getCostCurve(container, currentWR);
     const weightCurve = logic.getWeightSavedCurve(container.capacity, fillPct);
-    const cp = costCurve[wPct]; // direct index into 101-point array
+    const cp = costCurve[wPct];
     const wp = weightCurve[wPct];
 
     const costLines = [
@@ -562,15 +462,8 @@
     const v = profileSelect.value;
     if (v) localStorage.setItem(storage.SELECTED_PROFILE_KEY, v);
     else localStorage.removeItem(storage.SELECTED_PROFILE_KEY);
-    applyProfile();
   });
-  profileLoad?.addEventListener("click", applyProfile);
-
-  if (encRaceSelect) encRaceSelect.addEventListener("change", renderEncumbranceTable);
-  if (encStrInput) encStrInput.addEventListener("input", renderEncumbranceTable);
-  if (encConInput) encConInput.addEventListener("input", renderEncumbranceTable);
-  if (encPfInput) encPfInput.addEventListener("input", renderEncumbranceTable);
-  if (encOtherInput) encOtherInput.addEventListener("input", renderEncumbranceTable);
+  profileLoad?.addEventListener("click", () => {});
 
   window.addEventListener("resize", render);
 
