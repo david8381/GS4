@@ -3370,6 +3370,10 @@ select.ambush-whatif-input {
   font-weight: 600;
 }
 
+.wr-chart-box .helper {
+  min-height: 2.8em;
+}
+
 .wr-chart-wrap {
   position: relative;
   width: 100%;
