@@ -1163,6 +1163,18 @@ body[data-page="badge"] .slot-note {
   color: var(--muted);
   line-height: 1.4;
 }
+/* Keep the −/value/+ steppers on a single line (don't wrap when value hits 10). */
+body[data-page="badge"] #componentTable .inline-actions,
+body[data-page="badge"] #boostTable .inline-actions {
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-start;
+}
+body[data-page="badge"] #componentTable .inline-actions > span,
+body[data-page="badge"] #boostTable .inline-actions > span {
+  min-width: 1.6em;
+  text-align: center;
+}
 
 .test-output {
   margin-top: 12px;
