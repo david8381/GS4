@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
   </head>
-  <body data-page="badge" data-page-scripts="badge.js">
+  <body data-page="badge" data-page-scripts="badge/badge-logic.js,badge.js">
     <div class="page">
       <div data-header></div>
 
@@ -25,6 +25,49 @@
             BP impact, boost changes, and recharge cost changes.
           </p>
         </section>
+
+        <details class="collapsible-section" open>
+          <summary>How the badge works</summary>
+          <div class="collapsible-body">
+            <section class="notes">
+              <p>
+                Your Adventurer's Guild badge is an enhancive item you improve with
+                <strong>lifetime bounty points (BP)</strong>. Two things to plan:
+                <em>upgrades</em> (BP you permanently invest) and <em>enhancements</em>
+                (the stat/skill boosts the badge then carries).
+              </p>
+              <ul>
+                <li>
+                  <strong>5 components, levels 0&ndash;10.</strong> Material, Binding, Device,
+                  Motif, and Gem. Each level costs more than the last (1st&nbsp;=&nbsp;10k&nbsp;BP,
+                  2nd&nbsp;=&nbsp;20k, 3rd&nbsp;=&nbsp;30k&hellip;). Maxing all five costs
+                  2,750,000&nbsp;BP.
+                </li>
+                <li>
+                  <strong>Enhancement slots unlock by concentration, not spread.</strong>
+                  The 2nd enhancement needs <strong>10 upgrades within your top 2 components</strong>
+                  (cheapest 5/5/0/0/0&nbsp;=&nbsp;300k&nbsp;BP). The 3rd needs
+                  <strong>20 within your top 3</strong> (cheapest 7/7/6/0/0&nbsp;=&nbsp;770k&nbsp;BP).
+                  A spread build like 4/4/4/4/4 still unlocks only one enhancement.
+                </li>
+                <li>
+                  <strong>More total upgrades = stronger enhancements.</strong> Each boost needs a
+                  minimum number of badge upgrades (its "power") to hold its value &mdash; shown as
+                  <em>Req Upgrades</em> in the enhancement table.
+                </li>
+                <li>
+                  <strong>Recharge Cost (ORDER 5)</strong> is the BP to charge the badge at the
+                  Treasure Master once your enhancements are set &mdash; a repeatable charging cost,
+                  not a one-time upgrade.
+                </li>
+              </ul>
+              <p class="helper">
+                Watch the status banner under the summary cards: <strong>&#10003;</strong> means the
+                setup is legal in-game; <strong>&#9888;</strong> flags exactly what to fix.
+              </p>
+            </section>
+          </div>
+        </details>
 
         <section class="calc-panel">
           <div class="input-block">
@@ -51,20 +94,20 @@
           </div>
 
           <div class="summary-block">
-            <div class="summary-card">
+            <div class="summary-card" title="Lifetime BP permanently spent to reach the component levels below.">
               <div class="summary-title">Total Upgrade Cost</div>
               <div class="summary-value" id="upgradeCost">0</div>
-              <div class="summary-sub">Lifetime-invested badge value</div>
+              <div class="summary-sub">Lifetime BP spent on component levels</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card" title="Lifetime BP left after paying for your component upgrades.">
               <div class="summary-title">Lifetime BP Remaining</div>
               <div class="summary-value" id="bpRemaining">0</div>
-              <div class="summary-sub" id="slotSummary">Slots: 0 / 3</div>
+              <div class="summary-sub" id="slotSummary">Slots &#9675;&#9675;&#9675; &middot; 0 used / 0 unlocked &middot; 0 upgrades</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card" title="BP to charge all enhancements at the Treasure Master (ORDER 5). Must fit within the badge's power.">
               <div class="summary-title">Recharge Cost (ORDER 5)</div>
               <div class="summary-value" id="rechargeCost">0</div>
-              <div class="summary-sub" id="powerSummary">Enhancive power: 0 / 0</div>
+              <div class="summary-sub" id="powerSummary">Boost strength used: 0 / 0 power</div>
             </div>
           </div>
         </section>
@@ -119,7 +162,9 @@
             <section class="notes">
               <ul>
                 <li><a href="https://gswiki.play.net/Adventurer%27s_Guild_Badge" target="_blank" rel="noopener noreferrer">GSWiki: Adventurer's Guild Badge</a></li>
-                <li><a href="https://gswiki.play.net/Bounty_points" target="_blank" rel="noopener noreferrer">GSWiki: Bounty Points</a></li>
+                <li><a href="https://gswiki.play.net/Introduction_to_Adventurer%27s_Guild_Badges" target="_blank" rel="noopener noreferrer">GSWiki: Introduction to Adventurer's Guild Badges (upgrade &amp; slot rules)</a></li>
+                <li><a href="https://gswiki.play.net/Adventurer%27s_Guild_Badge_Cost_Spreadsheet" target="_blank" rel="noopener noreferrer">GSWiki: Adventurer's Guild Badge Cost Spreadsheet (per-boost recharge costs)</a></li>
+                <li><a href="https://gswiki.play.net/Bounty_point" target="_blank" rel="noopener noreferrer">GSWiki: Bounty Point</a></li>
               </ul>
             </section>
           </div>
@@ -130,7 +175,7 @@
       <div data-footer></div>
     </div>
 
-    <script src="shared.js?v=0.3.16"></script>
-    <script src="site.js?v=0.3.16"></script>
+    <script src="shared.js?v=0.3.41"></script>
+    <script src="site.js?v=0.3.41"></script>
   </body>
 </html>

@@ -5,10 +5,6 @@ const slotSummaryEl = document.getElementById("slotSummary");
 const rechargeCostEl = document.getElementById("rechargeCost");
 const powerSummaryEl = document.getElementById("powerSummary");
 const validationMessageEl = document.getElementById("validationMessage");
-const runBadgeTestsBtn = document.getElementById("runBadgeTests");
-const testOutputEl = document.getElementById("testOutput");
-const stateJsonInput = document.getElementById("stateJson");
-const validateStateJsonBtn = document.getElementById("validateStateJson");
 const stateJsonStatusEl = document.getElementById("stateJsonStatus");
 const badgeProfileStatusEl = document.getElementById("badgeProfileStatus");
 const badgeProfileSelect = document.getElementById("badgeProfileSelect");
@@ -18,219 +14,40 @@ const badgeProfileReloadButtons = Array.from(document.querySelectorAll(".badge-p
 
 const componentTable = document.getElementById("componentTable");
 const boostTable = document.getElementById("boostTable");
-const POWER_PER_UPGRADE = 1200;
 const sharedStorage = globalThis.GS4Storage;
 
-const componentNames = ["Material", "Binding", "Device", "Motif", "Gem"];
+// Pure rules + game data live in badge/badge-logic.js (shared with the test suite).
+const BadgeLogic = globalThis.BadgeLogic;
+const {
+  componentNames,
+  boostDefs,
+  boostById,
+  upgradeCostForLevel,
+  nextUpgradeCost,
+  totalUpgrades,
+  slotCount,
+  slotAdvice,
+  requiredUpgradesForCost,
+  availableEnhancementPowerForComponents,
+  boostCost,
+  rechargeCostForBoosts,
+} = BadgeLogic;
 
-const statNames = [
-  "Strength",
-  "Constitution",
-  "Dexterity",
-  "Agility",
-  "Discipline",
-  "Aura",
-  "Logic",
-  "Intuition",
-  "Wisdom",
-  "Influence",
-];
-
-const rankNames = [
-  "Two Weapon Combat Ranks",
-  "Armor Use Ranks",
-  "Shield Use Ranks",
-  "Combat Maneuvers Ranks",
-  "Edged Weapons Ranks",
-  "Blunt Weapons Ranks",
-  "Two-Handed Weapons Ranks",
-  "Ranged Weapons Ranks",
-  "Thrown Weapons Ranks",
-  "Polearm Weapons Ranks",
-  "Brawling Ranks",
-  "Ambushing Ranks",
-  "Multi Opponent Combat Ranks",
-  "Physical Fitness Ranks",
-  "Dodging Ranks",
-  "Arcane Symbols Ranks",
-  "Magic Item Use Ranks",
-  "Spell Aiming Ranks",
-  "Harness Power Ranks",
-  "Elemental Mana Control Ranks",
-  "Mental Mana Control Ranks",
-  "Spirit Mana Control Ranks",
-  "Elemental Lore - Air Ranks",
-  "Elemental Lore - Earth Ranks",
-  "Elemental Lore - Fire Ranks",
-  "Elemental Lore - Water Ranks",
-  "Spiritual Lore - Blessings Ranks",
-  "Spiritual Lore - Religion Ranks",
-  "Spiritual Lore - Summoning Ranks",
-  "Sorcerous Lore - Demonology Ranks",
-  "Sorcerous Lore - Necromancy Ranks",
-  "Mental Lore - Divination Ranks",
-  "Mental Lore - Manipulation Ranks",
-  "Mental Lore - Telepathy Ranks",
-  "Mental Lore - Transference Ranks",
-  "Mental Lore - Transformation Ranks",
-  "Survival Ranks",
-  "Disarming Traps Ranks",
-  "Picking Locks Ranks",
-  "Stalking and Hiding Ranks",
-  "Perception Ranks",
-  "Climbing Ranks",
-  "Swimming Ranks",
-  "First Aid Ranks",
-  "Trading Ranks",
-  "Pickpocketing Ranks",
-];
+const OK_COLOR = "#1f4e42";
+const BAD_COLOR = "#b42318";
 
 function formatNumber(value) {
   return Math.round(value).toLocaleString("en-US");
 }
 
-function triangularCost(unit, value) {
-  if (value <= 0) return 0;
-  return unit * ((value * (value + 1)) / 2);
+function ordinal(n) {
+  const names = { 1: "1st", 2: "2nd", 3: "3rd" };
+  return names[n] || `${n}th`;
 }
 
-function upgradeCostForLevel(level) {
-  return 10000 * ((level * (level + 1)) / 2);
+function pluralUpgrades(n) {
+  return `${n} upgrade${n === 1 ? "" : "s"}`;
 }
-
-function nextUpgradeCost(level) {
-  if (level >= 10) return 0;
-  return (level + 1) * 10000;
-}
-
-function nonZeroCount(components) {
-  return components.filter((value) => value > 0).length;
-}
-
-function slotCount(components) {
-  const total = components.reduce((sum, value) => sum + value, 0);
-  let slots = total > 0 ? 1 : 0;
-  if (total >= 10) slots = Math.max(slots, 2);
-  if (total >= 20) slots = Math.max(slots, 3);
-  return slots;
-}
-
-function totalUpgrades(components) {
-  return components.reduce((sum, value) => sum + value, 0);
-}
-
-function buildBoostDefs() {
-  const defs = [];
-
-  const statUnits = [320, 240, 240, 240, 240, 480, 160, 160, 400, 160];
-  statNames.forEach((name, idx) => {
-    defs.push({ id: idx + 1, name: `${name} Stat`, max: 10, unit: statUnits[idx] });
-  });
-
-  const statBonusUnits = [1120, 880, 880, 880, 880, 1680, 560, 560, 1440, 560];
-  statNames.forEach((name, idx) => {
-    defs.push({ id: idx + 11, name: `${name} Bonus`, max: 5, unit: statBonusUnits[idx] });
-  });
-
-  defs.push({ id: 21, name: "Max Mana", max: 20, unit: 240 });
-  defs.push({ id: 22, name: "Mana Recovery", max: 10, unit: 800 });
-  defs.push({ id: 23, name: "Max Health", max: 20, unit: 160 });
-  defs.push({ id: 24, name: "Health Recovery", max: 10, unit: 800 });
-  defs.push({ id: 25, name: "Max Stamina", max: 20, unit: 240 });
-  defs.push({ id: 26, name: "Stamina Recovery", max: 10, unit: 240 });
-  defs.push({ id: 27, name: "Spirit Recovery", max: 2, unit: 16000 });
-
-  const rankUnitOverrides = {
-    29: { unit: 4000 }, // Armor Use
-    40: { unit: 4800, max: 4 }, // MOC
-    41: { unit: 1600 }, // PF
-    43: { unit: 3200 }, // Arcane Symbols
-    44: { unit: 3200 }, // MIU
-    50: { unit: 4000 },
-    51: { unit: 4000 },
-    52: { unit: 4000 },
-    53: { unit: 4000 },
-    54: { unit: 4000 },
-    55: { unit: 4000 },
-    56: { unit: 4000 },
-    57: { unit: 4000 },
-    58: { unit: 4000 },
-    59: { unit: 4000 },
-    60: { unit: 4000 },
-    61: { unit: 4000 },
-    62: { unit: 4000 },
-    63: { unit: 4000 },
-    64: { unit: 1600 },
-    65: { unit: 1600 },
-    66: { unit: 1600 },
-    67: { unit: 1600 },
-    68: { unit: 1600 },
-    69: { unit: 800, max: 10 }, // Climbing
-    70: { unit: 800, max: 10 }, // Swimming
-    71: { unit: 1600 },
-    72: { unit: 1600 },
-    73: { unit: 1600 },
-  };
-
-  rankNames.forEach((name, idx) => {
-    const id = 28 + idx;
-    const override = rankUnitOverrides[id] || {};
-    defs.push({
-      id,
-      name,
-      max: override.max || 5,
-      unit: override.unit || 2400,
-    });
-  });
-
-  const bonusUnitOverrides = {
-    29: 400,
-    40: 480,
-    41: 160,
-    43: 320,
-    44: 320,
-    50: 400,
-    51: 400,
-    52: 400,
-    53: 400,
-    54: 400,
-    55: 400,
-    56: 400,
-    57: 400,
-    58: 400,
-    59: 400,
-    60: 400,
-    61: 400,
-    62: 400,
-    63: 400,
-    64: 160,
-    65: 160,
-    66: 160,
-    67: 160,
-    68: 160,
-    69: 80,
-    70: 80,
-    71: 160,
-    72: 160,
-    73: 160,
-  };
-
-  rankNames.forEach((name, idx) => {
-    const sourceId = 28 + idx;
-    const id = 74 + idx;
-    defs.push({
-      id,
-      name: name.replace("Ranks", "Bonus"),
-      max: 10,
-      unit: bonusUnitOverrides[sourceId] || 240,
-    });
-  });
-
-  return defs;
-}
-
-const boostDefs = buildBoostDefs();
-const boostById = new Map(boostDefs.map((def) => [def.id, def]));
 
 const state = {
   lifetimeBp: 0,
@@ -287,11 +104,6 @@ function currentStateSnapshot() {
     components: [...state.components],
     boosts: state.boosts.map((entry) => ({ id: entry.id, value: entry.value })),
   };
-}
-
-function syncStateJson() {
-  if (!stateJsonInput) return;
-  stateJsonInput.value = JSON.stringify(currentStateSnapshot(), null, 2);
 }
 
 function setStateJsonStatus(message, isError = false) {
@@ -464,120 +276,16 @@ function currentUpgradeCost() {
   return state.components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
 }
 
-function upgradeCostForComponents(components) {
-  return components.reduce((sum, level) => sum + upgradeCostForLevel(level), 0);
-}
-
-function boostCost(entry) {
-  const def = boostById.get(entry.id);
-  if (!def) return 0;
-  return triangularCost(def.unit, entry.value);
-}
-
-function boostCostFor(id, value) {
-  const def = boostById.get(id);
-  if (!def) return 0;
-  return triangularCost(def.unit, value);
-}
-
 function currentRechargeCost() {
-  return state.boosts.reduce((sum, entry) => sum + boostCost(entry), 0);
-}
-
-function rechargeCostForBoosts(boosts) {
-  return boosts.reduce((sum, entry) => sum + boostCost(entry), 0);
-}
-
-function requiredUpgradesForCost(cost) {
-  if (cost <= 0) return 0;
-  return Math.ceil(cost / POWER_PER_UPGRADE);
+  return rechargeCostForBoosts(state.boosts);
 }
 
 function availableEnhancementPower() {
-  return totalUpgrades(state.components) * POWER_PER_UPGRADE;
-}
-
-function availableEnhancementPowerForComponents(components) {
-  return totalUpgrades(components) * POWER_PER_UPGRADE;
+  return availableEnhancementPowerForComponents(state.components);
 }
 
 function slotIsUnlocked(index) {
   return index < slotCount(state.components);
-}
-
-function evaluateTestState(testState) {
-  const upgrade = upgradeCostForComponents(testState.components);
-  const slotsUnlocked = slotCount(testState.components);
-  const slotsUsed = testState.boosts.filter((entry) => entry.value > 0).length;
-  const recharge = rechargeCostForBoosts(testState.boosts);
-  const power = availableEnhancementPowerForComponents(testState.components);
-  return {
-    upgrade,
-    upgradeValid: upgrade <= testState.lifetimeBp,
-    slotsUnlocked,
-    slotsUsed,
-    recharge,
-    power,
-    enhValid: slotsUsed <= slotsUnlocked && recharge <= power,
-  };
-}
-
-function runSelfTests() {
-  const tests = [
-    {
-      name: "T1 fresh badge valid",
-      state: { lifetimeBp: 300000, components: [0, 0, 0, 0, 0], boosts: [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
-      expect: { upgrade: 0, upgradeValid: true, slotsUnlocked: 0, enhValid: true },
-    },
-    {
-      name: "T2 component overspend invalid",
-      state: { lifetimeBp: 50000, components: [3, 0, 0, 0, 0], boosts: [{ id: 1, value: 0 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
-      expect: { upgrade: 60000, upgradeValid: false },
-    },
-    {
-      name: "T3 unlock second slot",
-      state: { lifetimeBp: 9999999, components: [5, 5, 0, 0, 0], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 0 }] },
-      expect: { slotsUnlocked: 2, enhValid: true },
-    },
-    {
-      name: "T4 third boost invalid when only two slots unlocked",
-      state: { lifetimeBp: 9999999, components: [5, 5, 0, 0, 0], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 1 }] },
-      expect: { slotsUnlocked: 2, enhValid: false },
-    },
-    {
-      name: "T5 high-cost boost invalid at low upgrades",
-      state: { lifetimeBp: 9999999, components: [1, 0, 0, 0, 0], boosts: [{ id: 29, value: 5 }, { id: 22, value: 0 }, { id: 87, value: 0 }] },
-      expect: { power: 1200, enhValid: false },
-    },
-    {
-      name: "T6 valid at higher upgrades",
-      state: { lifetimeBp: 9999999, components: [10, 10, 0, 0, 0], boosts: [{ id: 29, value: 2 }, { id: 22, value: 2 }, { id: 87, value: 0 }] },
-      expect: { slotsUnlocked: 3, enhValid: true },
-    },
-    {
-      name: "T7 distributed upgrades still unlock three slots",
-      state: { lifetimeBp: 9999999, components: [10, 10, 10, 10, 10], boosts: [{ id: 1, value: 1 }, { id: 22, value: 1 }, { id: 87, value: 1 }] },
-      expect: { slotsUnlocked: 3, enhValid: true },
-    },
-  ];
-
-  let pass = 0;
-  const lines = [];
-  tests.forEach((test) => {
-    const got = evaluateTestState(test.state);
-    let ok = true;
-    Object.entries(test.expect).forEach(([key, expected]) => {
-      if (got[key] !== expected) ok = false;
-    });
-    if (ok) pass += 1;
-    lines.push(`${ok ? "PASS" : "FAIL"} ${test.name}`);
-    lines.push(` got: ${JSON.stringify(got)}`);
-    lines.push(` exp: ${JSON.stringify(test.expect)}`);
-  });
-  lines.push("");
-  lines.push(`Summary: ${pass}/${tests.length} passing`);
-  testOutputEl.textContent = lines.join("\n");
-  testOutputEl.style.color = pass === tests.length ? "#1f4e42" : "#b42318";
 }
 
 function changeComponent(index, delta) {
@@ -622,40 +330,71 @@ function renderSummary() {
   const isValid = slotValid && powerValid;
   const upgradeValid = upgrade <= state.lifetimeBp;
 
+  const allValid = upgradeValid && isValid;
+  const advice = slotAdvice(state.components);
+
   upgradeCostEl.textContent = `${formatNumber(upgrade)} BP`;
-  upgradeCostEl.style.color = upgradeValid ? "#1f4e42" : "#b42318";
+  upgradeCostEl.style.color = upgradeValid ? OK_COLOR : BAD_COLOR;
 
   bpRemainingEl.textContent = `${formatNumber(state.lifetimeBp - upgrade)} BP`;
-  bpRemainingEl.style.color = upgradeValid && isValid ? "#1f4e42" : "#b42318";
-  slotSummaryEl.textContent = `Slots Used: ${slotsUsed} / ${slotsUnlocked} · Upgrades: ${upgrades}`;
-  slotSummaryEl.style.color = slotValid ? "#1f4e42" : "#b42318";
+  bpRemainingEl.style.color = upgradeValid && isValid ? OK_COLOR : BAD_COLOR;
+
+  // Slots shown as pips: ● unlocked, ○ still locked.
+  const pips = "●".repeat(slotsUnlocked) + "○".repeat(3 - slotsUnlocked);
+  slotSummaryEl.textContent = `Slots ${pips} · ${slotsUsed} used / ${slotsUnlocked} unlocked · ${pluralUpgrades(upgrades)}`;
+  slotSummaryEl.style.color = slotValid ? OK_COLOR : BAD_COLOR;
 
   rechargeCostEl.textContent = `${formatNumber(recharge)} BP`;
-  rechargeCostEl.style.color = isValid ? "#1f4e42" : "#b42318";
-  powerSummaryEl.textContent = `Enhancive power: ${formatNumber(recharge)} / ${formatNumber(powerAvailable)}`;
-  powerSummaryEl.style.color = isValid ? "#1f4e42" : "#b42318";
+  rechargeCostEl.style.color = isValid ? OK_COLOR : BAD_COLOR;
+  powerSummaryEl.textContent = `Boost strength used: ${formatNumber(recharge)} / ${formatNumber(powerAvailable)} power`;
+  powerSummaryEl.style.color = isValid ? OK_COLOR : BAD_COLOR;
 
   const reasons = [];
   if (!upgradeValid) {
     reasons.push(
-      `Component upgrades cost ${formatNumber(upgrade)} BP but lifetime BP is only ${formatNumber(state.lifetimeBp)}.`
+      `Component upgrades cost ${formatNumber(upgrade)} BP, but you only have ${formatNumber(
+        state.lifetimeBp
+      )} lifetime BP to spend. Lower a component level or raise your lifetime BP.`
     );
   }
   if (!slotValid) {
-    reasons.push(`Using ${slotsUsed} boost slots, but only ${slotsUnlocked} slot(s) are unlocked.`);
+    let msg = `You've configured ${slotsUsed} enhancement${slotsUsed === 1 ? "" : "s"}, but only ${slotsUnlocked} slot${
+      slotsUnlocked === 1 ? " is" : "s are"
+    } unlocked.`;
+    if (advice && advice.needed > 0) {
+      msg += ` Add ${pluralUpgrades(advice.needed)} across your top ${advice.withinTop} components to unlock the ${ordinal(
+        advice.nextSlot
+      )} enhancement, or clear a boost.`;
+    } else {
+      msg += " Clear a boost to fix this.";
+    }
+    reasons.push(msg);
   }
   if (!powerValid) {
     reasons.push(
-      `Enhancement power required is ${formatNumber(recharge)}, but only ${formatNumber(powerAvailable)} is available from upgrades.`
+      `Your enhancements need ${formatNumber(recharge)} power, but the badge only supplies ${formatNumber(
+        powerAvailable
+      )} from its ${pluralUpgrades(upgrades)}. Add more component upgrades or lower a boost value.`
     );
   }
 
+  validationMessageEl.classList.toggle("status-ok", reasons.length === 0);
+  validationMessageEl.classList.toggle("status-error", reasons.length > 0);
+  validationMessageEl.style.color = "";
   if (reasons.length === 0) {
-    validationMessageEl.textContent = "Configuration valid.";
-    validationMessageEl.style.color = "#1f4e42";
+    let okMsg = "<strong>✓ Valid setup.</strong> This badge configuration works in-game.";
+    if (advice && advice.needed > 0) {
+      okMsg += ` <span class="status-tip">Tip: ${advice.needed} more upgrade${
+        advice.needed === 1 ? "" : "s"
+      } in your top ${advice.withinTop} components unlocks the ${ordinal(advice.nextSlot)} enhancement.</span>`;
+    }
+    validationMessageEl.innerHTML = okMsg;
   } else {
-    validationMessageEl.textContent = `Invalid configuration: ${reasons.join(" ")}`;
-    validationMessageEl.style.color = "#b42318";
+    const body =
+      reasons.length === 1
+        ? reasons[0]
+        : `<ul class="status-reasons">${reasons.map((reason) => `<li>${reason}</li>`).join("")}</ul>`;
+    validationMessageEl.innerHTML = `<strong>⚠ Needs fixing:</strong> ${body}`;
   }
 
   lifetimeBpInput.classList.remove("changed-from-profile");
@@ -670,7 +409,8 @@ function renderComponentTable() {
   const overspent = currentUpgradeCost() > state.lifetimeBp;
   state.components.forEach((level, index) => {
     const row = document.createElement("tr");
-    row.style.color = overspent ? "#b42318" : "#1f4e42";
+    row.style.color = overspent ? BAD_COLOR : OK_COLOR;
+    if (overspent) row.classList.add("row-invalid");
     if (saved && level !== saved.components[index]) {
       row.classList.add("changed-from-profile");
     }
@@ -678,7 +418,7 @@ function renderComponentTable() {
     const next = nextUpgradeCost(level);
 
     row.innerHTML = `
-      <td>${componentNames[index]}</td>
+      <td>${overspent ? '<span class="row-flag" title="Costs more than your lifetime BP">⚠</span> ' : ""}${componentNames[index]}</td>
       <td>
         <div class="inline-actions">
           <button class="btn ghost" data-comp-minus="${index}" type="button">-</button>
@@ -714,16 +454,31 @@ function renderBoostTable() {
     const rowCost = boostCost(entry);
     const required = requiredUpgradesForCost(rowCost);
     const unlocked = slotIsUnlocked(index);
-    const rowValid = (unlocked || entry.value === 0) && required <= totalUpgrades(state.components);
+    const powerOk = required <= totalUpgrades(state.components);
+    const rowValid = (unlocked || entry.value === 0) && powerOk;
 
     const row = document.createElement("tr");
-    row.style.color = rowValid ? "#1f4e42" : "#b42318";
+    row.style.color = rowValid ? OK_COLOR : BAD_COLOR;
+    if (!rowValid) row.classList.add("row-invalid");
+    if (!unlocked) row.classList.add("slot-locked");
     const savedEntry = saved?.boosts?.[index];
     if (savedEntry && (entry.id !== savedEntry.id || entry.value !== savedEntry.value)) {
       row.classList.add("changed-from-profile");
     }
+
+    const lockNote = unlocked
+      ? ""
+      : `<div class="slot-note">🔒 Locked — this is the ${ordinal(index + 1)} enhancement. Concentrate more upgrades to unlock it.</div>`;
+    const powerNote =
+      unlocked && isSelected && entry.value > 0 && !powerOk
+        ? `<div class="slot-note">⚠ Needs ${pluralUpgrades(required)} of badge power; the badge has ${pluralUpgrades(
+            totalUpgrades(state.components)
+          )}.</div>`
+        : "";
+    const rowFlag = rowValid ? "" : '<span class="row-flag" title="This enhancement will not hold">⚠</span> ';
+
     row.innerHTML = `
-      <td>${index + 1}</td>
+      <td>${rowFlag}${index + 1}${unlocked ? "" : " 🔒"}</td>
       <td>
         <select data-boost-id="${index}">
           <option value="0" ${entry.id === 0 ? "selected" : ""}>Select Boost</option>
@@ -735,6 +490,7 @@ function renderBoostTable() {
             .join("")}
         </select>
         <button class="btn ghost" data-boost-clear="${index}" type="button" ${entry.id === 0 ? "disabled" : ""}>clear</button>
+        ${lockNote}${powerNote}
       </td>
       <td>
         <div class="inline-actions">
@@ -773,7 +529,6 @@ function render() {
   renderSummary();
   renderComponentTable();
   renderBoostTable();
-  syncStateJson();
   updateProfileButtonState();
 }
 
@@ -781,32 +536,6 @@ lifetimeBpInput.addEventListener("input", () => {
   state.lifetimeBp = Math.max(0, Number(lifetimeBpInput.value) || 0);
   render();
 });
-
-runBadgeTestsBtn?.addEventListener("click", runSelfTests);
-
-if (validateStateJsonBtn && stateJsonInput) {
-  validateStateJsonBtn.addEventListener("click", () => {
-    const parsed = parseStateJson(stateJsonInput.value);
-    if (!parsed.ok) {
-      setStateJsonStatus(`JSON invalid: ${parsed.reasons.join(" ")}`, true);
-      return;
-    }
-    applyParsedState(parsed.value);
-    setStateJsonStatus("JSON valid. Planner updated.");
-    render();
-  });
-
-  stateJsonInput.addEventListener("input", () => {
-    const parsed = parseStateJson(stateJsonInput.value);
-    if (!parsed.ok) {
-      setStateJsonStatus("Waiting for valid JSON...", true);
-      return;
-    }
-    applyParsedState(parsed.value);
-    setStateJsonStatus("JSON applied from editor.");
-    render();
-  });
-}
 
 if (badgeProfileLoad && badgeProfileSelect) {
   badgeProfileSelect.addEventListener("change", () => {
